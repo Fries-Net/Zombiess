@@ -1,0 +1,100 @@
+general:
+  no-permission: "&cYou do not have permission."
+  player-only: "&cOnly players can run this command."
+  reloaded: "&aReloaded jZombies config and language."
+  none-value: "none"
+
+game:
+  already-running: "&cA game is already running."
+  no-players: "&cNo online players to start with."
+  starting: "&eGame starts in &6{seconds}s&e."
+  next-wave-forced: "&eForced next wave."
+  wave-start: "&6Wave &e{wave}&6/&e{total}&6 started!"
+  wave-cleared: "&aWave {wave} cleared!"
+  stopped: "&cGame stopped."
+  completed: "&aAll waves cleared. Victory!"
+  failed: "&cAll players were eliminated."
+  kill-reward: "&6+{reward}g &8| &e{coins}g"
+  player-eliminated: "&c{player} has been eliminated."
+
+economy:
+  not-enough-coins: "&cNot enough gold. Need {price}, have {coins}."
+
+weapon:
+  list-header: "&eWeapons:"
+  list-line: "&7- &e{id} &7({display}&7)"
+  buy-usage: "&cUsage: /jz buy <weaponId>"
+  not-found: "&cUnknown weapon."
+  bought: "&aBought {weapon} for {price} gold."
+
+skin:
+  usage: "&eUsage: /jz skin <list|buy|equip> ..."
+  list-usage: "&cUsage: /jz skin list <weaponId>"
+  buy-usage: "&cUsage: /jz skin buy <skinId>"
+  equip-usage: "&cUsage: /jz skin equip <weaponId> <skinId|default>"
+  list-header: "&eSkins for {weapon}:"
+  list-line-owned: "&7- &e{id} &7({display}&7) &a[Owned]"
+  list-line-price: "&7- &e{id} &7({display}&7) &6[{price} tokens]"
+  none-for-weapon: "&7No skins configured for that weapon."
+  not-found: "&cUnknown skin."
+  already-owned: "&eYou already own that skin."
+  not-enough-tokens: "&cNot enough skin tokens. Need {price}, have {tokens}."
+  bought: "&aBought skin {skin}. Tokens left: {tokens}."
+  pregame-only: "&cYou can only change skins before the game starts."
+  weapon-not-allowed: "&cThat skin cannot be applied to this weapon."
+  must-own: "&cYou must buy this skin first."
+  equipped: "&aEquipped {skin} on {weapon}."
+  default-equipped: "&aDefault skin restored for {weapon}."
+
+skills:
+  header: "&eSkill Tree: &f{tree} &8| &ePoints: &f{points}"
+  pick-tree: "&cPick a skill tree first: /jz skills tree <id>"
+  available-trees: "&eAvailable trees:"
+  tree-line: "&7- &e{id} &7({display}&7)"
+  usage: "&eUsage: /jz skills <tree|upgrade|reset>"
+  tree-usage: "&cUsage: /jz skills tree <id>"
+  tree-not-found: "&cUnknown skill tree."
+  tree-locked: "&cYour tree is locked. Use /jz skills reset to switch."
+  tree-selected: "&aSelected tree: {tree}"
+  upgrade-usage: "&cUsage: /jz skills upgrade <skillId>"
+  upgraded: "&aUpgraded {skill} to level {level}. Points left: {points}."
+  no-such-skill: "&cThat skill is not in your selected tree."
+  not-enough-points: "&cNot enough skill points."
+  maxed: "&eThat skill is already max level."
+  reset: "&cSkill progression reset. Choose a new tree."
+  points-gained: "&a+{amount} skill points (total {total}) &8| &b+{tokenAmount} tokens (total {tokenTotal})"
+  list-line: "&7- &e{id} &7lvl {level}/{max} &6| cost {cost}"
+  list-line-max: "&7- &e{id} &7lvl {level}/{max} &a| max"
+
+revive:
+  player-downed: "&c{player} is down! Sneak + right-click to revive."
+  already-reviving: "&eSomeone is already reviving this player."
+  started: "&aReviving {target}... ({seconds}s)"
+  being-revived: "&e{player} is reviving you."
+  failed-distance: "&cRevive failed (too far away)."
+  revived: "&aYou were revived by {player}."
+  revive-success: "&aYou revived {target}."
+
+barricade:
+  repair-start: "&eRepairing barricade..."
+  repair-complete: "&aBarricade repaired."
+
+player:
+  stats: "&eGold: &f{coins} &8| &eSkin Tokens: &f{tokens} &8| &eSkill Points: &f{skillPoints} &8| &eTree: &f{tree}"
+
+combat:
+  crit: "&6CRIT!"
+
+command:
+  help-title: "&ejZombies Commands:"
+  help-admin: "&7/jz start|stop|nextwave|reload"
+  help-stats: "&7/jz stats"
+  help-weapons: "&7/jz weapons"
+  help-buy: "&7/jz buy <weaponId>"
+  help-skin-list: "&7/jz skin list <weaponId>"
+  help-skin-buy: "&7/jz skin buy <skinId>"
+  help-skin-equip: "&7/jz skin equip <weaponId> <skinId|default>"
+  help-skills: "&7/jz skills"
+  help-skill-tree: "&7/jz skills tree <treeId>"
+  help-skill-upgrade: "&7/jz skills upgrade <skillId>"
+  help-skill-reset: "&7/jz skills reset"

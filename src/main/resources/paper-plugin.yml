@@ -1,0 +1,17 @@
+name: jZombies
+version: '${version}'
+main: org.johnfries.jZombies.JZombies
+api-version: '1.21'
+authors: [ john-fries ]
+description: Hypixel-style Zombies game mode framework with waves, skins, skills, and MythicMobs support.
+website: https://johnfries.net
+dependencies:
+  server:
+    MythicMobs:
+      load: BEFORE
+      required: false
+permissions:
+  jzombies.use:
+    default: true
+  jzombies.admin:
+    default: op
