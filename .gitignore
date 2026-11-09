@@ -117,3 +117,20 @@ runs/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+
+# Local infrastructure, credentials and runtime state
+.env
+.env.*
+!.env.example
+*.local.yml
+*.local.properties
+*.pem
+*.key
+.tmp/
+.tools/
+.vscode/
+/plugins/FriesNetZombies/data/
+**/logs/
+**/crash-reports/
+*.hprof
+*.jfr

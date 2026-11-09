@@ -1,0 +1,19 @@
+dependencies {
+    api project(':zombies-common')
+    implementation 'com.zaxxer:HikariCP:6.2.1'
+    implementation 'org.flywaydb:flyway-core:11.20.3'
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql:11.20.3'
+    runtimeOnly 'org.postgresql:postgresql:42.7.14'
+    runtimeOnly 'com.h2database:h2:2.4.240'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+tasks.named('test') { exclude '**/*PostgresTest.class' }
+tasks.register('integrationTest', Test) {
+    description = 'Requires ZOMBIES_TEST_DATABASE_URL, USER and PASSWORD for a disposable PostgreSQL database.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/*PostgresTest.class'
+    shouldRunAfter tasks.named('test')
+}

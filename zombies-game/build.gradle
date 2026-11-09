@@ -1,0 +1,50 @@
+plugins {
+    id 'com.gradleup.shadow'
+    id 'xyz.jpenilla.run-paper'
+}
+dependencies {
+    implementation project(':zombies-common')
+    implementation project(':zombies-persistence')
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+}
+def pluginVersion = project.version
+processResources {
+    inputs.property 'version', pluginVersion
+    filesMatching('paper-plugin.yml') { expand(version: pluginVersion) }
+}
+tasks.named('shadowJar') {
+    archiveClassifier = ''
+    mergeServiceFiles()
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+}
+tasks.named('jar') { archiveClassifier = 'thin' }
+tasks.named('assemble') { dependsOn tasks.named('shadowJar') }
+tasks.named('runServer') {
+    minecraftVersion('1.21.11')
+    build(132)
+    runDirectory = rootProject.file('run')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+}
+
+tasks.register('verifyPluginJar') {
+    group = 'verification'
+    dependsOn tasks.named('shadowJar')
+    inputs.file(tasks.named('shadowJar').flatMap { it.archiveFile })
+    doLast {
+        def jar = new java.util.zip.ZipFile(tasks.named('shadowJar').get().archiveFile.get().asFile)
+        try {
+            ['paper-plugin.yml', 'net/fries/zombies/game/ZombiesPlugin.class',
+             'db/migration/V1__accounts_and_match_results.sql', 'org/postgresql/Driver.class',
+             'org/h2/Driver.class', 'META-INF/services/org.flywaydb.core.extensibility.Plugin'].each {
+                if (jar.getEntry(it) == null) throw new GradleException("Plugin is missing ${it}")
+            }
+            def paths = jar.entries().toList()*.name
+            if (paths.any { it.startsWith('org/bukkit/') || it.startsWith('org/johnfries/') }) {
+                throw new GradleException('Plugin contains server API or historical gameplay classes')
+            }
+            def descriptor = jar.getInputStream(jar.getEntry('paper-plugin.yml')).getText('UTF-8')
+            if (descriptor.contains('\u0024{version}')) throw new GradleException('Unexpanded plugin version')
+        } finally { jar.close() }
+    }
+}
+tasks.named('check') { dependsOn tasks.named('verifyPluginJar') }

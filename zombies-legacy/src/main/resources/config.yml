@@ -1,0 +1,970 @@
+language: "en_US"
+
+mythic:
+  enabled: true
+
+game:
+  starting-coins: 500
+  wave-interval-seconds: 8
+  wave-duration-seconds: 180
+  start-delay-seconds: 10
+  downed-bleedout-seconds: 25
+  revive-base-seconds: 5
+  barricade-base-ticks: 40
+  skin-tokens-per-wave: 1
+  max-rounds: 30
+  max-weapons: 3
+  lock-inventory: true
+  disable-hunger-loss: true
+  kill-base-gold-drop: 8
+  damage-gold-multiplier: 0.8
+  gold-drop:
+    material: GOLD_NUGGET
+    name: "&#FFD54FGold"
+    pickup-delay-ticks: 5
+  barricade-repair-material: OAK_PLANKS
+  barricade-anchor-materials:
+    - IRON_BARS
+    - COBBLESTONE_WALL
+  spawn-points:
+    - world: world
+      x: 12.5
+      y: 65.0
+      z: -4.5
+      yaw: 0.0
+      pitch: 0.0
+    - world: world
+      x: -9.5
+      y: 65.0
+      z: 14.5
+      yaw: 0.0
+      pitch: 0.0
+    - world: world
+      x: -16.5
+      y: 65.0
+      z: -12.5
+      yaw: 0.0
+      pitch: 0.0
+    - world: world
+      x: 22.5
+      y: 65.0
+      z: 10.5
+      yaw: 0.0
+      pitch: 0.0
+
+scoreboard:
+  enabled: true
+  update-ticks: 20
+  title: "&#FBC02D&lBLOCKING DEAD"
+
+weapons:
+  pistol:
+    display: "&#FDFDFDPistol"
+    material: IRON_HOE
+    price: 500
+    model-data: 1001
+    clip-size: 14
+    max-reserve-ammo: 98
+    damage: 5.2
+    headshot-multiplier: 2.0
+    pellets: 1
+    spread: 0.010
+    range: 68
+    fire-cooldown-ticks: 4
+    reload-ticks: 34
+    loot-box-weapon: false
+    loot-weight: 1
+    shoot-sound: ENTITY_FIREWORK_ROCKET_BLAST
+    reload-sound: ITEM_ARMOR_EQUIP_IRON
+  shotgun:
+    display: "&#FFD54FShotgun"
+    material: GOLDEN_HOE
+    price: 1250
+    model-data: 1002
+    clip-size: 8
+    max-reserve-ammo: 48
+    damage: 3.3
+    headshot-multiplier: 1.5
+    pellets: 7
+    spread: 0.085
+    range: 34
+    fire-cooldown-ticks: 16
+    reload-ticks: 50
+    loot-box-weapon: true
+    loot-weight: 14
+    shoot-sound: ENTITY_GENERIC_EXPLODE
+    reload-sound: ITEM_ARMOR_EQUIP_IRON
+  smg:
+    display: "&#80DEEASMG"
+    material: STONE_HOE
+    price: 1500
+    model-data: 1003
+    clip-size: 28
+    max-reserve-ammo: 224
+    damage: 3.8
+    headshot-multiplier: 1.7
+    pellets: 1
+    spread: 0.028
+    range: 55
+    fire-cooldown-ticks: 2
+    reload-ticks: 40
+    loot-box-weapon: true
+    loot-weight: 12
+    shoot-sound: ENTITY_FIREWORK_ROCKET_BLAST
+    reload-sound: ITEM_ARMOR_EQUIP_CHAIN
+  rifle:
+    display: "&#A5D6A7Rifle"
+    material: DIAMOND_HOE
+    price: 1800
+    model-data: 1004
+    clip-size: 18
+    max-reserve-ammo: 144
+    damage: 7.0
+    headshot-multiplier: 2.0
+    pellets: 1
+    spread: 0.018
+    range: 70
+    fire-cooldown-ticks: 5
+    reload-ticks: 44
+    loot-box-weapon: true
+    loot-weight: 11
+    shoot-sound: ENTITY_FIREWORK_ROCKET_LARGE_BLAST
+    reload-sound: ITEM_ARMOR_EQUIP_IRON
+  sniper:
+    display: "&#CE93D8Sniper"
+    material: NETHERITE_HOE
+    price: 2200
+    model-data: 1005
+    clip-size: 6
+    max-reserve-ammo: 42
+    damage: 16.0
+    headshot-multiplier: 2.6
+    pellets: 1
+    spread: 0.004
+    range: 96
+    fire-cooldown-ticks: 18
+    reload-ticks: 56
+    loot-box-weapon: true
+    loot-weight: 6
+    shoot-sound: ENTITY_LIGHTNING_BOLT_THUNDER
+    reload-sound: ITEM_ARMOR_EQUIP_NETHERITE
+  blaze_blaster:
+    display: "&#FF8A65Blaze Blaster"
+    material: BLAZE_ROD
+    price: 2800
+    model-data: 1006
+    clip-size: 20
+    max-reserve-ammo: 180
+    damage: 6.2
+    headshot-multiplier: 1.9
+    pellets: 1
+    spread: 0.020
+    range: 65
+    fire-cooldown-ticks: 4
+    reload-ticks: 44
+    loot-box-weapon: true
+    loot-weight: 8
+    shoot-sound: ENTITY_BLAZE_SHOOT
+    reload-sound: ITEM_ARMOR_EQUIP_GOLD
+  rocket_launcher:
+    display: "&#FF5252Rocket Launcher"
+    material: CROSSBOW
+    price: 4200
+    model-data: 1007
+    clip-size: 2
+    max-reserve-ammo: 16
+    damage: 26.0
+    headshot-multiplier: 1.2
+    pellets: 1
+    spread: 0.012
+    range: 64
+    fire-cooldown-ticks: 26
+    reload-ticks: 72
+    loot-box-weapon: true
+    loot-weight: 3
+    shoot-sound: ENTITY_FIREWORK_ROCKET_LAUNCH
+    reload-sound: ITEM_ARMOR_EQUIP_NETHERITE
+
+skins:
+  urban_pistol:
+    display: "&7Urban Pistol"
+    custom-model-data: 2101
+    price: 4
+    allowed-weapons: [pistol]
+  obsidian_pistol:
+    display: "&8Obsidian Pistol"
+    custom-model-data: 2102
+    price: 8
+    allowed-weapons: [pistol]
+  tactical_shotgun:
+    display: "&fTactical Shotgun"
+    custom-model-data: 2201
+    price: 8
+    allowed-weapons: [shotgun]
+  ember_shotgun:
+    display: "&6Ember Shotgun"
+    custom-model-data: 2202
+    price: 12
+    allowed-weapons: [shotgun]
+  chrome_smg:
+    display: "&7Chrome SMG"
+    custom-model-data: 2301
+    price: 10
+    allowed-weapons: [smg]
+  viper_smg:
+    display: "&aViper SMG"
+    custom-model-data: 2302
+    price: 14
+    allowed-weapons: [smg]
+  ranger_rifle:
+    display: "&2Ranger Rifle"
+    custom-model-data: 2401
+    price: 12
+    allowed-weapons: [rifle]
+  neon_rifle:
+    display: "&bNeon Rifle"
+    custom-model-data: 2402
+    price: 16
+    allowed-weapons: [rifle]
+  storm_sniper:
+    display: "&9Storm Sniper"
+    custom-model-data: 2501
+    price: 16
+    allowed-weapons: [sniper]
+  void_sniper:
+    display: "&5Void Sniper"
+    custom-model-data: 2502
+    price: 20
+    allowed-weapons: [sniper]
+
+skill-trees:
+  engineer:
+    display: "&eEngineer"
+    skills:
+      fast_hands:
+        display: "&aFast Hands"
+        description: "Repair barricades faster."
+        type: BARRICADE_SPEED
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.20
+      bargain_builder:
+        display: "&6Bargain Builder"
+        description: "Reduce weapon buy price."
+        type: WEAPON_DISCOUNT
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.05
+      payday:
+        display: "&ePayday"
+        description: "More gold from kills."
+        type: COIN_GAIN
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.08
+      quick_reload:
+        display: "&bQuick Reload"
+        description: "Improves reload speed."
+        type: RELOAD_SPEED
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.07
+  medic:
+    display: "&aMedic"
+    skills:
+      field_revive:
+        display: "&dField Revive"
+        description: "Revive teammates faster."
+        type: REVIVE_SPEED
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.18
+      iron_lungs:
+        display: "&fIron Lungs"
+        description: "Increase max health."
+        type: EXTRA_HEALTH
+        max-level: 5
+        base-cost: 1
+        value-per-level: 2.0
+      support_pay:
+        display: "&6Support Pay"
+        description: "More gold from kills."
+        type: COIN_GAIN
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.06
+      steady_hands:
+        display: "&cSteady Hands"
+        description: "Increase damage."
+        type: DAMAGE_BOOST
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.06
+  assault:
+    display: "&cAssault"
+    skills:
+      overclock:
+        display: "&cOverclock"
+        description: "Increase damage output."
+        type: DAMAGE_BOOST
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.08
+      hunters_eye:
+        display: "&4Hunter's Eye"
+        description: "Chance to critically strike."
+        type: CRIT_CHANCE
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.05
+      scavenger:
+        display: "&6Scavenger"
+        description: "More gold from kills."
+        type: COIN_GAIN
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.07
+      battle_savings:
+        display: "&eBattle Savings"
+        description: "Lower weapon prices."
+        type: WEAPON_DISCOUNT
+        max-level: 5
+        base-cost: 1
+        value-per-level: 0.04
+
+areas:
+  hospital_gate:
+    display: "&#90CAF9Hospital Wing"
+    price: 750
+    interact-block:
+      world: world
+      x: 5
+      y: 65
+      z: 2
+    open-blocks:
+      - world: world
+        x: 6
+        y: 65
+        z: 2
+      - world: world
+        x: 6
+        y: 66
+        z: 2
+  station_access:
+    display: "&#A5D6A7Station Access"
+    price: 1200
+    interact-block:
+      world: world
+      x: -3
+      y: 65
+      z: 8
+    open-blocks:
+      - world: world
+        x: -4
+        y: 65
+        z: 8
+      - world: world
+        x: -4
+        y: 66
+        z: 8
+
+vending-upgrades:
+  ballistic_chip:
+    display: "&#FFCC80Ballistic Chip"
+    price: 1250
+    type: DAMAGE_MULTIPLIER
+    value: 0.15
+  ammo_pack:
+    display: "&#C5E1A5Ammo Pack"
+    price: 1200
+    type: MAX_AMMO_MULTIPLIER
+    value: 0.20
+  speed_loader:
+    display: "&#80CBC4Speed Loader"
+    price: 1000
+    type: RELOAD_MULTIPLIER
+    value: 0.15
+  med_boost:
+    display: "&#F48FB1Regeneration"
+    price: 1500
+    type: REGENERATION
+    value: 1.0
+
+stations:
+  loot-boxes:
+    box_alpha:
+      price: 950
+      spin-ticks: 80
+      interact-block:
+        world: world
+        x: 2
+        y: 65
+        z: -2
+  vending:
+    vendor_damage:
+      upgrade: ballistic_chip
+      interact-block:
+        world: world
+        x: 14
+        y: 65
+        z: 4
+    vendor_ammo:
+      upgrade: ammo_pack
+      interact-block:
+        world: world
+        x: 15
+        y: 65
+        z: 4
+    vendor_reload:
+      upgrade: speed_loader
+      interact-block:
+        world: world
+        x: 16
+        y: 65
+        z: 4
+    vendor_regen:
+      upgrade: med_boost
+      interact-block:
+        world: world
+        x: 17
+        y: 65
+        z: 4
+  pack-a-punch:
+    pap_core:
+      id: pap_core
+      price: 5000
+      interact-block:
+        world: world
+        x: -10
+        y: 65
+        z: 12
+  armor-shop:
+    armor_a:
+      interact-block:
+        world: world
+        x: -8
+        y: 65
+        z: 2
+  enchanting:
+    enchant_a:
+      price: 3500
+      interact-block:
+        world: world
+        x: -7
+        y: 65
+        z: 2
+
+armor-tiers:
+  "1":
+    display: "&#EF9A9ALeather Armor"
+    price: 900
+    helmet: LEATHER_HELMET
+    chestplate: LEATHER_CHESTPLATE
+    leggings: LEATHER_LEGGINGS
+    boots: LEATHER_BOOTS
+  "2":
+    display: "&#B0BEC5Chain Armor"
+    price: 1500
+    helmet: CHAINMAIL_HELMET
+    chestplate: CHAINMAIL_CHESTPLATE
+    leggings: CHAINMAIL_LEGGINGS
+    boots: CHAINMAIL_BOOTS
+  "3":
+    display: "&#FFD54FGold Armor"
+    price: 2200
+    helmet: GOLDEN_HELMET
+    chestplate: GOLDEN_CHESTPLATE
+    leggings: GOLDEN_LEGGINGS
+    boots: GOLDEN_BOOTS
+  "4":
+    display: "&#CFD8DCIron Armor"
+    price: 3000
+    helmet: IRON_HELMET
+    chestplate: IRON_CHESTPLATE
+    leggings: IRON_LEGGINGS
+    boots: IRON_BOOTS
+  "5":
+    display: "&#90CAF9Diamond Armor"
+    price: 4200
+    helmet: DIAMOND_HELMET
+    chestplate: DIAMOND_CHESTPLATE
+    leggings: DIAMOND_LEGGINGS
+    boots: DIAMOND_BOOTS
+
+shooting-range:
+  reset-on-miss: true
+  max-distance: 80
+  targets:
+    target_1:
+      world: world
+      x: 24.5
+      y: 67.2
+      z: -6.5
+      radius: 0.45
+      points: 10
+    target_2:
+      world: world
+      x: 24.5
+      y: 67.2
+      z: -2.5
+      radius: 0.45
+      points: 10
+    target_3:
+      world: world
+      x: 24.5
+      y: 67.2
+      z: 1.5
+      radius: 0.45
+      points: 15
+
+waves:
+  1:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 8
+        health: 20
+        speed-multiplier: 0.95
+        damage: 3
+        kill-reward: 22
+  2:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 10
+        health: 22
+        speed-multiplier: 1.0
+        damage: 3
+        kill-reward: 22
+  3:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 12
+        health: 24
+        speed-multiplier: 1.02
+        damage: 3
+        kill-reward: 24
+  4:
+    skill-points: 1
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 10
+        health: 25
+        speed-multiplier: 1.05
+        damage: 3
+        kill-reward: 24
+      - id: fast
+        type: HUSK
+        amount: 4
+        health: 22
+        speed-multiplier: 1.12
+        damage: 3
+        kill-reward: 26
+  5:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 14
+        health: 28
+        speed-multiplier: 1.08
+        damage: 4
+        kill-reward: 25
+  6:
+    skill-points: 1
+    mobs:
+      - id: heavy
+        type: ZOMBIE
+        amount: 10
+        health: 32
+        speed-multiplier: 1.08
+        damage: 4
+        kill-reward: 28
+      - id: fast
+        type: HUSK
+        amount: 6
+        health: 26
+        speed-multiplier: 1.16
+        damage: 4
+        kill-reward: 28
+  7:
+    skill-points: 1
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 12
+        health: 34
+        speed-multiplier: 1.10
+        damage: 4
+        kill-reward: 29
+      - id: pigman
+        type: ZOMBIFIED_PIGLIN
+        amount: 4
+        health: 28
+        speed-multiplier: 1.14
+        damage: 4
+        kill-reward: 32
+  8:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 16
+        health: 36
+        speed-multiplier: 1.12
+        damage: 4
+        kill-reward: 30
+  9:
+    skill-points: 1
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 14
+        health: 40
+        speed-multiplier: 1.12
+        damage: 5
+        kill-reward: 32
+      - id: spider
+        type: SPIDER
+        amount: 4
+        health: 30
+        speed-multiplier: 1.20
+        damage: 5
+        kill-reward: 35
+  10:
+    skill-points: 2
+    mobs:
+      - id: boss_brute
+        type: ZOMBIE
+        mythic: ZombieBrute
+        amount: 1
+        health: 350
+        speed-multiplier: 1.0
+        damage: 8
+        kill-reward: 300
+      - id: escort
+        type: HUSK
+        amount: 10
+        health: 44
+        speed-multiplier: 1.14
+        damage: 5
+        kill-reward: 35
+  11:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 16
+        health: 45
+        speed-multiplier: 1.15
+        damage: 5
+        kill-reward: 34
+      - id: fast
+        type: HUSK
+        amount: 6
+        health: 34
+        speed-multiplier: 1.20
+        damage: 5
+        kill-reward: 36
+  12:
+    skill-points: 1
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 18
+        health: 48
+        speed-multiplier: 1.16
+        damage: 5
+        kill-reward: 35
+  13:
+    skill-points: 1
+    mobs:
+      - id: pigman
+        type: ZOMBIFIED_PIGLIN
+        amount: 8
+        health: 40
+        speed-multiplier: 1.22
+        damage: 6
+        kill-reward: 38
+      - id: classic
+        type: ZOMBIE
+        amount: 12
+        health: 48
+        speed-multiplier: 1.18
+        damage: 5
+        kill-reward: 35
+  14:
+    skill-points: 1
+    mobs:
+      - id: armored
+        type: DROWNED
+        amount: 14
+        health: 54
+        speed-multiplier: 1.15
+        damage: 6
+        kill-reward: 40
+  15:
+    skill-points: 2
+    mobs:
+      - id: blaze
+        type: BLAZE
+        amount: 6
+        health: 65
+        speed-multiplier: 1.12
+        damage: 7
+        kill-reward: 55
+      - id: classic
+        type: ZOMBIE
+        amount: 14
+        health: 55
+        speed-multiplier: 1.20
+        damage: 6
+        kill-reward: 40
+  16:
+    skill-points: 1
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 20
+        health: 58
+        speed-multiplier: 1.22
+        damage: 6
+        kill-reward: 42
+  17:
+    skill-points: 1
+    mobs:
+      - id: fast
+        type: HUSK
+        amount: 10
+        health: 46
+        speed-multiplier: 1.28
+        damage: 7
+        kill-reward: 44
+      - id: armored
+        type: DROWNED
+        amount: 10
+        health: 60
+        speed-multiplier: 1.18
+        damage: 7
+        kill-reward: 44
+  18:
+    skill-points: 1
+    mobs:
+      - id: ranged
+        type: STRAY
+        amount: 8
+        health: 52
+        speed-multiplier: 1.0
+        damage: 7
+        kill-reward: 50
+      - id: classic
+        type: ZOMBIE
+        amount: 14
+        health: 62
+        speed-multiplier: 1.24
+        damage: 6
+        kill-reward: 42
+  19:
+    skill-points: 1
+    mobs:
+      - id: pigman
+        type: ZOMBIFIED_PIGLIN
+        amount: 10
+        health: 54
+        speed-multiplier: 1.25
+        damage: 7
+        kill-reward: 48
+      - id: classic
+        type: ZOMBIE
+        amount: 14
+        health: 64
+        speed-multiplier: 1.25
+        damage: 7
+        kill-reward: 44
+  20:
+    skill-points: 2
+    mobs:
+      - id: boss_inferno
+        type: BLAZE
+        mythic: InfernoBoss
+        amount: 1
+        health: 520
+        speed-multiplier: 1.0
+        damage: 10
+        kill-reward: 450
+      - id: escort
+        type: HUSK
+        amount: 16
+        health: 60
+        speed-multiplier: 1.26
+        damage: 7
+        kill-reward: 46
+  21:
+    skill-points: 2
+    mobs:
+      - id: classic
+        type: ZOMBIE
+        amount: 22
+        health: 68
+        speed-multiplier: 1.26
+        damage: 8
+        kill-reward: 48
+  22:
+    skill-points: 2
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 16
+        health: 70
+        speed-multiplier: 1.28
+        damage: 8
+        kill-reward: 50
+      - id: fast
+        type: HUSK
+        amount: 10
+        health: 58
+        speed-multiplier: 1.34
+        damage: 8
+        kill-reward: 50
+  23:
+    skill-points: 2
+    mobs:
+      - id: armored
+        type: DROWNED
+        amount: 16
+        health: 76
+        speed-multiplier: 1.24
+        damage: 8
+        kill-reward: 52
+      - id: blaze
+        type: BLAZE
+        amount: 6
+        health: 82
+        speed-multiplier: 1.12
+        damage: 8
+        kill-reward: 60
+  24:
+    skill-points: 2
+    mobs:
+      - id: ranged
+        type: STRAY
+        amount: 10
+        health: 64
+        speed-multiplier: 1.05
+        damage: 9
+        kill-reward: 58
+      - id: classic
+        type: ZOMBIE
+        amount: 18
+        health: 76
+        speed-multiplier: 1.30
+        damage: 8
+        kill-reward: 52
+  25:
+    skill-points: 2
+    mobs:
+      - id: wither
+        type: WITHER_SKELETON
+        amount: 8
+        health: 95
+        speed-multiplier: 1.22
+        damage: 10
+        kill-reward: 75
+      - id: classic
+        type: ZOMBIE
+        amount: 18
+        health: 78
+        speed-multiplier: 1.30
+        damage: 8
+        kill-reward: 54
+  26:
+    skill-points: 2
+    mobs:
+      - id: fast
+        type: HUSK
+        amount: 14
+        health: 68
+        speed-multiplier: 1.36
+        damage: 9
+        kill-reward: 54
+      - id: armored
+        type: DROWNED
+        amount: 14
+        health: 82
+        speed-multiplier: 1.28
+        damage: 9
+        kill-reward: 55
+  27:
+    skill-points: 2
+    mobs:
+      - id: pigman
+        type: ZOMBIFIED_PIGLIN
+        amount: 14
+        health: 72
+        speed-multiplier: 1.34
+        damage: 9
+        kill-reward: 56
+      - id: blaze
+        type: BLAZE
+        amount: 8
+        health: 88
+        speed-multiplier: 1.16
+        damage: 10
+        kill-reward: 62
+  28:
+    skill-points: 2
+    mobs:
+      - id: mixed
+        type: ZOMBIE
+        amount: 20
+        health: 84
+        speed-multiplier: 1.34
+        damage: 10
+        kill-reward: 56
+      - id: ranged
+        type: STRAY
+        amount: 10
+        health: 72
+        speed-multiplier: 1.08
+        damage: 10
+        kill-reward: 60
+  29:
+    skill-points: 2
+    mobs:
+      - id: wither
+        type: WITHER_SKELETON
+        amount: 12
+        health: 110
+        speed-multiplier: 1.25
+        damage: 11
+        kill-reward: 85
+      - id: classic
+        type: ZOMBIE
+        amount: 16
+        health: 90
+        speed-multiplier: 1.36
+        damage: 10
+        kill-reward: 58
+  30:
+    skill-points: 3
+    mobs:
+      - id: final_boss
+        type: WITHER_SKELETON
+        mythic: BlockingDeadFinal
+        amount: 1
+        health: 900
+        speed-multiplier: 1.0
+        damage: 13
+        kill-reward: 1200
+      - id: final_swarm
+        type: HUSK
+        amount: 24
+        health: 86
+        speed-multiplier: 1.40
+        damage: 11
+        kill-reward: 60
