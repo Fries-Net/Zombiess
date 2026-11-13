@@ -29,6 +29,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     private UUID previousMatch;
     private UUID awaitingRespawn;
     private boolean observedRespawn;
+    private final Map<String,List<Long>> shotTicks=new HashMap<>();
+    private final Map<String,Long> observedShots=new HashMap<>();
+    private boolean trackingShots;
+    private long switchDeadline;
     private final Map<UUID, Long> matchesBefore = new HashMap<>();
 
     @Override
@@ -42,6 +46,11 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         () -> {
                             var r = zombies.matches().current();
                             if (quiet && r != null && r.waves != null) r.waves.pause(true);
+                            if(trackingShots&&r!=null&&r.combat!=null)for(String name:List.of("SurvivorOne","SurvivorTwo")){
+                                var p=getServer().getPlayerExact(name);if(p==null)continue;var w=r.combat.held(p);if(w==null)continue;
+                                if(w.shotsFired()!=observedShots.getOrDefault(name,w.shotsFired()))shotTicks.get(name).add(w.lastShotTick());
+                                observedShots.put(name,w.shotsFired());
+                            }
                             if (awaitingRespawn != null
                                     && r != null
                                     && r.survivor(awaitingRespawn) != null
@@ -106,6 +115,37 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     r.combat.shoot(p);
                     check(w.magazine() == ammoBefore - 1, "same-tick cooldown");
                 }
+                case "timing-start" -> {
+                    var r=run();var p=player("SurvivorTwo");giveAk(p);p.getInventory().setHeldItemSlot(1);beginTracking();
+                }
+                case "timing-rates" -> {
+                    getLogger().info("PLAYTEST_TIMING glock="+shotTicks.get("SurvivorOne")+" ak="+shotTicks.get("SurvivorTwo"));
+                    for(var entry:Map.of("SurvivorOne",30L,"SurvivorTwo",20L).entrySet()){
+                        var ticks=shotTicks.get(entry.getKey());check(ticks.size()>=3,"multiple client shots "+entry.getKey()+" "+ticks);
+                        for(int i=1;i<ticks.size();i++){long interval=ticks.get(i)-ticks.get(i-1);check(interval>=entry.getValue()&&interval<=entry.getValue()+3,"distinct configured cadence "+entry.getKey()+" "+ticks);}
+                        var w=run().combat.held(player(entry.getKey()));check(w.magazine()==w.definition().magazine()-ticks.size(),"exact rapid-click ammunition "+entry.getKey());
+                    }
+                }
+                case "timing-hold-start" -> beginTracking();
+                case "timing-held" -> {
+                    check(shotTicks.get("SurvivorOne").size()==1,"semi-auto holds fire once "+shotTicks);
+                    check(shotTicks.get("SurvivorTwo").size()==3,"automatic native hold fires every 20 ticks "+shotTicks);
+                }
+                case "timing-reset" -> {
+                    trackingShots=false;
+                    for(String name:List.of("SurvivorOne","SurvivorTwo")){
+                        var p=player(name);var r=run();r.combat.switched(p);p.getInventory().setHeldItemSlot(0);p.getInventory().setItem(1,null);
+                        r.survivor(p.getUniqueId()).weapons().remove(new net.fries.zombies.common.NamespacedId("friesnet:weapon/ak47"));
+                    }
+                }
+                case "timing-switch-start" -> {
+                    var p=player("SurvivorOne");giveAk(p);var w=run().combat.held(p);long before=w.shotsFired();run().combat.shoot(p);
+                    check(w.shotsFired()==before+1,"switch fixture successful Glock shot");switchDeadline=w.readyAt();
+                }
+                case "timing-switched" -> {
+                    var w=run().combat.held(player("SurvivorOne"));check(w.definition().name().equals("AK-47"),"actual client hotbar switch");
+                    check(w.shotsFired()==1&&w.magazine()==19,"switch spam cannot bypass previous recovery");check(w.lastShotTick()>=switchDeadline,"Glock recovery survives AK switch");
+                }
                 case "head" -> {
                     var r = run();
                     var p = player("SurvivorOne");
@@ -150,7 +190,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var w = r.combat.held(player("SurvivorOne"));
                     check(!w.reloading(), "reload completed");
                     check(
-                            w.magazine() == 20 && w.magazine() + w.reserve() == ammoBefore,
+                            w.magazine() == w.definition().magazine() && w.magazine() + w.reserve() == ammoBefore,
                             "reload conserves ammunition");
                 }
                 case "pause" -> {
@@ -239,6 +279,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "repair" -> {
                     var r = run();
+                    for(var z:r.world.getEntitiesByClass(Zombie.class))if(r.waves.contains(z.getUniqueId()))z.teleport(new Location(r.world,-10.5,64,.5));
                     var p = player("SurvivorOne");
                     p.teleport(new Location(r.world, -4.5, 64, -9.5));
                     p.setSneaking(true);
@@ -330,8 +371,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "battle" -> {
                     var r = run();
-                    var z = (Zombie) getServer().getEntity(target);
-                    if (z != null) {
+                    for(var z:r.world.getEntitiesByClass(Zombie.class))if(r.waves.contains(z.getUniqueId())) {
                         z.getAttribute(Attribute.MAX_HEALTH).setBaseValue(18);
                         z.setHealth(18);
                     }
@@ -478,6 +518,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
         check(r != null, "match present");
         return r;
     }
+    private void giveAk(Player p){var r=run();var id=new net.fries.zombies.common.NamespacedId("friesnet:weapon/ak47");var w=new WeaponState(r.content.weapons().get(id));r.survivor(p.getUniqueId()).weapons().put(id,w);p.getInventory().setItem(1,r.combat.item(w));}
+    private void beginTracking(){trackingShots=true;for(String name:List.of("SurvivorOne","SurvivorTwo")){shotTicks.put(name,new ArrayList<>());observedShots.put(name,run().combat.held(player(name)).shotsFired());}}
 
     private Player player(String name) {
         var p = getServer().getPlayerExact(name);
