@@ -14,19 +14,19 @@ For a repeatable bootstrap test, install Python 3.10+ and run:
 python tools/paper_smoke.py --java /path/to/jdk21/bin/java --accept-eula
 ```
 
-The harness verifies the official Paper SHA-256, creates an isolated localhost server on an ephemeral port, verifies plugin readiness and console commands, and shuts down cleanly. It retains generated logs under `run/`. Network access is required to download Paper/Mojang libraries. This checks bootstrap and command wiring; it does not test client gameplay or rendering.
+The harness verifies the official Paper SHA-256, creates an isolated localhost server on an ephemeral port, verifies plugin readiness and console commands, and shuts down cleanly. It retains generated logs under `run/`. Network access is required to download Paper/Mojang libraries. For real multiplayer, use Node 22+, `npm ci --prefix tools/paper-client --ignore-scripts --no-audit --no-fund`, then `python tools/paper_playtest.py --java /path/to/java21 --accept-eula`. This separate harness connects two protocol clients, exercises a shortened playable match, reuses the instance and forcibly kills/restarts Paper to verify recovery. It installs a separate console-only assertion JAR only in the isolated test server. Never deploy that JAR on a game server.
 
 ## Configuration
 
 Examples are the actual defaults in `zombies-game/src/main/resources/`. Every required setting must be present and correctly typed. `schema-version` must equal 1; unknown settings and duplicate keys fail validation. Error messages identify the relevant file/setting without echoing secrets. YAML aliases are disabled.
 
-`config.yml` contains stable `server-id`, named log level and default match rules (capacity, countdown, reservation TTL and private pause eligibility). Match capacity is 1–64. Countdowns are 0–300 seconds and reservations 1–3600 seconds. Default rules support 1–4 players. These are domain defaults for future match creation, not an invitation to join playable matches now.
+`config.yml` contains stable `server-id`, named log level and default match rules (capacity, countdown, reservation TTL and private pause eligibility). Match capacity is 1–64. Countdowns are 0–300 seconds and reservations 1–3600 seconds. Default rules support 1–4 players. Use `/zombies join training` to gather for five seconds, then reserve and begin the configured countdown. Population loss below minimum during countdown cancels/releases the lobby; join again for a new reservation.
 
 `database.yml` controls `STANDALONE` or `POSTGRESQL`, migration policy, pool size (1–32; at least 2 when migrations run at startup), workers (at most pool size), bounded queue (1–10000), and SQL/connection timeout (1–60 seconds). Production credentials resolve from the names configured by `url-env`, `user-env` and `password-env`. JDBC URLs must not embed passwords or usernames. Use `sslmode=verify-full` and trusted certificates for remote PostgreSQL connections.
 
 `reload` constructs and validates a new snapshot before applying it. Log level and future match rules can reload. Changes to server ID, database mode, credentials, pool or migration policy require a controlled restart. A rejected reload leaves the current snapshot intact. Future sessions take new rules; existing sessions keep their original rules.
 
-Content-specific `maps/`, `weapons/`, `mobs/`, `perks/`, `waves/`, `lang/`, `quests/`, `cases/` and `progression/` loading will be introduced with those features. The new plugin does not read the legacy monolithic content configuration.
+`gameplay.yml` contains namespaced weapon definitions, the starting weapon, gradual wave formulas/caps/timeout, points/rewards and life/channel timings. `maps/*.yml` contain bounded versioned block templates, safe player/zombie spawns, purchase gates, barricades and weapon stations. Both formats reject missing/unknown/duplicate keys and invalid references. The defaults are working examples; map IDs must be unique. These content snapshots load at startup and are not changed by `/zombies reload`. Do not remove pending journal/player files when updating content. The new runtime does not load the legacy monolithic configuration.
 
 ## PostgreSQL development and integration tests
 
@@ -66,7 +66,7 @@ The runtime role can create/update player economic data for the instance it serv
 
 Install Java 21, Paper 1.21.11 build 132, and only `zombies-game-0.1.0.jar`. Use a stable unique `server-id` for each allocation. Pterodactyl can run these pre-provisioned servers using a Java 21 Paper egg and environment secrets. Keep world/config backups and stop the instance before replacing plugin binaries. Do not place panel keys in plugin configuration or Minecraft messages.
 
-Phase 1 has no privileged instance controller, automatic world restoration, Velocity plugin, hub routing or admission security. Do not expose it as a public Zombies game service. Standalone diagnostic readiness means its foundation/storage are initialized, not that a map is loaded and a game instance is assignable. These deployment integrations are later milestones.
+Phase 2 runs one local match at a time with owned disposable world restoration. Readiness includes storage, content parsing, abandoned-world cleanup and pending-result replay. This is a standalone game adapter; a privileged instance controller, signed network admission, Velocity and hub routing remain later milestones. Controlled restarts are required for binary/content changes; plugin hot-reload is not supported.
 
 ## Builds and releases
 
@@ -74,7 +74,7 @@ Phase 1 has no privileged instance controller, automatic world restoration, Velo
 
 Gradle locks transitive versions; `gradle/verification-metadata.xml` pins dependency artifact checksums. Paper's 1.21.x API uses snapshot coordinates ([upstream format](https://docs.papermc.io/paper/dev/project-setup/)); checksums pin the actual resolved artifacts and reject unexpected replacements. If upstream removes the pinned snapshot, mirror the verified artifacts or deliberately review a dependency update. Do not disable verification to make an unexpected download pass. Wrapper upgrades must include the official distribution checksum. Archive ordering/timestamps are deterministic.
 
-For a reviewed dependency change, run `./gradlew clean build --write-locks --write-verification-metadata sha256`, inspect changed versions/checksums, then run a normal build with verification enabled. Record the actual integration results separately from unit results. A new release must also pass the Paper smoke harness and the PostgreSQL CI job.
+For a reviewed dependency change, run `./gradlew clean build --write-locks --write-verification-metadata sha256`, inspect changed versions/checksums, then run a normal build with verification enabled. Record integration results separately from unit results. A release must pass the Paper multiplayer harness and PostgreSQL CI job. The multiplayer client has a committed npm lockfile and is never bundled in the Minecraft plugin.
 
 ## Troubleshooting
 
@@ -87,6 +87,10 @@ For a reviewed dependency change, run `./gradlew clean build --write-locks --wri
 - Java class-version error: confirm `JAVA_HOME`, server startup Java and Gradle toolchain point to JDK 21.
 - Paper smoke download failure: check HTTPS/network access and the pinned upstream download; the harness verifies its checksum.
 
-## Manual acceptance beyond this milestone
+## Playable acceptance and recovery
 
-Connect a Java 1.21.11 client; verify command permissions and suggestions, profile feedback, and failed reload feedback. No physical player inventory or world state should change. Gameplay, rendering, map editing, packet behavior, reconnect recovery, load tests and network transfers require their later implementations and must not be reported as tested here.
+Connect a Java 1.21.11 client and follow [the play instructions](../README.md). Joining temporarily installs a match loadout only after the original inventory/status backup is forced. Leaving or finishing returns the original state. A disposable `fnz_<uuid>` world exists only for that match; hub/operator worlds are not edited. A clean result receipt and verified world removal gate the next match.
+
+`match_result_pending` retains the final journal and retries every five seconds. `world_cleanup_failed` or `cleanup_player_failed` leaves the instance unavailable and retries cleanup. Fix storage/permissions/third-party unload interference; do not delete ownership markers or pending results to bypass these gates. `player_restore_failed` keeps the backup; `/zombies leave` can retry a player's restoration after the underlying problem is corrected. Invalid/corrupt startup journals block readiness and need investigation and restoration from backups.
+
+Active checkpoints are written every five seconds of match ticks. After a JVM crash the match is recorded as abandoned at the last forced checkpoint, rewards replay idempotently, and original player state is restored on connection. No live entity simulation is resumed. See [Phase 2 verification and filesystem limits](PHASE_2.md). Graphical client polish, full 30-round balance, production load and network transfers require separate acceptance.

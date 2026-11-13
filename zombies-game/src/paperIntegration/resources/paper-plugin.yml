@@ -1,0 +1,10 @@
+name: ZombiesPlaytest
+version: '1.0'
+main: net.fries.zombies.playtest.PaperPlaytest
+api-version: '1.21.11'
+dependencies:
+  server:
+    FriesNetZombies:
+      load: BEFORE
+      required: true
+      join-classpath: true

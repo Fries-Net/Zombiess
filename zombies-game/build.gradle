@@ -48,3 +48,16 @@ tasks.register('verifyPluginJar') {
     }
 }
 tasks.named('check') { dependsOn tasks.named('verifyPluginJar') }
+
+// An explicit test-only plugin drives assertions inside a real Paper JVM. Never bundled for deployment.
+sourceSets {
+    paperIntegration {
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+    }
+}
+tasks.register('paperIntegrationJar', Jar) {
+    dependsOn tasks.named('paperIntegrationClasses')
+    archiveClassifier = 'paper-integration'
+    from sourceSets.paperIntegration.output
+}
+tasks.named('check') { dependsOn tasks.named('paperIntegrationJar') }
