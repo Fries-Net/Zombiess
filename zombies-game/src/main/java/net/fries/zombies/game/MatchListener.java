@@ -1,7 +1,6 @@
 package net.fries.zombies.game;
 
 import net.fries.zombies.common.gameplay.Survivor;
-import net.fries.zombies.game.world.MapWorlds;
 
 import org.bukkit.entity.*;
 import org.bukkit.event.*;
@@ -99,8 +98,14 @@ final class MatchListener implements Listener {
 
     @EventHandler
     public void pickup(EntityPickupItemEvent e) {
-        var r=matches.current();
-        if(r!=null&&r.powerups!=null&&e.getEntity() instanceof Player player&&r.powerups.pickup(player,e.getItem())){e.setCancelled(true);return;}
+        var r = matches.current();
+        if (r != null
+                && r.powerups != null
+                && e.getEntity() instanceof Player player
+                && r.powerups.pickup(player, e.getItem())) {
+            e.setCancelled(true);
+            return;
+        }
         if (matches.managed(e.getEntity().getUniqueId())) e.setCancelled(true);
     }
 
@@ -143,8 +148,13 @@ final class MatchListener implements Listener {
     public void damage(EntityDamageEvent e) {
         var r = matches.current();
         if (r != null && r.waves != null && r.waves.contains(e.getEntity().getUniqueId())) {
-            if(e instanceof EntityDamageByEntityEvent melee && melee.getDamager() instanceof Player attacker && !r.combat.authorizes(e.getEntity().getUniqueId()) && r.combat.knife(attacker)){
-                e.setCancelled(true);r.combat.melee(attacker,(Zombie)e.getEntity());return;
+            if (e instanceof EntityDamageByEntityEvent melee
+                    && melee.getDamager() instanceof Player attacker
+                    && !r.combat.authorizes(e.getEntity().getUniqueId())
+                    && r.combat.knife(attacker)) {
+                e.setCancelled(true);
+                r.combat.melee(attacker, (Zombie) e.getEntity());
+                return;
             }
             if (!(e instanceof EntityDamageByEntityEvent by)
                     || !(by.getDamager() instanceof Player)
@@ -175,6 +185,13 @@ final class MatchListener implements Listener {
     public void target(EntityTargetLivingEntityEvent e) {
         var r = matches.current();
         if (r != null
+                && r.windows != null
+                && r.windows.exterior(e.getEntity().getUniqueId())
+                && e.getTarget() != null) {
+            e.setCancelled(true);
+            return;
+        }
+        if (r != null
                 && r.waves != null
                 && r.waves.contains(e.getEntity().getUniqueId())
                 && e.getTarget() != null
@@ -197,11 +214,10 @@ final class MatchListener implements Listener {
             e.setTo(from);
             return;
         }
-        var b = r.map.bounds();
+        var b = r.map.playableBounds();
         if (!b.contains(
                 new net.fries.zombies.common.content.MapTemplate.Point(
-                        to.getX(), to.getY(), to.getZ())))
-            e.setTo(MapWorlds.location(r.world, r.map.playerSpawn()));
+                        to.getX(), to.getY(), to.getZ()))) e.setTo(e.getFrom());
     }
 
     @EventHandler

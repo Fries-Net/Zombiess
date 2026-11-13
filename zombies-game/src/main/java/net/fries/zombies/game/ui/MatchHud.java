@@ -42,6 +42,7 @@ public final class MatchHud {
             else if (s.life() == Survivor.Life.DEAD) text = "Spectating • return next round";
             else {
                 text = run.lives.channel(s.id());
+                if (text.isEmpty()) text = run.windows.context(p);
                 if (text.isEmpty()) text = run.interactions.context(p);
                 if (text.isEmpty()) {
                     var w = run.combat.held(p);
@@ -63,7 +64,14 @@ public final class MatchHud {
                                                             + " • F to reload");
                 }
             }
-            p.sendActionBar(Component.text(text+s.goldFeedback(run.tick)+(run.points.doubleGoldRemaining(run.tick)>0?" • DOUBLE GOLD":""), NamedTextColor.GOLD));
+            p.sendActionBar(
+                    Component.text(
+                            text
+                                    + s.goldFeedback(run.tick)
+                                    + (run.points.doubleGoldRemaining(run.tick) > 0
+                                            ? " • DOUBLE GOLD"
+                                            : ""),
+                            NamedTextColor.GOLD));
         }
     }
 

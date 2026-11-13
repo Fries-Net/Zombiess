@@ -18,12 +18,14 @@ public final class InteractionService {
 
     private final MatchRun run;
     private final Set<String> opened = new HashSet<>();
+    private final Set<String> rooms = new HashSet<>();
     private final Map<UUID, Repair> repairs = new HashMap<>();
     private final Map<String, Integer> repairRewards = new HashMap<>();
     private final List<Entity> displays = new ArrayList<>();
 
     public InteractionService(MatchRun run) {
         this.run = run;
+        rooms.addAll(run.map.initialRooms());
     }
 
     public void labels() {
@@ -84,6 +86,7 @@ public final class InteractionService {
                 }
                 MapWorlds.each(run.world, g.box(), b -> b.setType(Material.AIR, false));
                 opened.add(g.id());
+                rooms.add(g.unlocksRoom());
                 run.world.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1, .7f);
                 run.world
                         .getPlayers()
@@ -146,7 +149,15 @@ public final class InteractionService {
             }
             if (run.tick - channel.started >= run.content.repairTicks()) {
                 block.setType(MapWorlds.material(b.material()), false);
-                run.points.repair(id,b.id(),block.getX()+":"+block.getY()+":"+block.getZ(),run.waves.round(),true,run.content.repairPoints(),(int)b.box().volume()*run.content.repairPoints(),run.tick);
+                run.points.repair(
+                        id,
+                        b.id(),
+                        block.getX() + ":" + block.getY() + ":" + block.getZ(),
+                        run.waves.round(),
+                        true,
+                        run.content.repairPoints(),
+                        (int) b.box().volume() * run.content.repairPoints(),
+                        run.tick);
                 p.playSound(p.getLocation(), Sound.BLOCK_WOOD_PLACE, .5f, 1);
                 repairs.put(id, new Repair(b.id(), run.tick));
             }
@@ -210,6 +221,10 @@ public final class InteractionService {
 
     public boolean open(String gate) {
         return opened.contains(gate);
+    }
+
+    public boolean roomUnlocked(String room) {
+        return rooms.contains(room);
     }
 
     public void clear() {

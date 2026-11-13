@@ -19,7 +19,11 @@ public record ContentCatalog(Gameplay gameplay, Map<String, MapTemplate> maps) {
             byte[] old = ContentYaml.readBytes(file);
             byte[] next = GameplayMigration.upgrade(old, input.readAllBytes());
             if (!java.util.Arrays.equals(old, next)) {
-                Path backup = file.resolveSibling("gameplay.v"+ContentYaml.parse(old).integer("schema-version",1,3)+".backup.yml");
+                Path backup =
+                        file.resolveSibling(
+                                "gameplay.v"
+                                        + ContentYaml.parse(old).integer("schema-version", 1, 3)
+                                        + ".backup.yml");
                 if (!Files.exists(backup))
                     net.fries.zombies.persistence.DurableFiles.replace(backup, old);
                 // Validate the complete candidate before replacing a deployed content document.
@@ -39,6 +43,8 @@ public record ContentCatalog(Gameplay gameplay, Map<String, MapTemplate> maps) {
                             .toList();
             if (files.isEmpty() || files.size() > 32) throw new IOException("Expected 1..32 maps");
             for (var path : files) {
+                if (path.getFileName().toString().equals("training.yml"))
+                    migrateTraining(directory, path);
                 String key = path.getFileName().toString().replace(".yml", "");
                 var map = MapTemplate.load(path, gameplay);
                 if (maps.values().stream().anyMatch(m -> m.id().equals(map.id())))
@@ -47,5 +53,24 @@ public record ContentCatalog(Gameplay gameplay, Map<String, MapTemplate> maps) {
             }
         }
         return new ContentCatalog(gameplay, maps);
+    }
+
+    private static void migrateTraining(Path directory, Path file) throws IOException {
+        try (var legacy =
+                        ContentCatalog.class.getResourceAsStream(
+                                "/maps/migrations/phase2-training.yml");
+                var replacement = ContentCatalog.class.getResourceAsStream("/maps/training.yml")) {
+            if (legacy == null || replacement == null) return;
+            byte[] old = ContentYaml.readBytes(file);
+            byte[] upgraded =
+                    MapContentMigration.upgradeDefault(
+                            old, legacy.readAllBytes(), replacement.readAllBytes());
+            if (!java.util.Arrays.equals(old, upgraded)) {
+                var backup = directory.resolve("maps/backups/training-v1.yml");
+                if (!Files.exists(backup))
+                    net.fries.zombies.persistence.DurableFiles.replace(backup, old);
+                net.fries.zombies.persistence.DurableFiles.replace(file, upgraded);
+            }
+        }
     }
 }

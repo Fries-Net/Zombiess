@@ -204,6 +204,7 @@ public final class MatchCoordinator {
             r.lives.tick();
             if (!r.playing()) return;
             r.interactions.tick();
+            r.windows.tick();
             r.waves.tick();
             if (!r.playing()) return;
             r.hud.tick();
@@ -332,9 +333,10 @@ public final class MatchCoordinator {
             r.lives =
                     new net.fries.zombies.game.player.LifeService(r, outcome -> finish(r, outcome));
             r.interactions = new InteractionService(r);
+            r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
             r.hud = new MatchHud(r);
-            r.powerups=new net.fries.zombies.game.economy.PowerUpService(r);
+            r.powerups = new net.fries.zombies.game.economy.PowerUpService(r);
             r.interactions.labels();
             for (var s : r.players.values()) {
                 var p = Bukkit.getPlayer(s.id());

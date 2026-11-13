@@ -37,13 +37,14 @@ public final class MatchRun {
     public InteractionService interactions;
     public MatchHud hud;
     public net.fries.zombies.game.economy.PowerUpService powerups;
+    public net.fries.zombies.game.world.WindowService windows;
 
     public MatchRun(MatchSession session, MatchRules rules, Gameplay content, MapTemplate map) {
         this.session = session;
         this.rules = rules;
         this.content = content;
         this.map = map;
-        points=new net.fries.zombies.common.gameplay.PointsLedger(content.scoring(),players);
+        points = new net.fries.zombies.common.gameplay.PointsLedger(content.scoring(), players);
     }
 
     public boolean playing() {
@@ -60,7 +61,8 @@ public final class MatchRun {
     }
 
     public void dispose() {
-        if(powerups!=null)powerups.clear();
+        if (windows != null) windows.clear();
+        if (powerups != null) powerups.clear();
         if (waves != null) waves.clear();
         if (interactions != null) interactions.clear();
         if (hud != null) hud.clear();
