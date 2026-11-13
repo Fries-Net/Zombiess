@@ -75,6 +75,39 @@ public record MapTemplate(
 
     public record Shop(Point point, NamespacedId weapon) {}
 
+    public List<Shop> wallShops() {
+        var all = new java.util.ArrayList<>(shops);
+        objects.stream()
+                .filter(o -> o.kind() == MapObject.Kind.WALL_WEAPON)
+                .forEach(
+                        o ->
+                                all.add(
+                                        new Shop(
+                                                o.point(),
+                                                new NamespacedId(
+                                                        o.property("weapon", "missing:weapon")))));
+        return List.copyOf(all);
+    }
+
+    public Point playerSpawn(java.util.UUID player) {
+        var points =
+                objects.stream()
+                        .filter(o -> o.kind() == MapObject.Kind.PLAYER_SPAWN)
+                        .map(MapObject::point)
+                        .toList();
+        return points.isEmpty()
+                ? playerSpawn
+                : points.get(Math.floorMod(player.hashCode(), points.size()));
+    }
+
+    public Point spectatorSpawn() {
+        return objects.stream()
+                .filter(o -> o.kind() == MapObject.Kind.SPECTATOR_SPAWN)
+                .map(MapObject::point)
+                .findFirst()
+                .orElse(playerSpawn);
+    }
+
     public static MapTemplate load(Path path, Gameplay gameplay) throws IOException {
         return parse(ContentYaml.readBytes(path), gameplay);
     }
@@ -200,7 +233,10 @@ public record MapTemplate(
                         .toList();
         if (spawns.size() > 64
                 || ((spawns.isEmpty() || spawns.stream().noneMatch(s -> s.gate.equals("none")))
-                        && (schema == 1 || r.nodes("windows").isEmpty())))
+                        && (schema == 1 || r.nodes("windows").isEmpty())
+                        && (schema < 3
+                                || r.nodes("objects").stream()
+                                        .noneMatch(o -> o.text("kind").equals("ZOMBIE_REGION")))))
             throw new IllegalArgumentException("Missing initial spawns");
         var windows =
                 schema == 1
@@ -243,6 +279,14 @@ public record MapTemplate(
                                 ? List.of()
                                 : r.nodes("objects").stream().map(MapObject::load).toList());
         var objectIds = new HashSet<String>();
+        if (windows.isEmpty()
+                && spawns.stream().noneMatch(s -> s.gate().equals("none"))
+                && map.objects.stream()
+                        .noneMatch(
+                                o ->
+                                        o.kind() == MapObject.Kind.ZOMBIE_REGION
+                                                && initial.containsAll(o.rooms())))
+            throw new IllegalArgumentException("No initially active spawn region");
         if (map.objects.size() > 512) throw new IllegalArgumentException("Too many objects");
         for (var object : map.objects) {
             if (!objectIds.add(object.id()) || !rooms.containsAll(object.rooms()))

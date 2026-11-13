@@ -30,7 +30,7 @@ public final class InteractionService {
 
     public void labels() {
         for (var g : run.map.gates()) label(g.point(), g.name() + " • " + g.price() + " gold");
-        for (var s : run.map.shops()) {
+        for (var s : run.map.wallShops()) {
             var w = run.content.weapons().get(s.weapon());
             label(s.point(), w.name() + " • " + w.price() + " | Ammo " + w.ammoPrice());
         }
@@ -93,7 +93,7 @@ public final class InteractionService {
                         .forEach(t -> message(t, p.getName() + " opened " + g.name()));
                 return true;
             }
-        for (var shop : run.map.shops())
+        for (var shop : run.map.wallShops())
             if (near(p, shop.point(), 3.5)) {
                 var w = run.content.weapons().get(shop.weapon());
                 var owned = survivor.weapons().get(shop.weapon());
@@ -207,7 +207,7 @@ public final class InteractionService {
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5))
                 return "Right-click • " + g.name() + " • " + g.price() + " gold";
-        for (var s : run.map.shops())
+        for (var s : run.map.wallShops())
             if (near(p, s.point(), 3.5)) {
                 var w = run.content.weapons().get(s.weapon());
                 boolean owned = run.survivor(p.getUniqueId()).weapons().containsKey(s.weapon());

@@ -7,8 +7,24 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 class MapDraftTest {
+    @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory;
+
     private MapDraft draft() throws Exception {
         return new MapDraft(getClass().getResourceAsStream("/phase2-map.yml").readAllBytes());
+    }
+
+    @Test
+    void legacyStationsAndSpawnsMigrateWithoutLosingReferences() throws Exception {
+        var d = draft();
+        var file = directory.resolve("gameplay.yml");
+        java.nio.file.Files.write(
+                file, getClass().getResourceAsStream("/phase2-gameplay.yml").readAllBytes());
+        var map = d.validate(Gameplay.load(file));
+        assertTrue(map.shops().isEmpty());
+        assertTrue(map.zombieSpawns().isEmpty());
+        assertEquals(2, map.wallShops().size());
+        assertTrue(map.objects().stream().anyMatch(o -> o.kind() == MapObject.Kind.ZOMBIE_REGION));
+        assertArrayEquals(d.bytes(), new MapDraft(d.bytes()).bytes());
     }
 
     @Test

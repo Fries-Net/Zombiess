@@ -137,11 +137,43 @@ public final class WaveService {
             if (windows.isEmpty()) throw new IllegalStateException("No unlocked zombie window");
             window = windows.get(spawnIndex % windows.size());
         }
+        Location regionSpawn = null;
+        if (window == null) {
+            var regions =
+                    run.map.objects().stream()
+                            .filter(
+                                    o ->
+                                            o.kind()
+                                                            == net.fries.zombies.common.content
+                                                                    .MapObject.Kind.ZOMBIE_REGION
+                                                    && o.rooms().stream()
+                                                            .allMatch(
+                                                                    run.interactions::roomUnlocked))
+                            .toList();
+            if (!regions.isEmpty()) {
+                var safe = new ArrayList<Location>();
+                MapWorlds.each(
+                        run.world,
+                        regions.get(spawnIndex % regions.size()).region(),
+                        b -> {
+                            if (b.isPassable()
+                                    && b.getRelative(0, 1, 0).isPassable()
+                                    && b.getRelative(0, -1, 0).getType().isSolid())
+                                safe.add(b.getLocation().add(.5, 0, .5));
+                        });
+                if (safe.isEmpty())
+                    throw new IllegalStateException("No safe spawn in editor region");
+                regionSpawn = safe.get(spawnIndex % safe.size());
+            }
+        }
         var spawn =
-                window == null
-                        ? MapWorlds.location(
-                                run.world, eligible.get(spawnIndex % eligible.size()).point())
-                        : run.windows.spawn(window, spawnIndex);
+                regionSpawn != null
+                        ? regionSpawn
+                        : window == null
+                                ? MapWorlds.location(
+                                        run.world,
+                                        eligible.get(spawnIndex % eligible.size()).point())
+                                : run.windows.spawn(window, spawnIndex);
         spawnIndex++;
         var zombie =
                 run.world.spawn(

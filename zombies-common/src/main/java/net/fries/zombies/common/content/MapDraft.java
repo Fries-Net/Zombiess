@@ -26,6 +26,57 @@ public final class MapDraft {
         document.putIfAbsent("world-source", "blueprint");
         document.putIfAbsent("world-digest", "none");
         document.putIfAbsent("objects", new ArrayList<>());
+        migrateLegacyObjects();
+    }
+
+    private void migrateLegacyObjects() {
+        for (var shop : nodes("shops")) {
+            var object = legacyObject("legacy_wall_", "WALL_WEAPON", shop.get("point"));
+            object.put("properties", new LinkedHashMap<>(Map.of("weapon", shop.get("weapon"))));
+            nodes("objects").add(object);
+        }
+        for (var spawn : nodes("zombie-spawns")) {
+            var object = legacyObject("legacy_spawn_", "ZOMBIE_REGION", spawn.get("point"));
+            if (!spawn.get("gate").equals("none")) {
+                Object room =
+                        nodes("gates").stream()
+                                .filter(g -> g.get("id").equals(spawn.get("gate")))
+                                .findFirst()
+                                .orElseThrow()
+                                .get("unlocks-room");
+                object.put("rooms", new ArrayList<>(List.of(room)));
+            }
+            nodes("objects").add(object);
+        }
+        document.put("shops", new ArrayList<>());
+        document.put("zombie-spawns", new ArrayList<>());
+    }
+
+    private Map<String, Object> legacyObject(String prefix, String kind, Object point) {
+        int number = 1;
+        while (true) {
+            String id = prefix + number;
+            if (nodes("objects").stream().noneMatch(o -> id.equals(o.get("id")))) break;
+            number++;
+        }
+        var p = MapTemplate.point(new ContentYaml((Map<?, ?>) point));
+        var object = new LinkedHashMap<String, Object>();
+        object.put("id", prefix + number);
+        object.put("kind", kind);
+        object.put("point", point);
+        object.put(
+                "region",
+                box(
+                        (int) Math.floor(p.x()),
+                        (int) Math.floor(p.y()),
+                        (int) Math.floor(p.z()),
+                        (int) Math.floor(p.x()),
+                        (int) Math.floor(p.y()),
+                        (int) Math.floor(p.z())));
+        object.put("rooms", new ArrayList<>());
+        object.put("asset", "friesnet:object/" + kind.toLowerCase(Locale.ROOT));
+        object.put("properties", new LinkedHashMap<>());
+        return object;
     }
 
     public byte[] bytes() {
