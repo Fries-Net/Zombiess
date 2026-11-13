@@ -27,7 +27,10 @@ public record MapTemplate(
         List<Shop> shops,
         List<WindowDefinition> windows,
         Set<String> initialRooms,
-        Box playableBounds) {
+        Box playableBounds,
+        String worldSource,
+        String worldDigest,
+        List<MapObject> objects) {
     public MapTemplate {
         blocks = List.copyOf(blocks);
         zombieSpawns = List.copyOf(zombieSpawns);
@@ -36,6 +39,7 @@ public record MapTemplate(
         shops = List.copyOf(shops);
         windows = List.copyOf(windows);
         initialRooms = Set.copyOf(initialRooms);
+        objects = List.copyOf(objects);
     }
 
     public record Point(double x, double y, double z) {}
@@ -72,9 +76,12 @@ public record MapTemplate(
     public record Shop(Point point, NamespacedId weapon) {}
 
     public static MapTemplate load(Path path, Gameplay gameplay) throws IOException {
-        byte[] source = ContentYaml.readBytes(path);
+        return parse(ContentYaml.readBytes(path), gameplay);
+    }
+
+    public static MapTemplate parse(byte[] source, Gameplay gameplay) {
         var r = ContentYaml.parse(source);
-        int schema = r.integer("schema-version", 1, 2);
+        int schema = r.integer("schema-version", 1, 3);
         var rootKeys =
                 new java.util.ArrayList<>(
                         List.of(
@@ -90,7 +97,15 @@ public record MapTemplate(
                                 "barricades",
                                 "shops"));
         if (schema >= 2) rootKeys.addAll(List.of("windows", "initial-rooms", "playable-bounds"));
+        if (schema >= 3) rootKeys.addAll(List.of("world-source", "world-digest", "objects"));
         r.keys(rootKeys.toArray(String[]::new));
+        String worldSource = schema < 3 ? "blueprint" : r.text("world-source");
+        String worldDigest = schema < 3 ? "none" : r.text("world-digest");
+        boolean blueprint = worldSource.equals("blueprint");
+        if (blueprint
+                ? !worldDigest.equals("none")
+                : (!worldSource.matches("[0-9a-f]{32}") || !worldDigest.matches("[0-9a-f]{64}")))
+            throw new IllegalArgumentException("Invalid immutable world reference");
         String version = r.text("version");
         if (!version.matches("[a-zA-Z0-9_.-]{1,24}"))
             throw new IllegalArgumentException("Unsafe map version");
@@ -104,7 +119,7 @@ public record MapTemplate(
             throw new IllegalStateException(e);
         }
         var bounds = box(r.node("bounds"));
-        if (bounds.volume() > 200000)
+        if (bounds.volume() > (blueprint ? 200000 : 100000000))
             throw new IllegalArgumentException("Map exceeds bounded template size");
         var blocks =
                 r.nodes("blocks").stream()
@@ -114,7 +129,7 @@ public record MapTemplate(
                                     return new Fill(box(n.node("box")), n.text("material"));
                                 })
                         .toList();
-        if (blocks.isEmpty()
+        if ((blueprint && blocks.isEmpty())
                 || blocks.size() > 256
                 || blocks.stream().mapToLong(f -> f.box.volume()).sum() > 200000)
             throw new IllegalArgumentException("Invalid block budget");
@@ -221,7 +236,25 @@ public record MapTemplate(
                         shops,
                         windows,
                         initial,
-                        schema == 1 ? bounds : box(r.node("playable-bounds")));
+                        schema == 1 ? bounds : box(r.node("playable-bounds")),
+                        worldSource,
+                        worldDigest,
+                        schema < 3
+                                ? List.of()
+                                : r.nodes("objects").stream().map(MapObject::load).toList());
+        var objectIds = new HashSet<String>();
+        if (map.objects.size() > 512) throw new IllegalArgumentException("Too many objects");
+        for (var object : map.objects) {
+            if (!objectIds.add(object.id()) || !rooms.containsAll(object.rooms()))
+                throw new IllegalArgumentException("Invalid object identity or room reference");
+            map.requireInside(object.point());
+            map.requireInside(object.region());
+            if (object.kind() == MapObject.Kind.WALL_WEAPON
+                    && !gameplay.weapons()
+                            .containsKey(
+                                    new NamespacedId(object.property("weapon", "missing:weapon"))))
+                throw new IllegalArgumentException("Unknown wall weapon");
+        }
         map.requireInside(map.playableBounds);
         if (!map.playableBounds.contains(map.playerSpawn))
             throw new IllegalArgumentException("Player spawn outside playable area");
@@ -277,17 +310,20 @@ public record MapTemplate(
 
     public static Point point(ContentYaml n) {
         n.keys("x", "y", "z");
-        return new Point(n.number("x", -128, 128), n.number("y", 1, 255), n.number("z", -128, 128));
+        return new Point(
+                n.number("x", -29999984, 29999984),
+                n.number("y", -63, 319),
+                n.number("z", -29999984, 29999984));
     }
 
     public static Box box(ContentYaml n) {
         n.keys("x1", "y1", "z1", "x2", "y2", "z2");
         return new Box(
-                n.integer("x1", -128, 128),
-                n.integer("y1", 0, 255),
-                n.integer("z1", -128, 128),
-                n.integer("x2", -128, 128),
-                n.integer("y2", 0, 255),
-                n.integer("z2", -128, 128));
+                n.integer("x1", -29999984, 29999984),
+                n.integer("y1", -64, 319),
+                n.integer("z1", -29999984, 29999984),
+                n.integer("x2", -29999984, 29999984),
+                n.integer("y2", -64, 319),
+                n.integer("z2", -29999984, 29999984));
     }
 }

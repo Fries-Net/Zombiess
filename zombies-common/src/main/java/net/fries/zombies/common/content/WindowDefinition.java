@@ -82,9 +82,9 @@ public record WindowDefinition(
                                 b -> {
                                     b.keys("x", "y", "z", "material");
                                     return new Board(
-                                            b.integer("x", -128, 128),
-                                            b.integer("y", 0, 255),
-                                            b.integer("z", -128, 128),
+                                            b.integer("x", -29999984, 29999984),
+                                            b.integer("y", -64, 319),
+                                            b.integer("z", -29999984, 29999984),
                                             b.text("material"));
                                 })
                         .toList();

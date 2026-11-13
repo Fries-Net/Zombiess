@@ -273,7 +273,7 @@ public final class MatchCoordinator {
     private void prepare(MatchRun r) {
         r.preparing = true;
         onServer(
-                worlds.allocate(r.session.snapshot().identity().matchId()),
+                worlds.allocate(r.session.snapshot().identity().matchId(), r.map),
                 (name, error) -> {
                     if (error != null) preparationFailed(r, error);
                     else buildAndCapture(r, name);

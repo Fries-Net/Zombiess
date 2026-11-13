@@ -50,6 +50,10 @@ public final class MapWorlds {
     }
 
     public CompletableFuture<String> allocate(UUID id) {
+        return allocate(id, null);
+    }
+
+    public CompletableFuture<String> allocate(UUID id, MapTemplate map) {
         return disk.submit(
                 () -> {
                     String name = PREFIX + id.toString().replace("-", "");
@@ -58,6 +62,23 @@ public final class MapWorlds {
                     DurableFiles.replace(
                             path.resolve(MARKER),
                             name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    if (map != null && !map.worldSource().equals("blueprint")) {
+                        Path source =
+                                plugin.getDataFolder()
+                                        .toPath()
+                                        .resolve("maps/worlds")
+                                        .resolve(map.worldSource());
+                        String digest =
+                                net.fries.zombies.persistence.WorldSnapshot.copy(
+                                        source, path.resolve("snapshot"));
+                        if (!digest.equals(map.worldDigest()))
+                            throw new IOException("Published world checksum mismatch");
+                        try (var files = Files.list(path.resolve("snapshot"))) {
+                            for (var entry : files.toList())
+                                Files.move(entry, path.resolve(entry.getFileName()));
+                        }
+                        Files.delete(path.resolve("snapshot"));
+                    }
                     return name;
                 });
     }
