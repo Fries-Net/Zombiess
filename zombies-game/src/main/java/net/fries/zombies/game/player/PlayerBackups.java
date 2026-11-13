@@ -118,6 +118,7 @@ public final class PlayerBackups {
                             new PotionEffect(type, duration, amplifier, ambient, particles, icon));
             }
             if (in.available() != 0) throw new IOException("Trailing player backup data");
+            p.clearActiveItem();
             p.closeInventory();
             p.getInventory().setContents(items);
             p.getInventory().setHeldItemSlot(held);

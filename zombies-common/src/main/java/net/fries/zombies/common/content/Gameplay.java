@@ -21,7 +21,8 @@ public record Gameplay(
         int repairPoints,
         int tokensPerRound,
         int experiencePerKill,
-        int victoryTokens) {
+        int victoryTokens,
+        net.fries.zombies.common.gameplay.PointsPolicy scoring) {
     public Gameplay {
         weapons = Map.copyOf(weapons);
     }
@@ -55,7 +56,9 @@ public record Gameplay(
             float pitch,
             String particle,
             NamespacedId asset,
-            int pierceTargets) {
+            int pierceTargets,
+            int bodyGold,
+            int headGold) {
         public static Behaviour legacy(NamespacedId id) {
             return new Behaviour(
                     FireMode.SEMI_AUTOMATIC,
@@ -65,7 +68,9 @@ public record Gameplay(
                     1.8f,
                     "CRIT",
                     id,
-                    1);
+                    1,
+                    0,
+                    0);
         }
     }
 
@@ -104,7 +109,7 @@ public record Gameplay(
     public static Gameplay load(Path path) throws IOException {
         var root = ContentYaml.read(path);
         root.keys("schema-version", "starter", "weapons", "waves", "economy", "life");
-        int schema = root.integer("schema-version", 1, 2);
+        int schema = root.integer("schema-version", 1, 3);
         var weapons = new LinkedHashMap<NamespacedId, Weapon>();
         for (var w : root.nodes("weapons")) {
             var fields =
@@ -133,6 +138,7 @@ public record Gameplay(
                                 "shot-particle",
                                 "asset",
                                 "pierce-targets"));
+            if (schema >= 3) fields.addAll(java.util.List.of("body-gold", "headshot-gold"));
             w.keys(fields.toArray(String[]::new));
             var id = new NamespacedId(w.text("id"));
             var behaviour =
@@ -146,7 +152,9 @@ public record Gameplay(
                                     (float) w.number("sound-pitch", .5, 2),
                                     w.text("shot-particle"),
                                     new NamespacedId(w.text("asset")),
-                                    w.integer("pierce-targets", 1, 16));
+                                    w.integer("pierce-targets", 1, 16),
+                                    schema >= 3 ? w.integer("body-gold", 0, 1000) : 0,
+                                    schema >= 3 ? w.integer("headshot-gold", 0, 1000) : 0);
             var weapon =
                     new Weapon(
                             id,
@@ -201,15 +209,47 @@ public record Gameplay(
                         w.integer("alive-limit", 1, 100),
                         w.integer("timeout-ticks", 200, 72000));
         var e = root.node("economy");
-        e.keys(
-                "starting-points",
-                "kill-points",
-                "headshot-points",
-                "round-points",
-                "repair-points",
-                "tokens-per-round",
-                "experience-per-kill",
-                "victory-tokens");
+        var economyFields =
+                new java.util.ArrayList<>(
+                        java.util.List.of(
+                                "starting-points",
+                                "kill-points",
+                                "headshot-points",
+                                "round-points",
+                                "repair-points",
+                                "tokens-per-round",
+                                "experience-per-kill",
+                                "victory-tokens"));
+        if (schema >= 3)
+            economyFields.addAll(
+                    java.util.List.of(
+                            "fixed-rewards-enabled",
+                            "melee-gold",
+                            "explosive-gold",
+                            "damage-over-time-gold",
+                            "lethal-bonus",
+                            "assist-gold",
+                            "assist-window-ticks",
+                            "objective-gold",
+                            "target-gold-cap",
+                            "double-gold-ticks",
+                            "double-gold-drop-chance"));
+        e.keys(economyFields.toArray(String[]::new));
+        var scoring =
+                schema < 3
+                        ? net.fries.zombies.common.gameplay.PointsPolicy.legacy()
+                        : new net.fries.zombies.common.gameplay.PointsPolicy(
+                                e.bool("fixed-rewards-enabled"),
+                                e.integer("melee-gold", 0, 1000),
+                                e.integer("explosive-gold", 0, 1000),
+                                e.integer("damage-over-time-gold", 0, 1000),
+                                e.integer("lethal-bonus", 0, 1000),
+                                e.integer("assist-gold", 0, 1000),
+                                e.integer("assist-window-ticks", 1, 72000),
+                                e.integer("objective-gold", 0, 10000),
+                                e.integer("target-gold-cap", 1, 100000),
+                                e.integer("double-gold-ticks", 1, 72000),
+                                e.number("double-gold-drop-chance", 0, 1));
         var l = root.node("life");
         l.keys("bleedout-ticks", "revive-ticks", "repair-ticks");
         return new Gameplay(
@@ -217,7 +257,7 @@ public record Gameplay(
                 starter,
                 waves,
                 e.integer("starting-points", 0, 100000),
-                e.integer("kill-points", 1, 1000),
+                e.integer("kill-points", 0, 1000),
                 e.integer("headshot-points", 0, 1000),
                 e.integer("round-points", 0, 10000),
                 l.integer("bleedout-ticks", 20, 2400),
@@ -226,6 +266,7 @@ public record Gameplay(
                 e.integer("repair-points", 0, 1000),
                 e.integer("tokens-per-round", 0, 1000),
                 e.integer("experience-per-kill", 0, 1000),
-                e.integer("victory-tokens", 0, 10000));
+                e.integer("victory-tokens", 0, 10000),
+                scoring);
     }
 }

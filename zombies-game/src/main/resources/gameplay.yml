@@ -1,4 +1,4 @@
-schema-version: 2
+schema-version: 3
 starter: friesnet:weapon/glock18
 weapons:
   - id: friesnet:weapon/glock18
@@ -21,6 +21,8 @@ weapons:
     shot-particle: CRIT
     asset: friesnet:weapon/glock18
     pierce-targets: 1
+    body-gold: 10
+    headshot-gold: 15
   - id: friesnet:weapon/ak47
     name: AK-47
     material: DIAMOND_HOE
@@ -41,6 +43,8 @@ weapons:
     shot-particle: ELECTRIC_SPARK
     asset: friesnet:weapon/ak47
     pierce-targets: 1
+    body-gold: 7
+    headshot-gold: 10
   - id: friesnet:weapon/mac10
     name: MAC-10
     material: GOLDEN_HOE
@@ -61,6 +65,8 @@ weapons:
     shot-particle: SMOKE
     asset: friesnet:weapon/mac10
     pierce-targets: 1
+    body-gold: 4
+    headshot-gold: 6
   - id: friesnet:weapon/revolver
     name: Revolver
     material: IRON_HORSE_ARMOR
@@ -81,6 +87,8 @@ weapons:
     shot-particle: FLAME
     asset: friesnet:weapon/revolver
     pierce-targets: 1
+    body-gold: 12
+    headshot-gold: 24
   - id: friesnet:weapon/awp
     name: AWP
     material: AMETHYST_SHARD
@@ -101,6 +109,8 @@ weapons:
     shot-particle: END_ROD
     asset: friesnet:weapon/awp
     pierce-targets: 4
+    body-gold: 20
+    headshot-gold: 30
 waves:
   final-round: 30
   base-count: 5
@@ -117,13 +127,24 @@ waves:
   timeout-ticks: 7200
 economy:
   starting-points: 500
-  kill-points: 100
-  headshot-points: 50
-  round-points: 200
+  kill-points: 0
+  headshot-points: 0
+  round-points: 0
   repair-points: 10
   tokens-per-round: 1
   experience-per-kill: 5
   victory-tokens: 20
+  fixed-rewards-enabled: false
+  melee-gold: 10
+  explosive-gold: 5
+  damage-over-time-gold: 0
+  lethal-bonus: 0
+  assist-gold: 0
+  assist-window-ticks: 600
+  objective-gold: 100
+  target-gold-cap: 300
+  double-gold-ticks: 600
+  double-gold-drop-chance: 0.03
 life:
   bleedout-ticks: 500
   revive-ticks: 100

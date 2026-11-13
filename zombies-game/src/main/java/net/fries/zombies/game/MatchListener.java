@@ -99,6 +99,8 @@ final class MatchListener implements Listener {
 
     @EventHandler
     public void pickup(EntityPickupItemEvent e) {
+        var r=matches.current();
+        if(r!=null&&r.powerups!=null&&e.getEntity() instanceof Player player&&r.powerups.pickup(player,e.getItem())){e.setCancelled(true);return;}
         if (matches.managed(e.getEntity().getUniqueId())) e.setCancelled(true);
     }
 
@@ -141,6 +143,9 @@ final class MatchListener implements Listener {
     public void damage(EntityDamageEvent e) {
         var r = matches.current();
         if (r != null && r.waves != null && r.waves.contains(e.getEntity().getUniqueId())) {
+            if(e instanceof EntityDamageByEntityEvent melee && melee.getDamager() instanceof Player attacker && !r.combat.authorizes(e.getEntity().getUniqueId()) && r.combat.knife(attacker)){
+                e.setCancelled(true);r.combat.melee(attacker,(Zombie)e.getEntity());return;
+            }
             if (!(e instanceof EntityDamageByEntityEvent by)
                     || !(by.getDamager() instanceof Player)
                     || !r.combat.authorizes(e.getEntity().getUniqueId())) e.setCancelled(true);

@@ -70,4 +70,11 @@ public final class FireControl {
     public long remaining(long tick) {
         return recovery.remaining(tick);
     }
+
+    public boolean melee(long tick, int interval) {
+        if (!recovery.ready(tick)) return false;
+        cancel();
+        recovery.fired(tick, interval, 1);
+        return true;
+    }
 }

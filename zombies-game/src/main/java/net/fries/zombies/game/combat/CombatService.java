@@ -4,6 +4,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 
+import net.fries.zombies.common.gameplay.PointsLedger;
 import net.fries.zombies.common.gameplay.WeaponState;
 import net.fries.zombies.game.match.MatchRun;
 import net.kyori.adventure.text.Component;
@@ -23,10 +24,11 @@ import java.util.List;
 public final class CombatService {
     private final MatchRun run;
     private final NamespacedKey instanceKey;
-    private java.util.UUID damageTarget;
+    private final MatchDamageService damageService;
 
     public CombatService(JavaPlugin plugin, MatchRun run) {
         this.run = run;
+        damageService = new MatchDamageService(run);
         instanceKey = new NamespacedKey(plugin, "weapon_instance");
     }
 
@@ -37,6 +39,18 @@ public final class CombatService {
         int slot = 0;
         for (var weapon : s.weapons().values()) player.getInventory().setItem(slot++, item(weapon));
         player.getInventory().setHeldItemSlot(0);
+        var knife = new ItemStack(Material.IRON_SWORD);
+        knife.editMeta(
+                m -> {
+                    m.displayName(Component.text("Knife", NamedTextColor.WHITE));
+                    m.setUnbreakable(true);
+                    m.getPersistentDataContainer()
+                            .set(
+                                    new NamespacedKey(instanceKey.getNamespace(), "knife"),
+                                    PersistentDataType.BYTE,
+                                    (byte) 1);
+                });
+        player.getInventory().setItem(8, knife);
     }
 
     public ItemStack item(WeaponState state) {
@@ -148,12 +162,17 @@ public final class CombatService {
                     0);
         run.world.playSound(
                 player.getLocation(), w.behaviour().sound(), .6f, w.behaviour().pitch());
+        UUID bullet = UUID.randomUUID();
         for (var target : targets)
-            damage(player, state, (Zombie) target.getHitEntity(), target.getHitPosition());
+            damage(player, state, (Zombie) target.getHitEntity(), target.getHitPosition(), bullet);
     }
 
     private void damage(
-            Player player, WeaponState state, Zombie zombie, org.bukkit.util.Vector hit) {
+            Player player,
+            WeaponState state,
+            Zombie zombie,
+            org.bukkit.util.Vector hit,
+            UUID bullet) {
         if (zombie == null
                 || zombie.isDead()
                 || zombie.isInvulnerable()
@@ -164,18 +183,9 @@ public final class CombatService {
                 w.damage()
                         * (headshot ? w.headshotMultiplier() : 1)
                         * run.survivor(player.getUniqueId()).damageMultiplier();
-        // Clear vanilla invulnerability: the configured firearm cooldown is authoritative.
-        zombie.setNoDamageTicks(0);
-        double before = zombie.getHealth();
-        run.waves.attribute(zombie.getUniqueId(), player.getUniqueId(), headshot);
-        damageTarget = zombie.getUniqueId();
-        try {
-            zombie.damage(damage, player);
-        } finally {
-            damageTarget = null;
-        }
-        if (!zombie.isDead()) run.waves.forgetAttribution(zombie.getUniqueId());
-        if (zombie.getHealth() >= before) return;
+        if (damageService.apply(
+                        bullet, player, zombie, damage, headshot, PointsLedger.Kind.BULLET, w)
+                <= 0) return;
         player.playSound(
                 player.getLocation(),
                 headshot ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.ENTITY_ARROW_HIT_PLAYER,
@@ -197,6 +207,37 @@ public final class CombatService {
             player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, 1, 1);
     }
 
+    public boolean knife(Player player) {
+        var item = player.getInventory().getItemInMainHand();
+        return item.hasItemMeta()
+                && item.getItemMeta()
+                        .getPersistentDataContainer()
+                        .has(
+                                new NamespacedKey(instanceKey.getNamespace(), "knife"),
+                                PersistentDataType.BYTE);
+    }
+
+    public void melee(Player player, Zombie enemy) {
+        if (!run.alive(player.getUniqueId())
+                || !knife(player)
+                || !enemy.isValid()
+                || enemy.isDead()
+                || enemy.isInvulnerable()
+                || !run.waves.contains(enemy.getUniqueId())
+                || player.getWorld() != enemy.getWorld()
+                || player.getEyeLocation().distanceSquared(enemy.getEyeLocation()) > 20.25
+                || !player.hasLineOfSight(enemy)) return;
+        if (!run.survivor(player.getUniqueId()).fireControl().melee(run.tick, 10)) return;
+        damageService.apply(
+                UUID.randomUUID(),
+                player,
+                enemy,
+                6,
+                false,
+                PointsLedger.Kind.MELEE,
+                run.content.weapons().get(run.content.starter()));
+    }
+
     public void switched(Player player) {
         var w = held(player);
         if (w != null) w.cancelReload();
@@ -206,7 +247,11 @@ public final class CombatService {
     }
 
     public boolean authorizes(java.util.UUID target) {
-        return target.equals(damageTarget);
+        return damageService.authorizes(target);
+    }
+
+    public MatchDamageService damageService() {
+        return damageService;
     }
 
     public void tick() {

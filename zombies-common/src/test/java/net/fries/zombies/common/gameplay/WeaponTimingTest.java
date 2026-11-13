@@ -97,7 +97,9 @@ class WeaponTimingTest {
                                         b.pitch(),
                                         b.particle(),
                                         b.asset(),
-                                        1)));
+                                        1,
+                                        b.bodyGold(),
+                                        b.headGold())));
         var c = new FireControl();
         assertEquals(WeaponState.Shot.FIRED, c.press(burst, 0, 1));
         c.release();
@@ -129,7 +131,7 @@ class WeaponTimingTest {
                                 Path.of("../zombies-game/src/main/resources/gameplay.yml"));
         byte[] migrated = GameplayMigration.upgrade(original, defaults);
         var yaml = ContentYaml.parse(migrated);
-        assertEquals(2, yaml.integer("schema-version", 2, 2));
+        assertEquals(3, yaml.integer("schema-version", 3, 3));
         assertEquals(5, yaml.nodes("weapons").size());
         assertArrayEquals(migrated, GameplayMigration.upgrade(migrated, defaults));
         var custom =

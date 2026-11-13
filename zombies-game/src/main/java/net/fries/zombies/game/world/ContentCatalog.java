@@ -19,7 +19,7 @@ public record ContentCatalog(Gameplay gameplay, Map<String, MapTemplate> maps) {
             byte[] old = ContentYaml.readBytes(file);
             byte[] next = GameplayMigration.upgrade(old, input.readAllBytes());
             if (!java.util.Arrays.equals(old, next)) {
-                Path backup = file.resolveSibling("gameplay.v1.backup.yml");
+                Path backup = file.resolveSibling("gameplay.v"+ContentYaml.parse(old).integer("schema-version",1,3)+".backup.yml");
                 if (!Files.exists(backup))
                     net.fries.zombies.persistence.DurableFiles.replace(backup, old);
                 // Validate the complete candidate before replacing a deployed content document.

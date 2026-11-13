@@ -9,12 +9,12 @@ import java.util.*;
 public final class GameplayMigration {
     public static byte[] upgrade(byte[] original, byte[] bundled) {
         var old = ContentYaml.parse(original);
-        int schema = old.integer("schema-version", 1, 2);
-        if (schema == 2) return original.clone();
+        int schema = old.integer("schema-version", 1, 3);
+        if (schema == 3) return original.clone();
         var defaults = ContentYaml.parse(bundled);
         var result = new LinkedHashMap<String, Object>();
         old.values().forEach((key, value) -> result.put((String) key, value));
-        result.put("schema-version", 2);
+        result.put("schema-version", 3);
         var weapons = new ArrayList<Map<String, Object>>();
         var ids = new HashSet<String>();
         for (var weapon : old.nodes("weapons")) {
@@ -35,19 +35,25 @@ public final class GameplayMigration {
                             "fire-sound",
                             "sound-pitch",
                             "shot-particle",
-                            "pierce-targets")) target.put(key, behaviour.values().get(key));
-            target.put("asset", id);
+                            "pierce-targets",
+                            "body-gold",
+                            "headshot-gold")) target.putIfAbsent(key, behaviour.values().get(key));
+            target.putIfAbsent("asset", id);
             // Only replace the exact shipped Phase 2 balance; retain operator-customized values.
-            if (id.equals("friesnet:weapon/glock18")
+            if (schema == 1
+                    && id.equals("friesnet:weapon/glock18")
                     && Objects.equals(target.get("cooldown-ticks"), 4))
                 target.put("cooldown-ticks", 30);
-            if (id.equals("friesnet:weapon/glock18") && Objects.equals(target.get("magazine"), 20))
-                target.put("magazine", 10);
-            if (id.equals("friesnet:weapon/ak47")
+            if (schema == 1
+                    && id.equals("friesnet:weapon/glock18")
+                    && Objects.equals(target.get("magazine"), 20)) target.put("magazine", 10);
+            if (schema == 1
+                    && id.equals("friesnet:weapon/ak47")
                     && Objects.equals(target.get("cooldown-ticks"), 2))
                 target.put("cooldown-ticks", 20);
-            if (id.equals("friesnet:weapon/ak47") && Objects.equals(target.get("magazine"), 30))
-                target.put("magazine", 20);
+            if (schema == 1
+                    && id.equals("friesnet:weapon/ak47")
+                    && Objects.equals(target.get("magazine"), 30)) target.put("magazine", 20);
             weapons.add(target);
         }
         for (var weapon : defaults.nodes("weapons"))
@@ -57,6 +63,10 @@ public final class GameplayMigration {
                 weapons.add(target);
             }
         result.put("weapons", weapons);
+        var economy = new LinkedHashMap<String, Object>();
+        old.node("economy").values().forEach((k, v) -> economy.put((String) k, v));
+        defaults.node("economy").values().forEach((k, v) -> economy.putIfAbsent((String) k, v));
+        result.put("economy", economy);
         return new Dump(DumpSettings.builder().build())
                 .dumpToString(result)
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8);

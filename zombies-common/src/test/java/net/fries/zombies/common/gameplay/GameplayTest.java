@@ -121,8 +121,7 @@ class GameplayTest {
 
     @Test
     void contentRejectsUnknownKeysAliasesAndNonfiniteDamage() throws Exception {
-        String source =
-                Files.readString(Path.of("src/test/resources/phase2-gameplay.yml"));
+        String source = Files.readString(Path.of("src/test/resources/phase2-gameplay.yml"));
         Path file = directory.resolve("gameplay.yml");
         for (String invalid :
                 new String[] {

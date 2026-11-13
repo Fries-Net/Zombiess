@@ -207,6 +207,7 @@ public final class MatchCoordinator {
             r.waves.tick();
             if (!r.playing()) return;
             r.hud.tick();
+            r.powerups.tick();
             checkpoint(r);
             events(r);
         } catch (RuntimeException e) {
@@ -333,6 +334,7 @@ public final class MatchCoordinator {
             r.interactions = new InteractionService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
             r.hud = new MatchHud(r);
+            r.powerups=new net.fries.zombies.game.economy.PowerUpService(r);
             r.interactions.labels();
             for (var s : r.players.values()) {
                 var p = Bukkit.getPlayer(s.id());
