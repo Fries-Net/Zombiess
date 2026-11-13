@@ -6,7 +6,7 @@
 
 Four modules are sufficient for this milestone. Hub, proxy, network and pack modules will be introduced when their implementations arrive. Empty placeholder modules would obscure the dependency boundaries without delivering functionality.
 
-`ZombiesPlugin` wires explicit constructors. It loads configuration, starts storage asynchronously, registers commands and receives startup readiness through a server-thread callback. No singleton service locator is used. Shutdown stops callbacks and scheduled tasks immediately, then drains accepted database operations on a separate closer thread. Connection acquisition, migrations, queries and transactions never run on the server thread. File-based configuration reads are bounded to 64 KiB per file and occur only on startup/admin requests.
+`ZombiesPlugin` wires explicit constructors. It loads configuration, starts storage/content/recovery asynchronously, registers commands and receives startup readiness through a server-thread callback. No singleton service locator is used. Shutdown stops callbacks and scheduled tasks, preserves the latest result and returns online players, then drains accepted database operations on a separate closer thread. Connection acquisition, migrations, queries, transactions, journal writes and world-directory deletion never run on the server thread. Core configuration reads are bounded to 64 KiB; gameplay/map documents to 256 KiB.
 
 ## Domain lifecycle
 
@@ -22,9 +22,9 @@ Loss of minimum population cancels the countdown. Reservation expiry fails the s
 
 `MatchSession` is a synchronized, API-independent aggregate with explicit guarded operations. It does not expose an unrestricted state setter. Admission requires membership in the immutable reservation. Countdown and reservation clocks use an injected `Clock`. `begin()` freezes the initial roster and scaling count. Leaving afterward changes connected membership without changing difficulty scaling or removing a player from the result roster. Phase 1 rejects mid-game joining; reconnect and spectator policies belong to the playable adapter.
 
-The aggregate emits immutable `MatchEvent` values; its owner drains them after mutations and publishes them to interested adapters. World/equipment preparation happens between `STARTING` and `begin()`. Adapters must roll back preparation if capacity changes. Pausing is allowed only for private sessions whose immutable rules permit it. Phase 2 must use this state to stop match clocks, combat, spawning and AI; the domain does not itself manipulate Minecraft entities.
+The aggregate emits immutable `MatchEvent` values; its owner drains them after mutations. The Paper coordinator freezes a gathering lobby into reservations, advances the configured countdown, materializes/verifies a fresh world, and forces original-player backups before `begin()`. It then forces the initial active checkpoint before installing equipment or allowing combat. Capacity changes before begin roll preparation back. Private pause stops match clocks, firearms, life/repair/revive channels, spawning and native mob behavior. The domain itself manipulates no Minecraft entities.
 
-`finish()` validates the exact identity, start timestamp and frozen roster. `MatchCompletionService` asks the repository to commit the result and acknowledges the receipt. Until that receipt matches the result fingerprint, `cleanup()` fails. `ready(true)` is an explicit restoration assertion supplied by the future world adapter. No world restoration or automatic matchmaking is claimed in Phase 1.
+`finish()` validates the exact identity, start timestamp and frozen roster. The Phase 2 coordinator forces the immutable final result through `ResultJournal`, commits it through the repository, and acknowledges the matching receipt. Until then, `cleanup()` fails. The legacy-free Paper adapter supplies `ready(true)` only after players have returned and the owned world is unloaded and absent on disk. A failed cleanup retries without re-committing rewards.
 
 ## Persistence contract
 
@@ -36,13 +36,21 @@ SQL uses bound parameters and query timeouts. Hikari limits connections, the wor
 
 Standalone mode uses a local durable H2 file with PostgreSQL compatibility mode. It is a development adapter, not a distributed database or proof of PostgreSQL compatibility. The same repository contract is run separately against PostgreSQL. Use a separate schema owner to run migrations in production and the supplied least-privilege grants for runtime access. A compromised runtime can still falsify the matches it is authorized to submit; signed network reservations and authoritative reward policy are later work.
 
-The completion service preserves pending results in memory for retry but does not implement a durable submission spool. Before enabling actual matches, Phase 2 must journal completed-but-unsubmitted results and replay them after process crashes. A database-committed result already survives crashes and is safe to replay; an unsubmitted in-memory result does not. There is no active gameplay in this milestone that could generate such an unsubmitted result.
+`ResultJournal` now supplies the durable submission spool required before playable matches. A serial bounded disk worker writes checksummed, versioned records, forces contents, and replaces files atomically. A final result cannot regress to an active checkpoint. SQL failure leaves the record intact and blocks reuse. Startup replays finals and abandons active checkpoints using the same UUID/fingerprint contract. Active progress is checkpointed every five seconds of match time; interrupted gameplay is not resumed. See [recovery limits](PHASE_2.md).
 
 ## Configuration and content identity
 
 `ConfigurationLoader` rejects duplicate/unknown keys, invalid scalar types, aliases, oversized YAML, unsupported schemas, invalid capacities and missing required environment variables. It builds immutable snapshots. Compatible reloads swap only after complete validation; existing sessions retain their original `MatchRules`. Server identity and database configuration require restart. Errors do not echo YAML values or credentials.
 
-`NamespacedId` is the logical content identity, e.g. `friesnet:weapon/ak47`. Numeric model data is not a domain identifier. `MatchIdentity` freezes server, map version and pack version. These types prepare future asset and network work without claiming Java/Bedrock render format compatibility.
+`NamespacedId` is the logical content identity, e.g. `friesnet:weapon/ak47`. Numeric model data is not a domain identifier. `MatchIdentity` freezes server, map version and pack version. A map's declared version includes a digest of the exact bytes parsed for geometry, spawns and interactions. `ContentCatalog` retains immutable startup snapshots; changes require a controlled restart. Edition-specific packs remain future work.
+
+## Paper gameplay ownership
+
+`MatchCoordinator` owns lifecycle orchestration, with a new `MatchRun` for each reservation. `CombatService`, `WaveService`, `LifeService`, `InteractionService` and `MatchHud` own separate behavior. `WeaponState` and `Survivor` keep ammunition/life/points/statistics in common, independent of Paper. Items contain an owned instance UUID; client item lore never supplies damage, cooldowns or ammunition. Hitscan checks block occlusion and only tracked zombies can be damaged by authorized firearm calls.
+
+`MapWorlds` builds bounded trusted block templates into unique void worlds. It validates safe spawn floors/headroom and gate/barricade geometry before admission. Cleanup and startup recovery inspect the ownership marker, exact UUID-derived directory name, normalized parent and symbolic links before deletion. Other server worlds are never reset. Blocks, text displays and mobs belong to the disposable lease; no mutable world template is reused.
+
+`PlayerBackups` serializes original inventory/status before play; `PlayerRestoration` owns action locks, asynchronous storage, disconnect restoration, idempotent returns and startup recovery. Paper item serialization and player/world API calls run on the server thread. Snapshots are forced before admission, and original player data is saved before deleting its return snapshot. Disconnects leave the immutable result roster and scaling intact; reconnecting restores the player and requires a future match reservation.
 
 ## Extension points
 

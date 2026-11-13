@@ -2,12 +2,12 @@ name: FriesNetZombies
 version: '${version}'
 main: net.fries.zombies.game.ZombiesPlugin
 api-version: '1.21.11'
-description: FriesNet Zombies platform
+description: Playable standalone FriesNet Zombies matches
 authors: [FriesNet]
 permissions:
   zombies.use:
-    description: View own account and server status
+    description: Play Zombies matches and view own account
     default: true
   zombies.admin:
-    description: Reload configuration and inspect database health
+    description: Manage match lifecycle, reload rules and inspect database health
     default: op

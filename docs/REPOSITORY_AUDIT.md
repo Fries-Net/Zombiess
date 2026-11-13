@@ -34,7 +34,7 @@ The reference module is compiled, has no deployable descriptor in its JAR, and i
 ## Milestones
 
 1. **Foundation (this branch):** real Gradle modules; aligned platform; immutable strict configuration; guarded match domain/events; asynchronous standalone/PostgreSQL storage; Flyway; transactional result/reward ledger; diagnostics; tests, CI and local run instructions.
-2. **Playable matches (requires approval to continue):** trusted map templates and world restoration; map loader; gradual waves with frozen scaling; native zombies; firearms/reload identities; points; down/revive; doors/barricades; victory/loss; durable pending-result recovery; end-to-end playable match tests.
+2. **Playable matches (implemented; see [verification](PHASE_2.md)):** trusted map templates and world restoration; map loader; gradual waves with frozen scaling; native zombies; firearms/reload identities; points; down/revive; doors/barricades; victory/loss; durable pending-result recovery; end-to-end playable match tests.
 3. **Map/content authoring:** per-map drafts and immutable published versions; visual tools, undo/redo, validation/import/export; wall purchases, perks, mystery boxes, upgrades, holograms and custom mob registry.
 4. **Visuals:** edition-neutral asset registry; validated deterministic Java pack pipeline; delivery/version pinning; owned-model imports; skins/UI/sounds; shooting range.
 5. **Network:** Velocity and hub plugins; signed/versioned reservations; Redis coordination; parties; pre-provisioned Pterodactyl controller; verified routing/draining.

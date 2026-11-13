@@ -134,3 +134,6 @@ runs/
 **/crash-reports/
 *.hprof
 *.jfr
+node_modules/
+__pycache__/
+*.pyc

@@ -93,7 +93,7 @@ def main():
         cursor = 0
         wait_for("event=instance_ready", 60)
         cursor = len(captured)
-        for value, response in [("zombies status", "foundation ready"), ("zombies validate", "Configuration is valid"),
+        for value, response in [("zombies status", "playable ready"), ("zombies validate", "Configuration is valid"),
                                 ("zombies reload", "Configuration reloaded"), ("zombies health", "Database: healthy")]:
             command(value)
             wait_for(response, 30)

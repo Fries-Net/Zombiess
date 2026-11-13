@@ -1,51 +1,59 @@
 # FriesNet Zombies
 
-Java 21 / Paper **1.21.11, build 132**. Phase 1 of the production rebuild establishes a tested foundation. It is **not yet a playable Zombies release**. Phase 2 adds world management, waves and combat.
+A playable, standalone Zombies match for **Java 21 / Paper 1.21.11 build 132**. Phase 2 builds on the modular Phase 1 foundation: versioned maps, gradual scaled waves, Glock-18 and AK-47 combat, purchases, repairs, down/revive, victory/defeat, durable results and reusable instances.
 
-The deployable plugin boots without Redis, Velocity, PostgreSQL or MythicMobs. It uses a durable local H2 database in standalone development mode. Production uses PostgreSQL with the same repository contract and Flyway migrations.
+No Redis, Velocity, MythicMobs or external database is required for local play. Standalone accounts use durable H2; PostgreSQL uses the same transactional repository contract.
 
 | Module | Responsibility |
 | --- | --- |
-| `zombies-common` | Validated immutable configuration, identifiers, match domain, typed events, persistence ports |
-| `zombies-persistence` | Bounded asynchronous JDBC, HikariCP, Flyway, account snapshots, atomic match result processing |
-| `zombies-game` | Paper composition root, lifecycle-safe callbacks, diagnostics and administrative commands |
-| `zombies-legacy` | Isolated historical implementation, compiled for reference and excluded from deployment |
+| `zombies-common` | Immutable configuration/content, match domain, ammunition, survivor state, results and persistence ports |
+| `zombies-persistence` | Bounded asynchronous JDBC and disk workers, migrations, atomic rewards, crash recovery journal |
+| `zombies-game` | Paper lifecycle coordinator and separate world, combat, wave, life, interaction, presentation and restoration services |
+| `zombies-legacy` | Compiled historical reference, excluded from the deployed plugin |
 
-## Build and run
-
-Install JDK 21 and set `JAVA_HOME`. The checked-in Gradle 8.14.3 wrapper includes distribution and dependency checksums. On Windows use `gradlew.bat` in place of `./gradlew`.
+## Build and play
 
 ```sh
 ./gradlew clean build
 ./gradlew :zombies-game:runServer
 ```
 
-Review and accept the Minecraft EULA in the generated `run/eula.txt` before restarting the development server. The run task uses Java 21 and pinned Paper build 132. Install only `zombies-game/build/libs/zombies-game-0.1.0.jar` on other servers. The `thin` and legacy JARs are not deployable plugins.
+On Windows use `gradlew.bat` and set `JAVA_HOME` to JDK 21. Review and accept Minecraft's EULA in `run/eula.txt` before restarting the development server. On another server install only `zombies-game/build/libs/zombies-game-0.1.0.jar`; the `thin` and `paper-integration` JARs are not the release plugin.
 
-The plugin creates `plugins/FriesNetZombies/config.yml`, `database.yml`, and its local `data/` directory. No map, player inventory, or world blocks are modified in this milestone. Existing jZombies configurations and `players.yml` are not automatically migrated; keep backups and see [the audit](docs/REPOSITORY_AUDIT.md).
+Connect a Java 1.21.11 client, then use `/zombies join training`. The lobby gathers teammates for five seconds and freezes its reservation before the configured countdown. Default capacity is 1–4. New arrivals wait for the next match; disconnecting never reduces the current match's difficulty.
 
-## Available commands
+- Right-click to fire. Press **F**, left-click, or use `/zombies reloadgun` to reload. Changing weapon cancels its reload.
+- Approach the labelled workshop door or service barrier and right-click to purchase access. The workshop contains the AK-47 station; the Glock station supplies reserve ammunition. Owned weapon stations sell ammo instead of duplicate weapons.
+- Sneak and right-click beside a damaged barricade to repair it. Keep sneaking and stay nearby until the progress completes.
+- Sneak within 2.5 blocks of a downed teammate, with line of sight, for five seconds to revive them. Bleedout takes 25 seconds. Dead teammates spectate and return after a round clear; a team with no standing survivor loses.
+- Clear all 30 configured rounds to win. Results award tokens and experience separately from temporary match points. Cleanup restores original equipment, location, experience and game mode, removes the disposable world, and permits another match in the same JVM.
+
+The supplied Foundry Training map is a bounded block blueprint, pinned by version and content digest. Each match gets a new world and UUID. A map editor, world-folder import, packs, perks, mystery boxes and network services remain later milestones.
+
+## Commands
 
 `/zombies` and `/jz` accept:
 
 | Command | Permission | Behavior |
 | --- | --- | --- |
-| `status` | `zombies.use` (default true) | Reports foundation/storage readiness |
-| `profile` | `zombies.use` | Asynchronously reads the player's persisted account summary |
-| `health` | `zombies.admin` (op) | Probes the database; reports queue, worker, failure and latency metrics |
-| `validate` | `zombies.admin` | Validates disk configuration without applying it |
-| `reload` | `zombies.admin` | Atomically applies compatible settings; identity/storage changes require restart |
+| `join [map]`, `leave`, `reloadgun` | `zombies.use` (default true) | Join the lobby, leave safely, reload the held firearm |
+| `status`, `profile` | `zombies.use` | Instance/map status and asynchronous permanent account summary |
+| `health`, `validate`, `reload` | `zombies.admin` (op) | Storage diagnostics and core configuration validation/reload |
+| `pause`, `resume` | `zombies.admin` | Freeze/resume an eligible private match, including combat, clocks and native mobs |
+| `stop` | `zombies.admin` | End play as abandoned, persist results, and clean up |
+
+The plugin creates `config.yml`, `database.yml`, `gameplay.yml`, `maps/training.yml` and `data/` inside `plugins/FriesNetZombies/`. Core rules can reload for future sessions; gameplay and map snapshots load at startup. Existing legacy configs and `players.yml` are preserved without automatic migration.
 
 ## Verification
 
 ```sh
 ./gradlew clean build
-# Real PostgreSQL suite; provide disposable database credentials first:
-./gradlew :zombies-persistence:integrationTest
-# Actual Paper bootstrap/commands/shutdown, after reviewing its EULA:
-python tools/paper_smoke.py --java /path/to/jdk21/bin/java --accept-eula
+./gradlew :zombies-persistence:integrationTest  # disposable PostgreSQL credentials required
+python tools/paper_smoke.py --java /path/to/java21 --accept-eula
+npm ci --prefix tools/paper-client --ignore-scripts --no-audit --no-fund
+python tools/paper_playtest.py --java /path/to/java21 --accept-eula
 ```
 
-Tests cover domain transitions, frozen player scaling, configuration rejection, durable rewards, concurrency, rollback, restart and graceful shutdown. `check` also inspects the packaged plugin. PostgreSQL tests intentionally fail if their environment is absent; H2 tests are not presented as PostgreSQL verification. GitHub Actions builds the plugin, runs tests, provisions PostgreSQL for integration tests and uploads artifacts.
+The multiplayer harness requires Python 3.10+, Node 22+, and network access on first use. It uses two real protocol clients on an isolated loopback server and a separately packaged console-only assertion plugin. It tests a shortened three-round content fixture, combat/occlusion, purchases, repairs, down/revive/bleedout/respawn, victory, defeat, world restoration, repeated games, durable rewards, and an abrupt JVM kill followed by recovery. CI runs builds, PostgreSQL contracts and this Paper harness, retaining reports and server logs.
 
-Read [architecture and extension contracts](docs/ARCHITECTURE.md), [configuration/deployment](docs/DEVELOPMENT.md), [repository audit and roadmap](docs/REPOSITORY_AUDIT.md), and [Phase 1 verification](docs/PHASE_1.md).
+See [Phase 2 verification and limits](docs/PHASE_2.md), [architecture](docs/ARCHITECTURE.md), [deployment](docs/DEVELOPMENT.md), [roadmap](docs/REPOSITORY_AUDIT.md), and the historical [Phase 1 report](docs/PHASE_1.md).

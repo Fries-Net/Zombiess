@@ -57,3 +57,32 @@ jobs:
         with:
           name: postgres-test-reports
           path: zombies-persistence/build/reports/tests/integrationTest/
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/paper-client/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: bash gradlew :zombies-game:shadowJar :zombies-game:paperIntegrationJar --no-daemon
+      - run: npm ci --prefix tools/paper-client --ignore-scripts --no-audit --no-fund
+      - run: python tools/paper_playtest.py --accept-eula
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: paper-multiplayer-playtest
+          path: |
+            run/playtest-*/result.json
+            run/playtest-*/*.log
+            run/playtest-*/logs/
