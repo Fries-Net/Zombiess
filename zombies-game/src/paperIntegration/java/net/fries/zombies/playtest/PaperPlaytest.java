@@ -33,6 +33,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     private final Map<String,Long> observedShots=new HashMap<>();
     private boolean trackingShots;
     private long switchDeadline;
+    private List<Zombie> piercingTargets;
+    private Item powerup;
     private final Map<UUID, Long> matchesBefore = new HashMap<>();
 
     @Override
@@ -101,7 +103,9 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var w = r.combat.held(p);
                     ammoBefore = w.magazine();
                     targetHealth = z.getHealth();
+                    int gold=r.survivor(p.getUniqueId()).points();
                     r.combat.shoot(p);
+                    check(r.survivor(p.getUniqueId()).points()==gold+10,"body hit grants 10 gold");
                     check(
                             Math.abs(z.getHealth() - (targetHealth - w.definition().damage()))
                                     < .01,
@@ -116,7 +120,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     check(w.magazine() == ammoBefore - 1, "same-tick cooldown");
                 }
                 case "timing-start" -> {
-                    var r=run();var p=player("SurvivorTwo");giveAk(p);p.getInventory().setHeldItemSlot(1);beginTracking();
+                    var r=run();var p=player("SurvivorTwo");giveAk(p);p.getInventory().setHeldItemSlot(1);
+                    player("SurvivorOne").teleport(new Location(r.world,-4.5,64,.5,-90,0));p.teleport(new Location(r.world,-4.5,64,2.5,-90,0));beginTracking();
                 }
                 case "timing-rates" -> {
                     getLogger().info("PLAYTEST_TIMING glock="+shotTicks.get("SurvivorOne")+" ak="+shotTicks.get("SurvivorTwo"));
@@ -154,7 +159,9 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     position(p, z, 1.7);
                     var w = r.combat.held(p);
                     double health = z.getHealth();
+                    int gold=r.survivor(p.getUniqueId()).points();
                     r.combat.shoot(p);
+                    check(r.survivor(p.getUniqueId()).points()==gold+15,"head hit grants 15 gold");
                     check(
                             Math.abs(
                                             z.getHealth()
@@ -172,8 +179,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     position(p, z, 1.0);
                     r.world.getBlockAt(-4, 65, 3).setType(Material.STONE);
                     double health = z.getHealth();
+                    int gold=r.survivor(p.getUniqueId()).points();
                     r.combat.shoot(p);
                     check(z.getHealth() == health, "wall blocks hitscan");
+                    check(r.survivor(p.getUniqueId()).points()==gold,"wall hits grant no gold");
                     r.world.getBlockAt(-4, 65, 3).setType(Material.AIR);
                 }
                 case "reload" -> {
@@ -277,6 +286,36 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                             "purchased reserve ammo");
                     p.getInventory().setHeldItemSlot(0);
                 }
+                case "gold-invalid" -> {
+                    var r=run();var p=player("SurvivorOne");var z=(Zombie)getServer().getEntity(target);var s=r.survivor(p.getUniqueId());int gold=s.points();double health=z.getHealth();z.setInvulnerable(true);
+                    r.combat.shoot(p);check(s.points()==gold&&z.getHealth()==health,"invulnerable target grants no gold");z.setInvulnerable(false);
+                    check(r.combat.damageService().apply(UUID.randomUUID(),p,z,0,false,PointsLedger.Kind.BULLET,r.content.weapons().get(r.content.starter()))==0,"zero damage rejected");check(s.points()==gold,"invalid damage unchanged");
+                }
+                case "gold-area" -> {
+                    var r=run();var p=player("SurvivorOne");var fresh=r.world.getEntitiesByClass(Zombie.class).stream().filter(z->r.waves.contains(z.getUniqueId())&&!z.getUniqueId().equals(target)).limit(3).toList();
+                    check(fresh.size()==3,"three registered test enemies");int index=0;for(var z:fresh){z.getAttribute(Attribute.MAX_HEALTH).setBaseValue(100);z.setHealth(100);z.teleport(new Location(r.world,-3.5,64,5.5+index++*2));}
+                    p.teleport(new Location(r.world,-3.5,64,.5));var s=r.survivor(p.getUniqueId());int gold=s.points();var action=UUID.randomUUID();var w=r.content.weapons().get(r.content.starter());
+                    r.combat.damageService().area(action,p,fresh.subList(0,2),10,PointsLedger.Kind.EXPLOSIVE,w);check(s.points()==gold+10,"explosion awards each distinct target");
+                    r.combat.damageService().area(action,p,fresh.subList(0,2),10,PointsLedger.Kind.EXPLOSIVE,w);check(s.points()==gold+10&&fresh.getFirst().getHealth()==90,"duplicate explosion applies and rewards once");
+                    r.combat.damageService().area(UUID.randomUUID(),p,fresh.subList(0,2),2,PointsLedger.Kind.DAMAGE_OVER_TIME,w);check(s.points()==gold+10&&fresh.getFirst().getHealth()==88,"periodic damage has configured zero gold");piercingTargets=fresh;
+                }
+                case "gold-pierce" -> {
+                    var r=run();var p=player("SurvivorOne");var old=(Zombie)getServer().getEntity(target);old.teleport(new Location(r.world,-10.5,64,.5));
+                    var id=new net.fries.zombies.common.NamespacedId("friesnet:weapon/awp");var w=new WeaponState(r.content.weapons().get(id));r.survivor(p.getUniqueId()).weapons().put(id,w);p.getInventory().setItem(2,r.combat.item(w));p.getInventory().setHeldItemSlot(2);
+                    position(p,piercingTargets.getFirst(),1.0);int gold=r.survivor(p.getUniqueId()).points();var health=piercingTargets.stream().map(Zombie::getHealth).toList();r.combat.shoot(p);
+                    for(int i=0;i<3;i++)check(Math.abs(piercingTargets.get(i).getHealth()-(health.get(i)-30))<.01,"AWP damages each pierced enemy once");
+                    check(w.magazine()==0&&r.survivor(p.getUniqueId()).points()==gold+60,"AWP single round and three distinct hit rewards");r.combat.reload(p);check(w.reloading(),"AWP long reload starts");
+                }
+                case "gold-pierce-reloaded" -> {
+                    var r=run();var p=player("SurvivorOne");var w=r.combat.held(p);check(w.magazine()==1&&w.reserve()==39&&!w.reloading(),"AWP long reload conserves ammo");r.combat.switched(p);p.getInventory().setHeldItemSlot(0);p.getInventory().setItem(2,null);r.survivor(p.getUniqueId()).weapons().remove(w.definition().id());
+                }
+                case "gold-melee" -> {
+                    var r=run();var p=player("SurvivorOne");var z=piercingTargets.getFirst();p.teleport(z.getLocation().clone().subtract(0,0,1.5));p.getInventory().setHeldItemSlot(8);int gold=r.survivor(p.getUniqueId()).points();double health=z.getHealth();p.attack(z);
+                    check(Math.abs(z.getHealth()-(health-6))<.01&&r.survivor(p.getUniqueId()).points()==gold+10,"native knife event grants valid melee gold");p.getInventory().setHeldItemSlot(0);
+                }
+                case "gold-objective" -> {var r=run();var s=r.survivor(player("SurvivorOne").getUniqueId());int gold=s.points();check(r.points.objective(s.id(),"test-power",r.waves.round(),r.tick)==100,"objective reward");check(r.points.objective(s.id(),"test-power",r.waves.round(),r.tick)==0&&s.points()==gold+100,"objective duplicate rejected");}
+                case "gold-powerup" -> {var r=run();var p=player("SurvivorOne");powerup=r.powerups.spawn(p.getLocation().clone().add(0,.3,0));powerup.setPickupDelay(0);}
+                case "gold-powered" -> {var r=run();check(!powerup.isValid()&&r.points.doubleGoldRemaining(r.tick)>0,"native pickup enables team double gold");var p=player("SurvivorOne");var z=piercingTargets.getFirst();int gold=r.survivor(p.getUniqueId()).points();r.combat.damageService().apply(UUID.randomUUID(),p,z,1,false,PointsLedger.Kind.BULLET,r.content.weapons().get(r.content.starter()));check(r.survivor(p.getUniqueId()).points()==gold+20,"powerup doubles hit gold");}
                 case "repair" -> {
                     var r = run();
                     for(var z:r.world.getEntitiesByClass(Zombie.class))if(r.waves.contains(z.getUniqueId()))z.teleport(new Location(r.world,-10.5,64,.5));
