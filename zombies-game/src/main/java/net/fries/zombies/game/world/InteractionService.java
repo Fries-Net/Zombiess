@@ -12,7 +12,7 @@ import org.bukkit.entity.*;
 
 import java.util.*;
 
-/** Server-thread purchases and interruptible repairs; ownership and points are checked together. */
+/** Server-thread purchases and interruptible repairs; ownership and gold are checked together. */
 public final class InteractionService {
     private record Repair(String id, long started) {}
 
@@ -27,7 +27,7 @@ public final class InteractionService {
     }
 
     public void labels() {
-        for (var g : run.map.gates()) label(g.point(), g.name() + " • " + g.price() + " points");
+        for (var g : run.map.gates()) label(g.point(), g.name() + " • " + g.price() + " gold");
         for (var s : run.map.shops()) {
             var w = run.content.weapons().get(s.weapon());
             label(s.point(), w.name() + " • " + w.price() + " | Ammo " + w.ammoPrice());
@@ -79,7 +79,7 @@ public final class InteractionService {
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5)) {
                 if (!survivor.spend(g.price())) {
-                    message(p, "Need " + g.price() + " points");
+                    message(p, "Need " + g.price() + " gold");
                     return true;
                 }
                 MapWorlds.each(run.world, g.box(), b -> b.setType(Material.AIR, false));
@@ -100,14 +100,14 @@ public final class InteractionService {
                         return true;
                     }
                     if (!survivor.spend(w.ammoPrice())) {
-                        message(p, "Need " + w.ammoPrice() + " points for ammo");
+                        message(p, "Need " + w.ammoPrice() + " gold for ammo");
                         return true;
                     }
                     owned.refill();
                     message(p, w.name() + " reserve refilled");
                 } else {
                     if (!survivor.spend(w.price())) {
-                        message(p, "Need " + w.price() + " points");
+                        message(p, "Need " + w.price() + " gold");
                         return true;
                     }
                     var state = new WeaponState(w);
@@ -146,12 +146,7 @@ public final class InteractionService {
             }
             if (run.tick - channel.started >= run.content.repairTicks()) {
                 block.setType(MapWorlds.material(b.material()), false);
-                String key = b.id() + ":" + run.waves.round();
-                int earned = repairRewards.getOrDefault(key, 0);
-                if (earned < b.box().volume()) {
-                    run.survivor(id).credit(run.content.repairPoints());
-                    repairRewards.put(key, earned + 1);
-                }
+                run.points.repair(id,b.id(),block.getX()+":"+block.getY()+":"+block.getZ(),run.waves.round(),true,run.content.repairPoints(),(int)b.box().volume()*run.content.repairPoints(),run.tick);
                 p.playSound(p.getLocation(), Sound.BLOCK_WOOD_PLACE, .5f, 1);
                 repairs.put(id, new Repair(b.id(), run.tick));
             }
@@ -200,7 +195,7 @@ public final class InteractionService {
                 return "Sneak + right-click to repair";
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5))
-                return "Right-click • " + g.name() + " • " + g.price() + " points";
+                return "Right-click • " + g.name() + " • " + g.price() + " gold";
         for (var s : run.map.shops())
             if (near(p, s.point(), 3.5)) {
                 var w = run.content.weapons().get(s.weapon());
@@ -208,7 +203,7 @@ public final class InteractionService {
                 return "Right-click • "
                         + w.name()
                         + (owned ? " ammo • " + w.ammoPrice() : " • " + w.price())
-                        + " points";
+                        + " gold";
             }
         return "";
     }

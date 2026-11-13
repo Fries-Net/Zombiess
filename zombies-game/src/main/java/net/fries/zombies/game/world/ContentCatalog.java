@@ -13,6 +13,23 @@ public record ContentCatalog(Gameplay gameplay, Map<String, MapTemplate> maps) {
     }
 
     public static ContentCatalog load(Path directory) throws IOException {
+        try (var input = ContentCatalog.class.getResourceAsStream("/gameplay.yml")) {
+            if (input == null) throw new IOException("Bundled gameplay content missing");
+            Path file = directory.resolve("gameplay.yml");
+            byte[] old = ContentYaml.readBytes(file);
+            byte[] next = GameplayMigration.upgrade(old, input.readAllBytes());
+            if (!java.util.Arrays.equals(old, next)) {
+                Path backup = file.resolveSibling("gameplay.v"+ContentYaml.parse(old).integer("schema-version",1,3)+".backup.yml");
+                if (!Files.exists(backup))
+                    net.fries.zombies.persistence.DurableFiles.replace(backup, old);
+                // Validate the complete candidate before replacing a deployed content document.
+                Path candidate = file.resolveSibling("gameplay.migration.yml");
+                net.fries.zombies.persistence.DurableFiles.replace(candidate, next);
+                Gameplay.load(candidate);
+                net.fries.zombies.persistence.DurableFiles.replace(file, next);
+                Files.delete(candidate);
+            }
+        }
         var gameplay = Gameplay.load(directory.resolve("gameplay.yml"));
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {

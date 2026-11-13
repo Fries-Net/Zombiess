@@ -43,9 +43,28 @@ final class MatchListener implements Listener {
         if (r == null || !r.alive(e.getPlayer().getUniqueId())) return;
         if (e.getAction().isRightClick()) {
             if (!r.interactions.interact(e.getPlayer())
-                    && !r.lives.reviving(e.getPlayer().getUniqueId()))
-                r.combat.shoot(e.getPlayer());
+                    && !r.lives.reviving(e.getPlayer().getUniqueId())
+                    && r.combat.held(e.getPlayer()) != null) {
+                r.combat.press(e.getPlayer());
+                e.setUseInteractedBlock(Event.Result.DENY);
+                e.setUseItemInHand(Event.Result.ALLOW);
+            }
         } else if (e.getAction().isLeftClick()) r.combat.reload(e.getPlayer());
+    }
+
+    @EventHandler
+    public void stopUse(io.papermc.paper.event.player.PlayerStopUsingItemEvent e) {
+        var r = matches.current();
+        if (r != null && r.combat != null) r.combat.release(e.getPlayer());
+    }
+
+    @EventHandler
+    public void consume(PlayerItemConsumeEvent e) {
+        if (matches.managed(e.getPlayer().getUniqueId())) {
+            e.setCancelled(true);
+            var r = matches.current();
+            if (r != null && r.combat != null) r.combat.release(e.getPlayer());
+        }
     }
 
     @EventHandler
@@ -80,6 +99,8 @@ final class MatchListener implements Listener {
 
     @EventHandler
     public void pickup(EntityPickupItemEvent e) {
+        var r=matches.current();
+        if(r!=null&&r.powerups!=null&&e.getEntity() instanceof Player player&&r.powerups.pickup(player,e.getItem())){e.setCancelled(true);return;}
         if (matches.managed(e.getEntity().getUniqueId())) e.setCancelled(true);
     }
 
@@ -122,6 +143,9 @@ final class MatchListener implements Listener {
     public void damage(EntityDamageEvent e) {
         var r = matches.current();
         if (r != null && r.waves != null && r.waves.contains(e.getEntity().getUniqueId())) {
+            if(e instanceof EntityDamageByEntityEvent melee && melee.getDamager() instanceof Player attacker && !r.combat.authorizes(e.getEntity().getUniqueId()) && r.combat.knife(attacker)){
+                e.setCancelled(true);r.combat.melee(attacker,(Zombie)e.getEntity());return;
+            }
             if (!(e instanceof EntityDamageByEntityEvent by)
                     || !(by.getDamager() instanceof Player)
                     || !r.combat.authorizes(e.getEntity().getUniqueId())) e.setCancelled(true);

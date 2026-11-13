@@ -1,30 +1,116 @@
-schema-version: 1
+schema-version: 3
 starter: friesnet:weapon/glock18
 weapons:
   - id: friesnet:weapon/glock18
     name: Glock-18
     material: IRON_HOE
-    magazine: 20
+    magazine: 10
     reserve: 160
     damage: 6.0
     headshot-multiplier: 2.0
     range: 64
-    cooldown-ticks: 4
+    cooldown-ticks: 30
     reload-ticks: 32
     price: 500
     ammo-price: 200
+    fire-mode: SEMI_AUTOMATIC
+    burst-shots: 1
+    burst-interval-ticks: 2
+    fire-sound: minecraft:entity.firework_rocket.blast
+    sound-pitch: 1.8
+    shot-particle: CRIT
+    asset: friesnet:weapon/glock18
+    pierce-targets: 1
+    body-gold: 10
+    headshot-gold: 15
   - id: friesnet:weapon/ak47
     name: AK-47
     material: DIAMOND_HOE
-    magazine: 30
+    magazine: 20
     reserve: 240
     damage: 10.0
     headshot-multiplier: 2.0
     range: 80
-    cooldown-ticks: 2
+    cooldown-ticks: 20
     reload-ticks: 48
     price: 1500
     ammo-price: 500
+    fire-mode: AUTOMATIC
+    burst-shots: 1
+    burst-interval-ticks: 2
+    fire-sound: minecraft:entity.generic.explode
+    sound-pitch: 1.7
+    shot-particle: ELECTRIC_SPARK
+    asset: friesnet:weapon/ak47
+    pierce-targets: 1
+    body-gold: 7
+    headshot-gold: 10
+  - id: friesnet:weapon/mac10
+    name: MAC-10
+    material: GOLDEN_HOE
+    magazine: 20
+    reserve: 240
+    damage: 5.0
+    headshot-multiplier: 1.8
+    range: 48
+    cooldown-ticks: 10
+    reload-ticks: 36
+    price: 1000
+    ammo-price: 350
+    fire-mode: AUTOMATIC
+    burst-shots: 1
+    burst-interval-ticks: 2
+    fire-sound: minecraft:block.note_block.snare
+    sound-pitch: 1.5
+    shot-particle: SMOKE
+    asset: friesnet:weapon/mac10
+    pierce-targets: 1
+    body-gold: 4
+    headshot-gold: 6
+  - id: friesnet:weapon/revolver
+    name: Revolver
+    material: IRON_HORSE_ARMOR
+    magazine: 6
+    reserve: 72
+    damage: 12.0
+    headshot-multiplier: 3.0
+    range: 72
+    cooldown-ticks: 40
+    reload-ticks: 60
+    price: 1250
+    ammo-price: 400
+    fire-mode: SEMI_AUTOMATIC
+    burst-shots: 1
+    burst-interval-ticks: 2
+    fire-sound: minecraft:entity.iron_golem.damage
+    sound-pitch: 1.2
+    shot-particle: FLAME
+    asset: friesnet:weapon/revolver
+    pierce-targets: 1
+    body-gold: 12
+    headshot-gold: 24
+  - id: friesnet:weapon/awp
+    name: AWP
+    material: AMETHYST_SHARD
+    magazine: 1
+    reserve: 40
+    damage: 30.0
+    headshot-multiplier: 2.5
+    range: 128
+    cooldown-ticks: 50
+    reload-ticks: 100
+    price: 2500
+    ammo-price: 700
+    fire-mode: SEMI_AUTOMATIC
+    burst-shots: 1
+    burst-interval-ticks: 2
+    fire-sound: minecraft:entity.lightning_bolt.impact
+    sound-pitch: 1.0
+    shot-particle: END_ROD
+    asset: friesnet:weapon/awp
+    pierce-targets: 4
+    body-gold: 20
+    headshot-gold: 30
 waves:
   final-round: 30
   base-count: 5
@@ -41,13 +127,24 @@ waves:
   timeout-ticks: 7200
 economy:
   starting-points: 500
-  kill-points: 100
-  headshot-points: 50
-  round-points: 200
+  kill-points: 0
+  headshot-points: 0
+  round-points: 0
   repair-points: 10
   tokens-per-round: 1
   experience-per-kill: 5
   victory-tokens: 20
+  fixed-rewards-enabled: false
+  melee-gold: 10
+  explosive-gold: 5
+  damage-over-time-gold: 0
+  lethal-bonus: 0
+  assist-gold: 0
+  assist-window-ticks: 600
+  objective-gold: 100
+  target-gold-cap: 300
+  double-gold-ticks: 600
+  double-gold-drop-chance: 0.03
 life:
   bleedout-ticks: 500
   revive-ticks: 100

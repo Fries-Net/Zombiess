@@ -12,6 +12,11 @@ import java.util.Set;
 
 /** Small strict reader shared by immutable gameplay and map documents. */
 public record ContentYaml(Map<?, ?> values) {
+    public boolean bool(String key) {
+        if (values.get(key) instanceof Boolean value) return value;
+        throw new IllegalArgumentException("Expected boolean: " + key);
+    }
+
     public static ContentYaml read(Path path) throws IOException {
         return parse(readBytes(path));
     }

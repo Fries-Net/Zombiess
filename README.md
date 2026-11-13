@@ -30,6 +30,10 @@ Connect a Java 1.21.11 client, then use `/zombies join training`. The lobby gath
 
 The supplied Foundry Training map is a bounded block blueprint, pinned by version and content digest. Each match gets a new world and UUID. A map editor, world-folder import, packs, perks, mystery boxes and network services remain later milestones.
 
+Phase 3 weapon/economy changes are being delivered in focused checkpoints; see [the verification report](docs/PHASE_3.md). Glock-18 now has 10 rounds and a 30-tick interval; AK-47 20/20; MAC-10 20/10; revolver 6/40; AWP 1/50 with a long reload and piercing. Fire and reload timings, trigger modes, sounds and placeholder visuals are configurable. A knife is available in slot 9.
+
+Match gold now comes from actual damaging hits. Glock body/head hits grant 10/15, AK 7/10, and other guns have their own values. Missing, blocked or invulnerable hits grant nothing. Default fixed kill/round gold is disabled. Double-gold pickups multiply match gold only; permanent tokens and experience retain their separate result transaction. Existing schema 1/2 gameplay files migrate with backups.
+
 ## Commands
 
 `/zombies` and `/jz` accept:

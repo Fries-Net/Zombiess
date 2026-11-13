@@ -63,7 +63,7 @@ public final class MatchHud {
                                                             + " • F to reload");
                 }
             }
-            p.sendActionBar(Component.text(text, NamedTextColor.GOLD));
+            p.sendActionBar(Component.text(text+s.goldFeedback(run.tick)+(run.points.doubleGoldRemaining(run.tick)>0?" • DOUBLE GOLD":""), NamedTextColor.GOLD));
         }
     }
 
@@ -95,7 +95,7 @@ public final class MatchHud {
                         "§7" + run.map.name(),
                         "§fRound §c" + run.waves.round() + " / " + run.content.waves().finalRound(),
                         "§fZombies §c" + run.waves.remaining(),
-                        "§fPoints §6" + s.points(),
+                        "§fGold §6" + s.points(),
                         "§fKills §e" + s.kills(),
                         "§fTeam §a" + alive + " / " + run.session.snapshot().initialPlayerCount(),
                         "§7" + s.life().name(),

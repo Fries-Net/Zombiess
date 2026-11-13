@@ -17,8 +17,9 @@ public final class WeaponState {
     private final Weapon definition;
     private int magazine;
     private int reserve;
-    private long nextShot;
+    private final WeaponTiming timing = new WeaponTiming();
     private long reloadEnds = -1;
+    private long shotsFired, lastShotTick = -1;
 
     public WeaponState(Weapon definition) {
         this.definition = definition;
@@ -27,19 +28,29 @@ public final class WeaponState {
     }
 
     public Shot shoot(long tick) {
+        return shoot(tick, 1, definition.cooldownTicks());
+    }
+
+    public Shot shoot(long tick, double rate, int cooldown) {
         tick(tick);
         if (reloadEnds >= 0) return Shot.RELOADING;
-        if (tick < nextShot) return Shot.COOLDOWN;
+        if (!timing.ready(tick)) return Shot.COOLDOWN;
         if (magazine == 0) return Shot.EMPTY;
         magazine--;
-        nextShot = tick + definition.cooldownTicks();
+        shotsFired++;
+        lastShotTick = tick;
+        timing.fired(tick, cooldown, rate);
         return Shot.FIRED;
     }
 
     public boolean reload(long tick) {
+        return reload(tick, 1);
+    }
+
+    public boolean reload(long tick, double speed) {
         tick(tick);
         if (reloadEnds >= 0 || magazine == definition.magazine() || reserve == 0) return false;
-        reloadEnds = tick + definition.reloadTicks();
+        reloadEnds = tick + WeaponTiming.duration(definition.reloadTicks(), speed);
         return true;
     }
 
@@ -83,5 +94,21 @@ public final class WeaponState {
 
     public long reloadRemaining(long tick) {
         return Math.max(0, reloadEnds - tick);
+    }
+
+    public long readyAt() {
+        return timing.readyAt();
+    }
+
+    public long fireRemaining(long tick) {
+        return timing.remaining(tick);
+    }
+
+    public long shotsFired() {
+        return shotsFired;
+    }
+
+    public long lastShotTick() {
+        return lastShotTick;
     }
 }

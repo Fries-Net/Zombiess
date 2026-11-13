@@ -20,8 +20,12 @@ public final class Survivor {
     private final UUID id;
     private final Map<NamespacedId, WeaponState> weapons = new LinkedHashMap<>();
     private Life life = Life.ALIVE;
+    private final FireControl fireControl = new FireControl();
+    private double fireRate = 1, reloadSpeed = 1, damageMultiplier = 1;
     private long bleedout;
     private int points, kills, headshots, revives, rounds;
+    private int goldDelta;
+    private long goldTick = -100;
 
     public Survivor(UUID id, Gameplay content) {
         this.id = id;
@@ -44,12 +48,13 @@ public final class Survivor {
     public void kill(boolean headshot, Gameplay content) {
         kills++;
         if (headshot) headshots++;
-        credit(content.killPoints() + (headshot ? content.headshotPoints() : 0));
+        if (content.scoring().fixedRewards())
+            credit(content.killPoints() + (headshot ? content.headshotPoints() : 0));
     }
 
     public void round(Gameplay content) {
         rounds++;
-        credit(content.roundPoints());
+        if (content.scoring().fixedRewards()) credit(content.roundPoints());
     }
 
     public void down(long tick, int duration) {
@@ -57,6 +62,7 @@ public final class Survivor {
         life = Life.DOWNED;
         bleedout = tick + duration;
         weapons.values().forEach(WeaponState::cancelReload);
+        fireControl.cancel();
     }
 
     public boolean bleed(long tick) {
@@ -107,6 +113,16 @@ public final class Survivor {
         return points;
     }
 
+    public void gold(int amount, long tick) {
+        credit(amount);
+        goldDelta = tick - goldTick <= 20 ? Math.addExact(goldDelta, amount) : amount;
+        goldTick = tick;
+    }
+
+    public String goldFeedback(long tick) {
+        return tick - goldTick <= 30 ? " +" + goldDelta + " gold" : "";
+    }
+
     public int kills() {
         return kills;
     }
@@ -117,6 +133,32 @@ public final class Survivor {
 
     public UUID id() {
         return id;
+    }
+
+    public FireControl fireControl() {
+        return fireControl;
+    }
+
+    public double fireRate() {
+        return fireRate;
+    }
+
+    public double reloadSpeed() {
+        return reloadSpeed;
+    }
+
+    public double damageMultiplier() {
+        return damageMultiplier;
+    }
+
+    public void weaponModifiers(double fireRate, double reloadSpeed, double damageMultiplier) {
+        WeaponTiming.duration(1, fireRate);
+        WeaponTiming.duration(1, reloadSpeed);
+        if (!Double.isFinite(damageMultiplier) || damageMultiplier <= 0 || damageMultiplier > 10)
+            throw new IllegalArgumentException("Invalid damage modifier");
+        this.fireRate = fireRate;
+        this.reloadSpeed = reloadSpeed;
+        this.damageMultiplier = damageMultiplier;
     }
 
     public long bleedoutRemaining(long tick) {

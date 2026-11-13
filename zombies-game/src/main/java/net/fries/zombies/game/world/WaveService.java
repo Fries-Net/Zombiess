@@ -87,7 +87,7 @@ public final class WaveService {
             for (var s : run.players.values())
                 if (s.life() != Survivor.Life.LEFT) s.round(run.content);
             run.lives.roundRespawn();
-            broadcast("Round " + round + " cleared! +" + run.content.roundPoints() + " points");
+            broadcast("Round " + round + " cleared!"+(run.content.scoring().fixedRewards()?" +"+run.content.roundPoints()+" gold":""));
             if (round >= run.content.waves().finalRound()) {
                 finish.accept(Outcome.WIN);
                 return;
@@ -144,14 +144,16 @@ public final class WaveService {
                             z.getEquipment().clear();
                         });
         zombies.put(zombie.getUniqueId(), zombie);
+        run.points.register(zombie.getUniqueId());
     }
 
     public void died(UUID id) {
-        if (zombies.remove(id) == null) return;
+        var zombie=zombies.remove(id);if(zombie==null)return;
         var credit = credits.remove(id);
         if (credit != null) {
             var s = run.players.get(credit.player());
             if (s != null) s.kill(credit.headshot(), run.content);
+            if(run.powerups!=null)run.powerups.maybeDrop(zombie.getLocation());
         }
     }
 

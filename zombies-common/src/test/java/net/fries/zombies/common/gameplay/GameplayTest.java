@@ -15,7 +15,7 @@ class GameplayTest {
     @TempDir Path directory;
 
     private Gameplay content() throws Exception {
-        return Gameplay.load(Path.of("../zombies-game/src/main/resources/gameplay.yml"));
+        return Gameplay.load(Path.of("src/test/resources/phase2-gameplay.yml"));
     }
 
     @Test
@@ -121,8 +121,7 @@ class GameplayTest {
 
     @Test
     void contentRejectsUnknownKeysAliasesAndNonfiniteDamage() throws Exception {
-        String source =
-                Files.readString(Path.of("../zombies-game/src/main/resources/gameplay.yml"));
+        String source = Files.readString(Path.of("src/test/resources/phase2-gameplay.yml"));
         Path file = directory.resolve("gameplay.yml");
         for (String invalid :
                 new String[] {
