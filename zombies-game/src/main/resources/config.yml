@@ -1,0 +1,10 @@
+schema-version: 1
+server-id: standalone-01
+log-level: INFO
+match:
+  min-players: 1
+  max-players: 4
+  countdown-seconds: 10
+  reservation-seconds: 120
+  private: false
+  pause-allowed: false

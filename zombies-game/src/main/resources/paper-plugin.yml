@@ -1,0 +1,13 @@
+name: FriesNetZombies
+version: '${version}'
+main: net.fries.zombies.game.ZombiesPlugin
+api-version: '1.21.11'
+description: FriesNet Zombies platform
+authors: [FriesNet]
+permissions:
+  zombies.use:
+    description: View own account and server status
+    default: true
+  zombies.admin:
+    description: Reload configuration and inspect database health
+    default: op

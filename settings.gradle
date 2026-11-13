@@ -1,1 +1,2 @@
-rootProject.name = 'jZombies'
+rootProject.name = 'friesnet-zombies'
+include 'zombies-common', 'zombies-persistence', 'zombies-game', 'zombies-legacy'

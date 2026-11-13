@@ -1,0 +1,12 @@
+schema-version: 1
+# STANDALONE is durable local H2 for development. Production must use POSTGRESQL.
+mode: STANDALONE
+# Production: run MigrationMain with a separate schema owner, then set false.
+migrate-on-start: true
+url-env: ZOMBIES_DATABASE_URL
+user-env: ZOMBIES_DATABASE_USER
+password-env: ZOMBIES_DATABASE_PASSWORD
+pool-size: 4
+workers: 2
+queue-capacity: 256
+timeout-seconds: 5
