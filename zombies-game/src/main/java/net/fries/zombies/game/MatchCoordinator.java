@@ -65,6 +65,7 @@ public final class MatchCoordinator {
             var material = Material.matchMaterial(w.material());
             if (material == null || material.isAir() || !material.isItem())
                 throw new IllegalArgumentException("Invalid weapon material");
+            org.bukkit.Particle.valueOf(w.behaviour().particle());
         }
         for (var m : catalog.maps().values()) {
             m.blocks().forEach(f -> MapWorlds.material(f.material()));

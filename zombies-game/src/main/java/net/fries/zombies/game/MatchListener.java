@@ -43,9 +43,28 @@ final class MatchListener implements Listener {
         if (r == null || !r.alive(e.getPlayer().getUniqueId())) return;
         if (e.getAction().isRightClick()) {
             if (!r.interactions.interact(e.getPlayer())
-                    && !r.lives.reviving(e.getPlayer().getUniqueId()))
-                r.combat.shoot(e.getPlayer());
+                    && !r.lives.reviving(e.getPlayer().getUniqueId())
+                    && r.combat.held(e.getPlayer()) != null) {
+                r.combat.press(e.getPlayer());
+                e.setUseInteractedBlock(Event.Result.DENY);
+                e.setUseItemInHand(Event.Result.ALLOW);
+            }
         } else if (e.getAction().isLeftClick()) r.combat.reload(e.getPlayer());
+    }
+
+    @EventHandler
+    public void stopUse(io.papermc.paper.event.player.PlayerStopUsingItemEvent e) {
+        var r = matches.current();
+        if (r != null && r.combat != null) r.combat.release(e.getPlayer());
+    }
+
+    @EventHandler
+    public void consume(PlayerItemConsumeEvent e) {
+        if (matches.managed(e.getPlayer().getUniqueId())) {
+            e.setCancelled(true);
+            var r = matches.current();
+            if (r != null && r.combat != null) r.combat.release(e.getPlayer());
+        }
     }
 
     @EventHandler

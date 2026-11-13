@@ -20,6 +20,8 @@ public final class Survivor {
     private final UUID id;
     private final Map<NamespacedId, WeaponState> weapons = new LinkedHashMap<>();
     private Life life = Life.ALIVE;
+    private final FireControl fireControl = new FireControl();
+    private double fireRate = 1, reloadSpeed = 1, damageMultiplier = 1;
     private long bleedout;
     private int points, kills, headshots, revives, rounds;
 
@@ -57,6 +59,7 @@ public final class Survivor {
         life = Life.DOWNED;
         bleedout = tick + duration;
         weapons.values().forEach(WeaponState::cancelReload);
+        fireControl.cancel();
     }
 
     public boolean bleed(long tick) {
@@ -117,6 +120,32 @@ public final class Survivor {
 
     public UUID id() {
         return id;
+    }
+
+    public FireControl fireControl() {
+        return fireControl;
+    }
+
+    public double fireRate() {
+        return fireRate;
+    }
+
+    public double reloadSpeed() {
+        return reloadSpeed;
+    }
+
+    public double damageMultiplier() {
+        return damageMultiplier;
+    }
+
+    public void weaponModifiers(double fireRate, double reloadSpeed, double damageMultiplier) {
+        WeaponTiming.duration(1, fireRate);
+        WeaponTiming.duration(1, reloadSpeed);
+        if (!Double.isFinite(damageMultiplier) || damageMultiplier <= 0 || damageMultiplier > 10)
+            throw new IllegalArgumentException("Invalid damage modifier");
+        this.fireRate = fireRate;
+        this.reloadSpeed = reloadSpeed;
+        this.damageMultiplier = damageMultiplier;
     }
 
     public long bleedoutRemaining(long tick) {

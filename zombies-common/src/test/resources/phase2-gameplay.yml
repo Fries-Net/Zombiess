@@ -1,0 +1,54 @@
+schema-version: 1
+starter: friesnet:weapon/glock18
+weapons:
+  - id: friesnet:weapon/glock18
+    name: Glock-18
+    material: IRON_HOE
+    magazine: 20
+    reserve: 160
+    damage: 6.0
+    headshot-multiplier: 2.0
+    range: 64
+    cooldown-ticks: 4
+    reload-ticks: 32
+    price: 500
+    ammo-price: 200
+  - id: friesnet:weapon/ak47
+    name: AK-47
+    material: DIAMOND_HOE
+    magazine: 30
+    reserve: 240
+    damage: 10.0
+    headshot-multiplier: 2.0
+    range: 80
+    cooldown-ticks: 2
+    reload-ticks: 48
+    price: 1500
+    ammo-price: 500
+waves:
+  final-round: 30
+  base-count: 5
+  count-per-round: 2
+  extra-player-factor: 0.65
+  base-health: 18
+  health-per-round: 2
+  base-damage: 3
+  damage-per-round: 0.15
+  speed: 0.20
+  spawn-ticks: 30
+  intermission-ticks: 160
+  alive-limit: 24
+  timeout-ticks: 7200
+economy:
+  starting-points: 500
+  kill-points: 100
+  headshot-points: 50
+  round-points: 200
+  repair-points: 10
+  tokens-per-round: 1
+  experience-per-kill: 5
+  victory-tokens: 20
+life:
+  bleedout-ticks: 500
+  revive-ticks: 100
+  repair-ticks: 40

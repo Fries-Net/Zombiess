@@ -38,7 +38,36 @@ public record Gameplay(
             int cooldownTicks,
             int reloadTicks,
             int price,
-            int ammoPrice) {}
+            int ammoPrice,
+            Behaviour behaviour) {}
+
+    public enum FireMode {
+        SEMI_AUTOMATIC,
+        AUTOMATIC,
+        BURST
+    }
+
+    public record Behaviour(
+            FireMode mode,
+            int burstShots,
+            int burstIntervalTicks,
+            String sound,
+            float pitch,
+            String particle,
+            NamespacedId asset,
+            int pierceTargets) {
+        public static Behaviour legacy(NamespacedId id) {
+            return new Behaviour(
+                    FireMode.SEMI_AUTOMATIC,
+                    1,
+                    1,
+                    "minecraft:entity.firework_rocket.blast",
+                    1.8f,
+                    "CRIT",
+                    id,
+                    1);
+        }
+    }
 
     public record Waves(
             int finalRound,
@@ -75,23 +104,49 @@ public record Gameplay(
     public static Gameplay load(Path path) throws IOException {
         var root = ContentYaml.read(path);
         root.keys("schema-version", "starter", "weapons", "waves", "economy", "life");
-        root.integer("schema-version", 1, 1);
+        int schema = root.integer("schema-version", 1, 2);
         var weapons = new LinkedHashMap<NamespacedId, Weapon>();
         for (var w : root.nodes("weapons")) {
-            w.keys(
-                    "id",
-                    "name",
-                    "material",
-                    "magazine",
-                    "reserve",
-                    "damage",
-                    "headshot-multiplier",
-                    "range",
-                    "cooldown-ticks",
-                    "reload-ticks",
-                    "price",
-                    "ammo-price");
+            var fields =
+                    new java.util.ArrayList<>(
+                            java.util.List.of(
+                                    "id",
+                                    "name",
+                                    "material",
+                                    "magazine",
+                                    "reserve",
+                                    "damage",
+                                    "headshot-multiplier",
+                                    "range",
+                                    "cooldown-ticks",
+                                    "reload-ticks",
+                                    "price",
+                                    "ammo-price"));
+            if (schema >= 2)
+                fields.addAll(
+                        java.util.List.of(
+                                "fire-mode",
+                                "burst-shots",
+                                "burst-interval-ticks",
+                                "fire-sound",
+                                "sound-pitch",
+                                "shot-particle",
+                                "asset",
+                                "pierce-targets"));
+            w.keys(fields.toArray(String[]::new));
             var id = new NamespacedId(w.text("id"));
+            var behaviour =
+                    schema == 1
+                            ? Behaviour.legacy(id)
+                            : new Behaviour(
+                                    FireMode.valueOf(w.text("fire-mode")),
+                                    w.integer("burst-shots", 1, 10),
+                                    w.integer("burst-interval-ticks", 1, 200),
+                                    new NamespacedId(w.text("fire-sound")).value(),
+                                    (float) w.number("sound-pitch", .5, 2),
+                                    w.text("shot-particle"),
+                                    new NamespacedId(w.text("asset")),
+                                    w.integer("pierce-targets", 1, 16));
             var weapon =
                     new Weapon(
                             id,
@@ -102,15 +157,16 @@ public record Gameplay(
                             w.number("damage", .1, 1000),
                             w.number("headshot-multiplier", 1, 10),
                             w.number("range", 1, 128),
-                            w.integer("cooldown-ticks", 1, 100),
-                            w.integer("reload-ticks", 1, 400),
+                            w.integer("cooldown-ticks", 1, 400),
+                            w.integer("reload-ticks", 1, 1200),
                             w.integer("price", 0, 1000000),
-                            w.integer("ammo-price", 1, 100000));
+                            w.integer("ammo-price", 1, 100000),
+                            behaviour);
             if (weapons.put(id, weapon) != null)
                 throw new IllegalArgumentException("Duplicate weapon identity");
         }
-        if (weapons.isEmpty() || weapons.size() > 9)
-            throw new IllegalArgumentException("Expected 1..9 weapons");
+        if (weapons.isEmpty() || weapons.size() > 256)
+            throw new IllegalArgumentException("Expected 1..256 weapon definitions");
         var starter = new NamespacedId(root.text("starter"));
         if (!weapons.containsKey(starter))
             throw new IllegalArgumentException("Unknown starting weapon");
