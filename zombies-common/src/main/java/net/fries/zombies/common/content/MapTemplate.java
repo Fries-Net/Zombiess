@@ -24,13 +24,18 @@ public record MapTemplate(
         List<Spawn> zombieSpawns,
         List<Gate> gates,
         List<Barricade> barricades,
-        List<Shop> shops) {
+        List<Shop> shops,
+        List<WindowDefinition> windows,
+        Set<String> initialRooms,
+        Box playableBounds) {
     public MapTemplate {
         blocks = List.copyOf(blocks);
         zombieSpawns = List.copyOf(zombieSpawns);
         gates = List.copyOf(gates);
         barricades = List.copyOf(barricades);
         shops = List.copyOf(shops);
+        windows = List.copyOf(windows);
+        initialRooms = Set.copyOf(initialRooms);
     }
 
     public record Point(double x, double y, double z) {}
@@ -59,7 +64,8 @@ public record MapTemplate(
 
     public record Spawn(Point point, String gate) {}
 
-    public record Gate(String id, String name, Point point, Box box, int price) {}
+    public record Gate(
+            String id, String name, Point point, Box box, int price, String unlocksRoom) {}
 
     public record Barricade(String id, Point point, Box box, String material) {}
 
@@ -68,19 +74,23 @@ public record MapTemplate(
     public static MapTemplate load(Path path, Gameplay gameplay) throws IOException {
         byte[] source = ContentYaml.readBytes(path);
         var r = ContentYaml.parse(source);
-        r.keys(
-                "schema-version",
-                "id",
-                "version",
-                "name",
-                "player-spawn",
-                "bounds",
-                "blocks",
-                "zombie-spawns",
-                "gates",
-                "barricades",
-                "shops");
-        r.integer("schema-version", 1, 1);
+        int schema = r.integer("schema-version", 1, 2);
+        var rootKeys =
+                new java.util.ArrayList<>(
+                        List.of(
+                                "schema-version",
+                                "id",
+                                "version",
+                                "name",
+                                "player-spawn",
+                                "bounds",
+                                "blocks",
+                                "zombie-spawns",
+                                "gates",
+                                "barricades",
+                                "shops"));
+        if (schema >= 2) rootKeys.addAll(List.of("windows", "initial-rooms", "playable-bounds"));
+        r.keys(rootKeys.toArray(String[]::new));
         String version = r.text("version");
         if (!version.matches("[a-zA-Z0-9_.-]{1,24}"))
             throw new IllegalArgumentException("Unsafe map version");
@@ -112,13 +122,22 @@ public record MapTemplate(
                 r.nodes("gates").stream()
                         .map(
                                 n -> {
-                                    n.keys("id", "name", "point", "box", "price");
+                                    if (schema == 1) n.keys("id", "name", "point", "box", "price");
+                                    else
+                                        n.keys(
+                                                "id",
+                                                "name",
+                                                "point",
+                                                "box",
+                                                "price",
+                                                "unlocks-room");
                                     return new Gate(
                                             n.text("id"),
                                             n.text("name"),
                                             point(n.node("point")),
                                             box(n.node("box")),
-                                            n.integer("price", 1, 100000));
+                                            n.integer("price", 1, 100000),
+                                            schema == 1 ? n.text("id") : n.text("unlocks-room"));
                                 })
                         .toList();
         var barricades =
@@ -164,10 +183,30 @@ public record MapTemplate(
                                     return new Spawn(point(n.node("point")), gate);
                                 })
                         .toList();
-        if (spawns.isEmpty()
-                || spawns.size() > 64
-                || spawns.stream().noneMatch(s -> s.gate.equals("none")))
+        if (spawns.size() > 64
+                || ((spawns.isEmpty() || spawns.stream().noneMatch(s -> s.gate.equals("none")))
+                        && (schema == 1 || r.nodes("windows").isEmpty())))
             throw new IllegalArgumentException("Missing initial spawns");
+        var windows =
+                schema == 1
+                        ? List.<WindowDefinition>of()
+                        : r.nodes("windows").stream().map(WindowDefinition::load).toList();
+        if (windows.size() > 64) throw new IllegalArgumentException("Too many windows");
+        var initial = schema == 1 ? Set.of("spawn") : Set.copyOf(r.strings("initial-rooms"));
+        var rooms = new HashSet<>(initial);
+        gates.forEach(g -> rooms.add(g.unlocksRoom()));
+        var windowIds = new HashSet<String>();
+        var boardPositions = new HashSet<Point>();
+        for (var window : windows) {
+            if (!windowIds.add(window.id()) || !rooms.containsAll(window.requiredRooms()))
+                throw new IllegalArgumentException("Invalid window identity or room reference");
+            for (var board : window.boards())
+                if (!boardPositions.add(board.point()))
+                    throw new IllegalArgumentException("Windows overlap");
+        }
+        if (!windows.isEmpty()
+                && windows.stream().noneMatch(w -> initial.containsAll(w.requiredRooms())))
+            throw new IllegalArgumentException("No initially active window");
         var map =
                 new MapTemplate(
                         new NamespacedId(r.text("id")),
@@ -179,7 +218,28 @@ public record MapTemplate(
                         spawns,
                         gates,
                         barricades,
-                        shops);
+                        shops,
+                        windows,
+                        initial,
+                        schema == 1 ? bounds : box(r.node("playable-bounds")));
+        map.requireInside(map.playableBounds);
+        if (!map.playableBounds.contains(map.playerSpawn))
+            throw new IllegalArgumentException("Player spawn outside playable area");
+        for (var window : windows) {
+            map.requireInside(window.point());
+            map.requireInside(window.approach());
+            map.requireInside(window.entry());
+            map.requireInside(window.spawnRegion());
+            for (var board : window.boards()) {
+                map.requireInside(board.point());
+                if (gates.stream().anyMatch(g -> g.box().contains(board.point())))
+                    throw new IllegalArgumentException("Window overlaps door geometry");
+            }
+            if (!map.playableBounds.contains(window.entry())
+                    || map.playableBounds.contains(window.approach()))
+                throw new IllegalArgumentException(
+                        "Window approach/entry must separate exterior and playable area");
+        }
         map.requireInside(map.playerSpawn);
         for (var s : spawns) map.requireInside(s.point);
         for (var s : shops) map.requireInside(s.point);
@@ -215,12 +275,12 @@ public record MapTemplate(
         requireInside(new Point(b.x2, b.y2, b.z2));
     }
 
-    private static Point point(ContentYaml n) {
+    public static Point point(ContentYaml n) {
         n.keys("x", "y", "z");
         return new Point(n.number("x", -128, 128), n.number("y", 1, 255), n.number("z", -128, 128));
     }
 
-    private static Box box(ContentYaml n) {
+    public static Box box(ContentYaml n) {
         n.keys("x1", "y1", "z1", "x2", "y2", "z2");
         return new Box(
                 n.integer("x1", -128, 128),

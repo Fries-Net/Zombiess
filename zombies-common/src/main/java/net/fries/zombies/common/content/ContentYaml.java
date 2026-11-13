@@ -12,6 +12,18 @@ import java.util.Set;
 
 /** Small strict reader shared by immutable gameplay and map documents. */
 public record ContentYaml(Map<?, ?> values) {
+    public List<String> strings(String key) {
+        if (values.get(key) instanceof List<?> list)
+            return list.stream()
+                    .map(
+                            v -> {
+                                if (v instanceof String s && !s.isBlank()) return s;
+                                throw new IllegalArgumentException("Expected string list: " + key);
+                            })
+                    .toList();
+        throw new IllegalArgumentException("Expected string list: " + key);
+    }
+
     public boolean bool(String key) {
         if (values.get(key) instanceof Boolean value) return value;
         throw new IllegalArgumentException("Expected boolean: " + key);
