@@ -60,6 +60,18 @@ public record WindowDefinition(
             throw new IllegalArgumentException("No board at window approach");
     }
 
+    public boolean clearsBoardPlane(MapTemplate.Point point, double bodyRadius) {
+        if (!Double.isFinite(bodyRadius) || bodyRadius < 0 || bodyRadius > 2)
+            throw new IllegalArgumentException("Invalid window body clearance");
+        var board = boards.getFirst();
+        return switch (orientation) {
+            case NORTH -> point.z() >= board.z() + 1 + bodyRadius;
+            case SOUTH -> point.z() <= board.z() - bodyRadius;
+            case WEST -> point.x() >= board.x() + 1 + bodyRadius;
+            case EAST -> point.x() <= board.x() - bodyRadius;
+        };
+    }
+
     public static WindowDefinition load(ContentYaml n) {
         n.keys(
                 "id",

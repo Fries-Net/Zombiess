@@ -127,7 +127,7 @@ def main():
         "server-ip=127.0.0.1\nserver-port=" + str(port) + "\nonline-mode=false\nenforce-secure-profile=false\n"
         "level-type=minecraft:flat\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\n"
         'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
-        "spawn-protection=0\nenable-rcon=false\nenable-query=false\nmax-players=4\npause-when-empty-seconds=-1\n", encoding="utf-8")
+        "spawn-protection=0\nspawn-monsters=false\nenable-rcon=false\nenable-query=false\nmax-players=4\npause-when-empty-seconds=-1\n", encoding="utf-8")
     server_args = [args.java, "-Xms512M", "-Xmx1536M", "-Dterminal.jline=false", "-Dterminal.ansi=false", "-jar", str(paper), "--nogui", "--add-plugin=" + str(plugin), "--add-plugin=" + str(helper)]
     server = clients = None
     checks = []
@@ -191,6 +191,8 @@ def main():
             check("window-damaging",1)
             check("window-first-board",1.3)
             check("window-entered",5)
+            check("window-jamb-start")
+            check("window-jamb-entered",3)
             check("body",2)
             check("head", 1.6)
             check("occlusion", 1.6)

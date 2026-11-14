@@ -30,6 +30,51 @@ asset: friesnet:window/wooden
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void entryHandoffRequiresTheWholeBodyBeyondTheBoardPlaneInAllOrientations() {
+        var north = load(definition());
+        assertFalse(north.clearsBoardPlane(new MapTemplate.Point(.5, 64, -8.95), .35));
+        assertTrue(north.clearsBoardPlane(new MapTemplate.Point(.5, 64, -8.5), .35));
+        var values =
+                (java.util.Map<String, Object>)
+                        ContentYaml.parse(
+                                        definition()
+                                                .getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                                .values();
+        values.put("orientation", "SOUTH");
+        values.put("approach", MapDraft.point(.5, 64, -8.5));
+        values.put("entry", MapDraft.point(.5, 64, -10.8));
+        values.put("spawn-region", MapDraft.box(-1, 64, -8, 1, 64, -7));
+        var south = WindowDefinition.load(new ContentYaml(values));
+        assertFalse(south.clearsBoardPlane(new MapTemplate.Point(.5, 64, -10.05), .35));
+        assertTrue(south.clearsBoardPlane(new MapTemplate.Point(.5, 64, -10.8), .35));
+        String westYaml =
+                definition()
+                        .replace("x", "!")
+                        .replace("z", "x")
+                        .replace("!", "z")
+                        .replace("NORTH", "WEST");
+        var west = load(westYaml);
+        assertFalse(west.clearsBoardPlane(new MapTemplate.Point(-8.95, 64, .5), .35));
+        assertTrue(west.clearsBoardPlane(new MapTemplate.Point(-8.5, 64, .5), .35));
+        var eastValues =
+                (java.util.Map<String, Object>)
+                        ContentYaml.parse(
+                                        westYaml.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                                .values();
+        eastValues.put("orientation", "EAST");
+        eastValues.put("approach", MapDraft.point(-8.5, 64, .5));
+        eastValues.put("entry", MapDraft.point(-10.8, 64, .5));
+        eastValues.put("spawn-region", MapDraft.box(-8, 64, -1, -7, 64, 1));
+        var east = WindowDefinition.load(new ContentYaml(eastValues));
+        assertFalse(east.clearsBoardPlane(new MapTemplate.Point(-10.05, 64, .5), .35));
+        assertTrue(east.clearsBoardPlane(new MapTemplate.Point(-10.8, 64, .5), .35));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> north.clearsBoardPlane(north.entry(), Double.NaN));
+    }
+
+    @Test
     void validWindowRetainsImmutableBoardAndRoomConfiguration() {
         var w = load(definition());
         assertEquals(2, w.boards().size());

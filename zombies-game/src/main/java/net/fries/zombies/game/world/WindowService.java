@@ -20,6 +20,7 @@ public final class WindowService {
     private final Map<String, List<Location>> spawns = new HashMap<>();
     private final Map<String, WindowDefinition.Board> components = new HashMap<>();
     private final Map<UUID, String> assigned = new HashMap<>();
+    private final Map<UUID, String> arrivals = new HashMap<>();
     private final Map<String, Boolean> attacking = new HashMap<>();
 
     public WindowService(MatchRun run) {
@@ -67,6 +68,7 @@ public final class WindowService {
 
     public void assign(Zombie zombie, WindowDefinition d) {
         assigned.put(zombie.getUniqueId(), d.id());
+        arrivals.put(zombie.getUniqueId(), d.id());
         zombie.setCollidable(false);
     }
 
@@ -76,17 +78,54 @@ public final class WindowService {
 
     public boolean guide(Zombie zombie) {
         String id = assigned.get(zombie.getUniqueId());
+        if (id == null) {
+            var previous = definitions.get(arrivals.get(zombie.getUniqueId()));
+            if (previous != null
+                    && !run.map.playableBounds().contains(point(zombie.getLocation()))
+                    && zombie.getLocation()
+                                    .distanceSquared(
+                                            MapWorlds.location(run.world, previous.entry()))
+                            < 9) {
+                assign(zombie, previous);
+                id = previous.id();
+            }
+        }
         if (id == null) return false;
-        if (run.map.playableBounds().contains(point(zombie.getLocation()))) {
+        var d = definitions.get(id);
+        if (cleared(zombie, d)) {
             assigned.remove(zombie.getUniqueId());
             zombie.setCollidable(true);
             return false;
         }
-        var d = definitions.get(id);
         zombie.setTarget(null);
-        var destination = MapWorlds.location(run.world, opening(d) ? d.entry() : d.approach());
+        boolean open = opening(d);
+        var destination = open ? entryDestination(d) : MapWorlds.location(run.world, d.approach());
         if (zombie.hasAI()) zombie.getPathfinder().moveTo(destination, 1.0);
         return true;
+    }
+
+    private boolean cleared(Zombie zombie, WindowDefinition d) {
+        return run.map.playableBounds().contains(point(zombie.getLocation()))
+                && d.clearsBoardPlane(point(zombie.getLocation()), zombie.getWidth() / 2 + .05);
+    }
+
+    private Location entryDestination(WindowDefinition d) {
+        var configured = MapWorlds.location(run.world, d.entry());
+        var farther = configured.clone();
+        switch (d.orientation()) {
+            case NORTH -> farther.add(0, 0, .75);
+            case SOUTH -> farther.subtract(0, 0, .75);
+            case WEST -> farther.add(.75, 0, 0);
+            case EAST -> farther.subtract(.75, 0, 0);
+        }
+        // Native waypoint arrival has a tolerance. Aim into the next clear interior cell so the
+        // whole body crosses the opening before returning to normal targeting/collision.
+        return run.map.playableBounds().contains(point(farther))
+                        && farther.getBlock().isPassable()
+                        && farther.clone().add(0, 1, 0).getBlock().isPassable()
+                        && farther.clone().subtract(0, 1, 0).getBlock().getType().isSolid()
+                ? farther
+                : configured;
     }
 
     private boolean opening(WindowDefinition d) {
@@ -102,6 +141,12 @@ public final class WindowService {
     }
 
     public void tick() {
+        arrivals.keySet()
+                .removeIf(
+                        id -> {
+                            var entity = Bukkit.getEntity(id);
+                            return entity == null || !entity.isValid() || entity.isDead();
+                        });
         assigned.keySet()
                 .removeIf(
                         id -> {
@@ -272,6 +317,7 @@ public final class WindowService {
     public void clear() {
         for (var d : definitions.values()) for (var b : d.boards()) clearCracks(d, b);
         assigned.clear();
+        arrivals.clear();
     }
 
     private void place(WindowDefinition d, WindowDefinition.Board b) {
