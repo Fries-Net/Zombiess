@@ -133,3 +133,23 @@ Next exact implementation step: **Phase 3F** — introduce validated perk defini
 perk ownership/caps, then connect the existing `PERK` stations to damage, movement, reload, revival
 and weapon-slot lifecycle services. Perks, Pack-a-Punch, power/boss/range/custom gameplay remain
 explicitly inactive placeholders. Production resource-pack assets and orchestration are later work.
+
+## Phase 3F — Perks
+
+Development resumes from merged master `9b487ed` on `feature/phase-3-perks` (PR #8).
+`perks.yml` supplies validated immutable definitions for all eight requested station types. Published
+`PERK` objects now drive vending, eligibility, prices, feedback and runtime effects. See [perk rules](PERKS.md)
+for exact solo revive, ownership, weapon-slot and loss policies. Original map formats remain supported.
+
+The unit/H2 build passes **99 tests**, with no failures or skips. The expanded two-client Paper
+fixture authors and publishes eight perk stations, uses native client vending input, and checks
+real damage/slowing, reload/cooldown modifiers, caps, Mule Kick loss and accelerated teammate revives.
+The full regression also persists perk health on a crash fixture and checks original attributes
+after recovery. Latest Paper/CI results must be verified before declaring the checkpoint complete.
+
+The capacity checks preserve mystery rewards that refill an owned weapon, while limiting new weapon
+instances according to Mule Kick. Duplicate perk purchases and empty Wunderfizz pools never charge.
+Normal-client visual acceptance remains for labels, sounds, particles and sidebar readability.
+
+Next checkpoint after perk verification: Phase 3G on `feature/phase-3-pack-a-punch`, with validated
+weapon-specific tiers, in-place upgrades retaining instance identity/ammunition and editor stations.

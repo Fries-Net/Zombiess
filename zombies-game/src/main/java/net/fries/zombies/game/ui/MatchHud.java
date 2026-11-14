@@ -99,20 +99,34 @@ public final class MatchHud {
                                 .filter(v -> v.life() == Survivor.Life.ALIVE)
                                 .count();
         var lines =
-                List.of(
-                        "§7" + run.map.name(),
-                        "§fRound §c" + run.waves.round() + " / " + run.content.waves().finalRound(),
-                        "§fZombies §c" + run.waves.remaining(),
-                        "§fGold §6" + s.points(),
-                        "§fKills §e" + s.kills(),
-                        "§fTeam §a" + alive + " / " + run.session.snapshot().initialPlayerCount(),
-                        "§7" + s.life().name(),
-                        run.waves.intermissionRemaining() > 0
-                                ? "§aNext wave: "
-                                        + ((run.waves.intermissionRemaining() + 19) / 20)
-                                        + "s"
-                                : "§8Survive together",
-                        "§8/zombies leave");
+                new ArrayList<>(
+                        List.of(
+                                "§7" + run.map.name(),
+                                "§fRound §c"
+                                        + run.waves.round()
+                                        + " / "
+                                        + run.content.waves().finalRound(),
+                                "§fZombies §c" + run.waves.remaining(),
+                                "§fGold §6" + s.points(),
+                                "§bPerks "
+                                        + s.perks().owned().size()
+                                        + "/"
+                                        + run.perkRules.maxOwned(),
+                                "§fKills §e" + s.kills(),
+                                "§fTeam §a"
+                                        + alive
+                                        + " / "
+                                        + run.session.snapshot().initialPlayerCount(),
+                                "§7" + s.life().name(),
+                                run.waves.intermissionRemaining() > 0
+                                        ? "§aNext wave: "
+                                                + ((run.waves.intermissionRemaining() + 19) / 20)
+                                                + "s"
+                                        : "§8Survive together",
+                                "§8/zombies leave"));
+        int index = 7;
+        for (var perk : s.perks().owned().stream().limit(3).toList())
+            lines.add(index++, "§b" + perk.name());
         if (lines.equals(previous.get(s.id()))) return;
         board.getEntries().forEach(board::resetScores);
         var objective = board.getObjective("zombies");

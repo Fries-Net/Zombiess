@@ -118,6 +118,7 @@ public final class PlayerBackups {
                             new PotionEffect(type, duration, amplifier, ambient, particles, icon));
             }
             if (in.available() != 0) throw new IOException("Trailing player backup data");
+            net.fries.zombies.game.world.PerkService.removeHealth(p);
             p.clearActiveItem();
             p.closeInventory();
             p.getInventory().setContents(items);

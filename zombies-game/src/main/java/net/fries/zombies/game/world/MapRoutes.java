@@ -37,7 +37,10 @@ public final class MapRoutes {
         map.gates().forEach(g -> interactions.add(nearby(world, doors, g.point())));
         map.wallShops().forEach(s -> interactions.add(nearby(world, doors, s.point())));
         map.objects().stream()
-                .filter(o -> o.kind() == MapObject.Kind.MYSTERY_BOX)
+                .filter(
+                        o ->
+                                o.kind() == MapObject.Kind.MYSTERY_BOX
+                                        || o.kind() == MapObject.Kind.PERK)
                 .forEach(o -> interactions.add(nearby(world, doors, o.point())));
         walk(
                 world,

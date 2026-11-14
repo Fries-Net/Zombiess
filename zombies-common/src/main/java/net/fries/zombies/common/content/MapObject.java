@@ -56,7 +56,8 @@ public record MapObject(
                     WALL_WEAPON,
                     AMMO,
                     HOLOGRAM,
-                    MYSTERY_BOX ->
+                    MYSTERY_BOX,
+                    PERK ->
                     true;
             default -> false;
         };

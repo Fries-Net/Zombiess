@@ -1,0 +1,12 @@
+schema-version: 1
+max-owned: 4
+base-weapon-slots: 3
+perks:
+  - {id: 'friesnet:perk/extra_health', type: JUGGERNOG, name: Juggernog, asset: 'friesnet:perk/juggernog', price: 2500, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 25, effects: {max-health: 40}}
+  - {id: 'friesnet:perk/speed', type: SPEED, name: Speed, asset: 'friesnet:perk/speed', price: 2000, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 20, effects: {movement-multiplier: 1.3}}
+  - {id: 'friesnet:perk/frozen_bullets', type: FROZEN_BULLETS, name: Frozen Bullets, asset: 'friesnet:perk/frozen_bullets', price: 2500, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 15, effects: {amplifier: 1, duration-ticks: 60, chance: 0.35}}
+  - {id: 'friesnet:perk/quick_revive', type: QUICK_REVIVE, name: Quick Revive, asset: 'friesnet:perk/quick_revive', price: 1500, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 3, weight: 20, effects: {revive-multiplier: 2, solo-delay-ticks: 100}}
+  - {id: 'friesnet:perk/speed_cola', type: SPEED_COLA, name: Speed Cola, asset: 'friesnet:perk/speed_cola', price: 3000, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 15, effects: {reload-multiplier: 2}}
+  - {id: 'friesnet:perk/mule_kick', type: MULE_KICK, name: Mule Kick, asset: 'friesnet:perk/mule_kick', price: 4000, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 10, effects: {extra-slots: 1}}
+  - {id: 'friesnet:perk/double_tap', type: DOUBLE_TAP, name: Double Tap, asset: 'friesnet:perk/double_tap', price: 2000, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 15, effects: {fire-rate-multiplier: 1.25, damage-multiplier: 1.2}}
+  - {id: 'friesnet:perk/wunderfizz', type: WUNDERFIZZ, name: Der Wunderfizz, asset: 'friesnet:perk/wunderfizz', price: 2500, enabled: true, min-round: 1, solo: true, team: true, purchase-limit: 100, weight: 0, effects: {}}

@@ -180,7 +180,16 @@ public final class EditorActions {
                     properties.put("price", Integer.toString(weapon.price()));
                     properties.put("ammo-price", Integer.toString(weapon.ammoPrice()));
                 }
-                case PERK -> properties.put("perk", "friesnet:perk/extra_health");
+                case PERK -> {
+                    properties.put("perk", "friesnet:perk/extra_health");
+                    properties.put(
+                            "price",
+                            Integer.toString(
+                                    service.catalog()
+                                            .perks()
+                                            .require("friesnet:perk/extra_health")
+                                            .price()));
+                }
                 case MYSTERY_BOX -> {
                     properties.put("box", "friesnet:box/default");
                     properties.put(

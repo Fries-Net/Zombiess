@@ -37,6 +37,7 @@ public final class LifeService {
         }
         var s = run.survivor(player.getUniqueId());
         s.down(run.tick, run.content.bleedoutTicks());
+        run.perks.down(player);
         player.setHealth(20);
         player.setWalkSpeed(0);
         player.setSprinting(false);
@@ -51,6 +52,12 @@ public final class LifeService {
     public void tick() {
         for (var s : run.players.values()) {
             var p = Bukkit.getPlayer(s.id());
+            if (s.selfRevive(run.tick) && p != null) {
+                run.perks.apply(p, false);
+                p.setHealth(10);
+                p.setNoDamageTicks(100);
+                broadcast(p.getName() + " consumed Quick Revive and returned!");
+            }
             if (s.bleed(run.tick) && p != null) {
                 p.setGameMode(GameMode.SPECTATOR);
                 p.teleport(MapWorlds.location(run.world, run.map.spectatorSpawn()));
@@ -89,9 +96,9 @@ public final class LifeService {
                 channel = new Channel(target.getUniqueId(), run.tick);
                 channels.put(s.id(), channel);
             }
-            if (run.tick - channel.started >= run.content.reviveTicks()
+            if (run.tick - channel.started >= run.perks.reviveTicks(s)
                     && s.revive(run.survivor(target.getUniqueId()))) {
-                target.setWalkSpeed(.2f);
+                run.perks.apply(target, false);
                 target.setHealth(10);
                 target.setNoDamageTicks(60);
                 channels.remove(s.id());
@@ -103,7 +110,12 @@ public final class LifeService {
                 broadcast(p.getName() + " revived " + target.getName());
             }
         }
-        if (run.players.values().stream().noneMatch(s -> s.life() == Survivor.Life.ALIVE))
+        if (run.players.values().stream()
+                .noneMatch(
+                        s ->
+                                s.life() == Survivor.Life.ALIVE
+                                        || s.life() == Survivor.Life.DOWNED
+                                                && s.perks().awaitingSoloRevive()))
             finish.accept(Outcome.LOSS);
     }
 
@@ -111,7 +123,8 @@ public final class LifeService {
         var c = channels.get(id);
         if (c == null) return "";
         return "Reviving "
-                + Math.min(100, (run.tick - c.started) * 100 / run.content.reviveTicks())
+                + Math.min(
+                        100, (run.tick - c.started) * 100 / run.perks.reviveTicks(run.survivor(id)))
                 + "% • keep sneaking";
     }
 
@@ -126,7 +139,7 @@ public final class LifeService {
             if (p == null) continue;
             s.respawn();
             p.setGameMode(GameMode.ADVENTURE);
-            p.setWalkSpeed(.2f);
+            run.perks.apply(p, false);
             p.setHealth(20);
             p.setNoDamageTicks(60);
             p.teleport(MapWorlds.location(run.world, run.map.playerSpawn(p.getUniqueId())));

@@ -968,6 +968,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         check(!zombies.matches().managed(p.getUniqueId()), "player released");
                         check(p.getGameMode() == GameMode.SURVIVAL, "original mode");
                         check(
+                                p.getAttribute(Attribute.MAX_HEALTH).getValue() == 20
+                                        && Math.abs(p.getWalkSpeed() - .2) < .001,
+                                "perk attributes and movement restored after cleanup/crash");
+                        check(
                                 p.getInventory().getItem(4) != null
                                         && p.getInventory().getItem(4).getType() == Material.EMERALD
                                         && p.getInventory().getItem(4).getAmount() == 7,
@@ -1008,6 +1012,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "frozen" -> {
                     var r = run();
+                    PaperPerkChecks.seedCrash(r, player("SurvivorOne"));
                     check(
                             r.session.snapshot().initialPlayerCount() == 2,
                             "disconnect does not rescale");
@@ -1070,7 +1075,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperEditorChecks.handle(step, zombies))
+                    if (!PaperPerkChecks.handle(step, zombies)
+                            && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");
                 }
             }

@@ -21,6 +21,7 @@ public final class Survivor {
     private final Map<NamespacedId, WeaponState> weapons = new LinkedHashMap<>();
     private Life life = Life.ALIVE;
     private final FireControl fireControl = new FireControl();
+    private final PerkLoadout perks = new PerkLoadout();
     private double fireRate = 1, reloadSpeed = 1, damageMultiplier = 1;
     private long bleedout;
     private int points, kills, headshots, revives, rounds;
@@ -86,6 +87,7 @@ public final class Survivor {
 
     public void leave() {
         life = Life.LEFT;
+        perks.clear();
         weapons.values().forEach(WeaponState::cancelReload);
     }
 
@@ -140,15 +142,35 @@ public final class Survivor {
     }
 
     public double fireRate() {
-        return fireRate;
+        return Math.min(
+                10,
+                fireRate
+                        * perks.strength(
+                                net.fries.zombies.common.content.Perks.Type.DOUBLE_TAP, 1));
     }
 
     public double reloadSpeed() {
-        return reloadSpeed;
+        return Math.min(
+                10,
+                reloadSpeed
+                        * perks.strength(
+                                net.fries.zombies.common.content.Perks.Type.SPEED_COLA, 1));
     }
 
     public double damageMultiplier() {
-        return damageMultiplier;
+        var tap = perks.get(net.fries.zombies.common.content.Perks.Type.DOUBLE_TAP);
+        return damageMultiplier * (tap == null ? 1 : tap.secondary());
+    }
+
+    public PerkLoadout perks() {
+        return perks;
+    }
+
+    public boolean selfRevive(long tick) {
+        if (life != Life.DOWNED || !perks.soloReady(tick)) return false;
+        life = Life.ALIVE;
+        perks.clear();
+        return true;
     }
 
     public void weaponModifiers(double fireRate, double reloadSpeed, double damageMultiplier) {

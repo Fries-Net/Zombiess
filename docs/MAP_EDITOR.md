@@ -76,8 +76,11 @@ entity inventories are copied as world files; the original folder is never used 
 Wall weapons and ammunition stations support `weapon`, `price` and `ammo-price` properties and
 room requirements. Prices default to the weapon definition when omitted. Holograms support
 `alignment` (`CENTER`, `LEFT`, `RIGHT`), `visibility` (`ALL`, `ALIVE`, `SPECTATORS`) and room rules.
-Perks, Pack-a-Punch, power, boss spawns, range targets and custom interactions are
+Pack-a-Punch, power, boss spawns, range targets and custom interactions are
 currently editable inactive placeholders, including explicit inactive labels during matches.
+Perk stations are active: select `perk` from the property menu and set `price` (omit it to follow
+the definition). `perks.yml` controls eligibility, prices, ownership limits, effects and Wunderfizz
+weights. Existing `friesnet:perk/extra_health` objects sell Juggernog. Room requirements are enforced.
 Mystery boxes are active: choose their `box` pool reference and optional `price` through the property
 menu. Stations with the same pool reference form relocation destinations; one is active per pool.
 Pool weights, rare rewards, opening/collection durations and relocation probability live in
