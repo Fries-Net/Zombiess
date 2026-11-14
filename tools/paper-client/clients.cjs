@@ -22,7 +22,15 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     const bot = bots.get(command.name);
     if (command.op === 'connect') return connect(command.name);
     if (!bot) throw new Error('Unknown client');
-    if (command.op === 'click') bot.clickWindow(command.slot, 0, 0).catch(e=>console.log('BOT_ERROR click '+e.message));
+    if (command.op === 'click') (async () => {
+      const deadline = Date.now() + 10000;
+      while (!bot.currentWindow || (command.title && !JSON.stringify(bot.currentWindow.title).includes(command.title))) {
+        if (Date.now() >= deadline) throw new Error('Expected inventory window did not arrive: ' + command.title);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      await bot.clickWindow(command.slot, 0, 0);
+      console.log('BOT_CLICKED ' + command.name + ' ' + command.slot);
+    })().catch(e=>console.log('BOT_ERROR click '+e.message));
     if (command.op === 'closewindow' && bot.currentWindow) bot.closeWindow(bot.currentWindow);
     if (command.op === 'useblock') {const block=bot.blockAt(new (require('vec3').Vec3)(command.x,command.y,command.z));if(!block)throw new Error('Block not loaded');bot.lookAt(block.position.offset(.5,.5,.5),true).then(()=>bot.activateBlock(block)).then(()=>console.log('BOT_USED_BLOCK '+command.name)).catch(e=>console.log('BOT_ERROR useblock '+e.message));}
     if (command.op === 'chat') bot.chat(command.text);
