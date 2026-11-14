@@ -120,7 +120,7 @@ public final class InteractionService {
                 var w = run.content.weapons().get(shop.weapon());
                 var owned = survivor.weapons().get(shop.weapon());
                 if (owned != null) {
-                    if (owned.reserve() == w.reserve()) {
+                    if (owned.reserve() == owned.definition().reserve()) {
                         message(p, "Reserve ammo is full");
                         return true;
                     }
@@ -153,6 +153,7 @@ public final class InteractionService {
                 return true;
             }
         if (run.perks.interact(p)) return true;
+        if (run.packAPunch.interact(p)) return true;
         return run.mysteryBoxes != null && run.mysteryBoxes.interact(p);
     }
 
@@ -251,6 +252,8 @@ public final class InteractionService {
             }
         String perk = run.perks.context(p);
         if (!perk.isEmpty()) return perk;
+        String upgrade = run.packAPunch.context(p);
+        if (!upgrade.isEmpty()) return upgrade;
         return run.mysteryBoxes == null ? "" : run.mysteryBoxes.context(p);
     }
 

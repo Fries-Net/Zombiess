@@ -14,7 +14,9 @@ public final class WeaponState {
     }
 
     private final UUID instanceId = UUID.randomUUID();
-    private final Weapon definition;
+    private Weapon definition;
+    private int upgradeLevel;
+    private long upgradedAt = -1;
     private int magazine;
     private int reserve;
     private final WeaponTiming timing = new WeaponTiming();
@@ -70,6 +72,33 @@ public final class WeaponState {
         if (reserve == definition.reserve()) return false;
         reserve = definition.reserve();
         return true;
+    }
+
+    /** Same owned identity and ammunition; upgrades never reset recovery or finish a reload. */
+    public boolean upgrade(
+            Survivor owner,
+            net.fries.zombies.common.content.WeaponUpgrades rules,
+            int expectedLevel,
+            int price,
+            long tick) {
+        var tier = rules.next(definition.id(), upgradeLevel);
+        if (price < 0 || price > 100000)
+            throw new IllegalArgumentException("Invalid upgrade price");
+        if (owner.life() != Survivor.Life.ALIVE
+                || owner.weapons().get(definition.id()) != this
+                || tier == null
+                || expectedLevel != upgradeLevel
+                || reloading()
+                || upgradedAt >= 0 && tick - upgradedAt < 10
+                || !owner.spend(price)) return false;
+        definition = tier.apply(definition);
+        upgradeLevel++;
+        upgradedAt = tick;
+        return true;
+    }
+
+    public int upgradeLevel() {
+        return upgradeLevel;
     }
 
     public UUID instanceId() {

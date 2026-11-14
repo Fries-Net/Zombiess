@@ -123,6 +123,7 @@ final class PaperEditorChecks {
                         s.draft.nodes("objects").size() == initialObjects + 15,
                         "all gameplay object kinds authored");
                 PaperPerkChecks.author(plugin, p);
+                PaperUpgradeChecks.author(plugin, p);
                 editor.execute(p, "select objects test_hologram".split(" "));
                 editor.execute(p, "set text Gold {gold} / round {round}".split(" "));
                 check(

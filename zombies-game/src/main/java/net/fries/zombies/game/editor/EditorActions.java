@@ -190,6 +190,10 @@ public final class EditorActions {
                                             .require("friesnet:perk/extra_health")
                                             .price()));
                 }
+                case PACK_A_PUNCH -> {
+                    properties.put("weapons", "*");
+                    properties.put("price", "-1");
+                }
                 case MYSTERY_BOX -> {
                     properties.put("box", "friesnet:box/default");
                     properties.put(
@@ -235,7 +239,9 @@ public final class EditorActions {
                             var props =
                                     new LinkedHashMap<String, Object>(
                                             (Map<String, Object>) s.selected().get("properties"));
-                            props.put(field, value);
+                            if (field.equals("price") && value.equals("default"))
+                                props.remove(field);
+                            else props.put(field, value);
                             s.selected().put("properties", props);
                         });
                 return;

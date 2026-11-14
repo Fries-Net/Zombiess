@@ -23,6 +23,8 @@ public final class MatchRun {
     public final MapTemplate map;
     public final MysteryPools mysteryPools;
     public final Perks perkRules;
+    public final WeaponUpgrades upgradeRules;
+    public net.fries.zombies.game.world.PackAPunchService packAPunch;
     public net.fries.zombies.game.world.PerkService perks;
     public net.fries.zombies.game.world.MysteryBoxService mysteryBoxes;
     public final MatchRules rules;
@@ -50,13 +52,15 @@ public final class MatchRun {
             Gameplay content,
             MapTemplate map,
             MysteryPools mysteryPools,
-            Perks perkRules) {
+            Perks perkRules,
+            WeaponUpgrades upgradeRules) {
         this.session = session;
         this.rules = rules;
         this.content = content;
         this.map = map;
         this.mysteryPools = mysteryPools;
         this.perkRules = perkRules;
+        this.upgradeRules = upgradeRules;
         points = new net.fries.zombies.common.gameplay.PointsLedger(content.scoring(), players);
     }
 
@@ -76,6 +80,7 @@ public final class MatchRun {
     public void dispose() {
         if (mysteryBoxes != null) mysteryBoxes.clear();
         if (perks != null) perks.clear();
+        if (packAPunch != null) packAPunch.clear();
         if (windows != null) windows.clear();
         if (powerups != null) powerups.clear();
         if (waves != null) waves.clear();

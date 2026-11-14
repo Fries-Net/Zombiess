@@ -153,3 +153,29 @@ Normal-client visual acceptance remains for labels, sounds, particles and sideba
 
 Next checkpoint after perk verification: Phase 3G on `feature/phase-3-pack-a-punch`, with validated
 weapon-specific tiers, in-place upgrades retaining instance identity/ammunition and editor stations.
+
+The completed perk checkpoint is `66c06fc652559c4e870546926f137d073dacc5bb`: **99 unit/H2 tests**
+and **118 real Paper stages** passed (`run/playtest-6a72b966/result.json`), including both crash
+recoveries. Push and PR CI passed build, PostgreSQL and Paper: run `43608566647`. PR #8 targets
+master and remains unmerged pending owner review.
+
+## Phase 3G — Pack-a-Punch
+
+`feature/phase-3-pack-a-punch` continues the perk history without duplicate commits. PR #9 targets
+master and depends on #8. Weapon-specific tiers and editor stations now perform in-place upgrades
+with configured costs, stats, capacities, sounds, tier assets and limits. Item names, lore and native
+glint provide pack-independent visuals. See [upgrade rules](PACK_A_PUNCH.md). Upgrades retain instance
+UUIDs, remaining ammo and shot recovery; new matches start with base weapons. The unit/H2 suite has
+**102 passing tests**. Final expanded Paper and CI results remain to be verified.
+
+## Proposed Phase 3H scope
+
+1. Apply a consistent hierarchy to sidebar, action bars, station prompts, holograms and purchase
+   feedback, with normal-client acceptance at different GUI scales and accessibility settings.
+2. Add a versioned asset manifest mapping existing weapon/perk/station IDs to models, sounds and
+   UI assets; validate missing references and provide useful native fallbacks.
+3. Integrate a supplied resource pack with version/hash identity, configurable delivery policy,
+   download feedback and explicit handling of declined/failed packs. Keep active matches pinned
+   to their content version. Production artwork and a pack builder remain separate deliverables.
+4. Extend the content registry for map-specific mobs and presentation, preserving the current
+   runtime boundaries. Network orchestration and the global case economy stay outside Phase 3.

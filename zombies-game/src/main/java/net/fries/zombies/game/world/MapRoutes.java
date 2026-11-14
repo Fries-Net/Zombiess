@@ -40,7 +40,8 @@ public final class MapRoutes {
                 .filter(
                         o ->
                                 o.kind() == MapObject.Kind.MYSTERY_BOX
-                                        || o.kind() == MapObject.Kind.PERK)
+                                        || o.kind() == MapObject.Kind.PERK
+                                        || o.kind() == MapObject.Kind.PACK_A_PUNCH)
                 .forEach(o -> interactions.add(nearby(world, doors, o.point())));
         walk(
                 world,

@@ -218,22 +218,34 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "window-jamb-entered" -> {
                     var r = run();
-                    var z = (Zombie) Bukkit.getEntity(jambZombie);
-                    check(
-                            z != null
+                    new org.bukkit.scheduler.BukkitRunnable() {
+                        int remaining = 100;
+
+                        public void run() {
+                            var z = (Zombie) Bukkit.getEntity(jambZombie);
+                            if (z != null
                                     && !r.windows.exterior(jambZombie)
                                     && r.map.playableBounds()
                                             .contains(
                                                     new net.fries.zombies.common.content.MapTemplate
-                                                            .Point(z.getX(), z.getY(), z.getZ())),
-                            "pushed-back zombie physically clears the jamb again: "
-                                    + (z == null
-                                            ? "missing"
-                                            : z.getLocation()
-                                                    + " exterior="
-                                                    + r.windows.exterior(jambZombie)));
-                    quiet = true;
-                    r.waves.pause(true);
+                                                            .Point(z.getX(), z.getY(), z.getZ()))) {
+                                quiet = true;
+                                r.waves.pause(true);
+                                cancel();
+                                getLogger().info("PLAYTEST_PASS window-jamb-entered");
+                            } else if (--remaining == 0) {
+                                cancel();
+                                getLogger()
+                                        .severe(
+                                                "PLAYTEST_FAIL window-jamb-entered native entry did"
+                                                    + " not clear: "
+                                                        + (z == null
+                                                                ? "missing"
+                                                                : z.getLocation()));
+                            }
+                        }
+                    }.runTaskTimer(this, 1, 1);
+                    return;
                 }
                 case "body" -> {
                     var r = run();
@@ -1013,6 +1025,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 case "frozen" -> {
                     var r = run();
                     PaperPerkChecks.seedCrash(r, player("SurvivorOne"));
+                    PaperUpgradeChecks.seedCrash(r, player("SurvivorOne"));
                     check(
                             r.session.snapshot().initialPlayerCount() == 2,
                             "disconnect does not rescale");
@@ -1075,7 +1088,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperPerkChecks.handle(step, zombies)
+                    if (!PaperUpgradeChecks.handle(step, zombies)
+                            && !PaperPerkChecks.handle(step, zombies)
                             && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");
                 }
