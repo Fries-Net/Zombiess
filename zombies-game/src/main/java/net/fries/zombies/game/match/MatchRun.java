@@ -21,6 +21,8 @@ public final class MatchRun {
     public final MatchSession session;
     public final Gameplay content;
     public final MapTemplate map;
+    public final MysteryPools mysteryPools;
+    public net.fries.zombies.game.world.MysteryBoxService mysteryBoxes;
     public final MatchRules rules;
     public final Map<UUID, Survivor> players = new LinkedHashMap<>();
     public World world;
@@ -40,11 +42,17 @@ public final class MatchRun {
     public net.fries.zombies.game.economy.PowerUpService powerups;
     public net.fries.zombies.game.world.WindowService windows;
 
-    public MatchRun(MatchSession session, MatchRules rules, Gameplay content, MapTemplate map) {
+    public MatchRun(
+            MatchSession session,
+            MatchRules rules,
+            Gameplay content,
+            MapTemplate map,
+            MysteryPools mysteryPools) {
         this.session = session;
         this.rules = rules;
         this.content = content;
         this.map = map;
+        this.mysteryPools = mysteryPools;
         points = new net.fries.zombies.common.gameplay.PointsLedger(content.scoring(), players);
     }
 
@@ -62,6 +70,7 @@ public final class MatchRun {
     }
 
     public void dispose() {
+        if (mysteryBoxes != null) mysteryBoxes.clear();
         if (windows != null) windows.clear();
         if (powerups != null) powerups.clear();
         if (waves != null) waves.clear();

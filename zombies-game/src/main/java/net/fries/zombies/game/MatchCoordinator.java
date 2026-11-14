@@ -247,6 +247,7 @@ public final class MatchCoordinator {
             if (!r.playing()) return;
             r.hud.tick();
             r.holograms.tick();
+            r.mysteryBoxes.tick();
             r.powerups.tick();
             checkpoint(r);
             events(r);
@@ -273,7 +274,7 @@ public final class MatchCoordinator {
         session.openLobby();
         queued.forEach(session::join);
         session.countdown();
-        run = new MatchRun(session, rules, catalog.gameplay(), map);
+        run = new MatchRun(session, rules, catalog.gameplay(), map, catalog.mysteryPools());
         run.countdownEnds = Instant.now().plus(rules.countdown());
         queued.clear();
         events(run);
@@ -374,6 +375,7 @@ public final class MatchCoordinator {
             r.interactions = new InteractionService(r);
             r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
+            r.mysteryBoxes = new net.fries.zombies.game.world.MysteryBoxService(r);
             r.holograms = new net.fries.zombies.game.ui.DynamicHolograms(plugin, r);
             r.hud = new MatchHud(r);
             r.powerups = new net.fries.zombies.game.economy.PowerUpService(r);

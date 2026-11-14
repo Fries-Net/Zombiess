@@ -1,12 +1,24 @@
-schema-version: 2
+schema-version: 3
 id: friesnet:map/training
-version: v2
+version: v3
+world-source: blueprint
+world-digest: none
+objects:
+  - id: training_box
+    kind: MYSTERY_BOX
+    point: {x: 3.5, y: 65, z: 7.5}
+    region: {x1: 3, y1: 64, z1: 8, x2: 3, y2: 64, z2: 8}
+    rooms: [spawn]
+    asset: friesnet:object/mystery_box
+    properties: {box: 'friesnet:box/default'}
 name: Foundry Training
 player-spawn: {x: -4.5, y: 64, z: 0.5}
 bounds: {x1: -16, y1: 62, z1: -16, x2: 16, y2: 72, z2: 16}
 playable-bounds: {x1: -14, y1: 64, z1: -9, x2: 14, y2: 72, z2: 9}
 initial-rooms: [spawn]
 blocks:
+  - box: {x1: 3, y1: 64, z1: 8, x2: 3, y2: 64, z2: 8}
+    material: CHEST
   - box: {x1: -15, y1: 63, z1: -15, x2: 15, y2: 63, z2: 15}
     material: POLISHED_ANDESITE
   - box: {x1: -15, y1: 64, z1: -15, x2: 15, y2: 68, z2: -15}

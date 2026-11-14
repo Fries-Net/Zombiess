@@ -68,7 +68,7 @@ public final class InteractionService {
                         }));
     }
 
-    private boolean near(Player p, MapTemplate.Point point, double radius) {
+    public boolean near(Player p, MapTemplate.Point point, double radius) {
         var at = MapWorlds.location(run.world, point);
         if (p.getWorld() != run.world || p.getEyeLocation().distanceSquared(at) > radius * radius)
             return false;
@@ -152,7 +152,7 @@ public final class InteractionService {
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
                 return true;
             }
-        return false;
+        return run.mysteryBoxes != null && run.mysteryBoxes.interact(p);
     }
 
     public void tick() {
@@ -248,7 +248,7 @@ public final class InteractionService {
                         + (owned || s.ammoOnly() ? " ammo • " + ammoPrice(s) : " • " + price(s))
                         + " gold";
             }
-        return "";
+        return run.mysteryBoxes == null ? "" : run.mysteryBoxes.context(p);
     }
 
     public boolean open(String gate) {
