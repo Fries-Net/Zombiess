@@ -37,3 +37,47 @@ Map schema 2 defines oriented windows with individually owned boards, exterior s
 Continuous sneak within range and line of sight restores one missing board at a time. Moving away, downing, reviving, occupied geometry or the configured active-attack restriction interrupts repairs. Board identity and round caps prevent repeated repair farming. Crack stages, wood particles/sounds and action-bar progress expose actual transitions. Match cleanup discards the world; repairs never rebuild an entire region.
 
 Verification: **82 automated tests pass**, including ten new definition/state tests. The final two-client Paper run passed **63 assertion stages**, including intact-window hitscan, progressive breaking, simultaneous attackers entering, occupied-space repair rejection, repair interruption, reward caps, door activation and repeat-match restoration (`run/playtest-350eb9e2/result.json`). The editor integration follows in stage D.
+
+## D. Visual map editor
+
+Recovery on 14 November 2026 confirmed `feature/phase-3-map-editor` at `3c648ac` as the latest
+development head. Remote master was `7f8fd9a`; the economy branch's `50ff136` merged windows
+there, while this editor branch already reached the original window commits directly. No replay,
+reset or duplicate cherry-pick was needed. Nineteen interrupted working-tree files were preserved
+in an ignored recovery archive before auditing and committing the implementation. There were no
+stashes. The original master integration remains an explicit owner decision.
+
+The editor now exposes commands, identity-checked inventory menus, configurable region tools,
+point placement, window board selection, particle previews, property menus, room starting states,
+undo/redo and destructive-action confirmation. Authors use isolated Creative leases and durable
+equipment backups. The editor creates/duplicates maps, imports unloaded world folders, exports
+metadata/worlds, autosaves terrain and drafts, validates physical geometry/walking routes, publishes
+immutable versions and checks historical versions out as drafts. Publication during a match changes
+only future matches. Editor-created weapon/ammo stations honor weapon choice, prices and room
+requirements. Holograms honor text, alignment, audience and room rules.
+
+Verification: **88 unit/H2 tests, zero failures/skips**. The combined Paper 1.21.11 build 132
+two-client suite passed **90 stages** (`run/playtest-c06bbd8c/result.json`), including all A–C checks,
+victory/defeat, repeated worlds, both match and editor forced-process recovery, native menu/tool
+input, real imported terrain, chest inventories/block states, untouched source-world checksums,
+publication/version pinning, configured door/weapon/ammo purchases, autosave and duplication.
+An additional **31-stage editor suite** passed historical-version checkout and public-pointer
+isolation (`run/playtest-7ca1b5ef/result.json`). GitHub Actions for `b002da6` passed all jobs:
+[build, PostgreSQL and Paper](https://github.com/Fries-Net/Zombiess/actions/runs/43576651563).
+Subsequent commits must verify their own CI result.
+
+One combined local run (`run/playtest-f086235c`) timed out waiting for automated battle victory
+after its explicit combat assertions passed. The diagnostic rerun completed victory and the whole
+suite. No runtime cause was reproduced or claimed fixed; battle diagnostics remain in the separate
+test plugin so recurrence includes enemy/weapon state. Logs from both runs were retained.
+
+Manual rendered-client acceptance remains for particle/menu readability, hologram audience and
+alignment, WorldEdit coexistence and representative production-map navigation. Route checks are
+bounded and conservative ordinary walking checks. Optional schematic placement currently uses an
+installed WorldEdit/FAWE tool in the draft; no bundled schematic parser is claimed. Metadata undo
+does not undo arbitrary terrain. See [authoring instructions and limits](MAP_EDITOR.md).
+
+Next gameplay checkpoint: **Phase 3E** — add validated weighted mystery-box pools, then connect
+the existing `MYSTERY_BOX` objects to a server-tick purchase/animation/collection service with
+refunds on cancellation and inventory-capacity checks. Perks, Pack-a-Punch, power/boss/range/custom
+objects remain explicitly inactive editor placeholders until their respective runtime checkpoints.

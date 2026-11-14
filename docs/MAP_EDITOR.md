@@ -62,3 +62,30 @@ Drafts and terrain autosave every two minutes of server ticks, briefly unloading
 isolated world. Save explicitly before stopping. Exit and object deletion show confirmation menus;
 `exit confirm` explicitly discards changes since the last completed save. Undo covers metadata only.
 Menus identify unimplemented gameplay types as **INACTIVE placeholders**.
+The room menu toggles which door-defined rooms start unlocked. The equivalent command is
+`room <id> locked|unlocked`; a locked room needs a door whose `unlocks-room` matches its ID.
+`drafts` lists recoverable saved drafts as clickable entry links; the main menu also exposes this
+list. Version checkout preserves the previous draft under `maps/drafts/history/` and changes only
+the editable draft. The public version changes only after an explicit publish.
+
+Exported folders include their complete gameplay metadata. Importing an exported folder restores
+that metadata automatically; the template argument is optional and defaults to training for a raw
+world. Import refuses a world whose native session lock is held. Structures, block states and tile
+entity inventories are copied as world files; the original folder is never used as an editing lease.
+
+Wall weapons and ammunition stations support `weapon`, `price` and `ammo-price` properties and
+room requirements. Prices default to the weapon definition when omitted. Holograms support
+`alignment` (`CENTER`, `LEFT`, `RIGHT`), `visibility` (`ALL`, `ALIVE`, `SPECTATORS`) and room rules.
+Mystery boxes, perks, Pack-a-Punch, power, boss spawns, range targets and custom interactions are
+currently editable inactive placeholders, including explicit inactive labels during matches.
+
+Publication performs conservative two-block walking checks for exterior routes, broken-window
+passages, entries/player spawns and nearby standing space for doors/stations, treating doors as
+eventually opened. The shared budget is 65,536 visited cells; very large maps may need smaller
+bounds. This checks ordinary walking geometry; native mob behavior still needs a gameplay test
+for stairs, partial blocks, water or custom navigation. Region objects supply normal spawns on maps
+without physical windows; maps with windows use their per-window exterior spawn regions.
+
+Manual visual acceptance remains: use a normal Java client to check particle visibility, tool/menu
+readability, hologram alignment/visibility and WorldEdit interaction on a representative imported
+production map. Protocol tests exercise actual menu clicks and tool packets but do not render pixels.

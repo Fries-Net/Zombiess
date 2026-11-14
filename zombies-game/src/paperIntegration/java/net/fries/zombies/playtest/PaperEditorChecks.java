@@ -13,6 +13,7 @@ import java.util.*;
 final class PaperEditorChecks {
     private static String publishedVersion;
     private static int initialObjects;
+    private static String sourceDigest;
 
     static boolean handle(String step, ZombiesPlugin plugin) throws Exception {
         var p = Bukkit.getPlayerExact("SurvivorOne");
@@ -28,14 +29,37 @@ final class PaperEditorChecks {
                                             "import_fixture",
                                             plugin.matches().catalog().maps().get("training"));
                     world.getBlockAt(8, 64, 7).setType(Material.GOLD_BLOCK, false);
+                    var chestBlock = world.getBlockAt(9, 64, 7);
+                    chestBlock.setType(Material.CHEST, false);
+                    var facing = (org.bukkit.block.data.Directional) chestBlock.getBlockData();
+                    facing.setFacing(org.bukkit.block.BlockFace.EAST);
+                    chestBlock.setBlockData(facing, false);
+                    ((org.bukkit.block.Chest) chestBlock.getState())
+                            .getBlockInventory()
+                            .setItem(0, new org.bukkit.inventory.ItemStack(Material.DIAMOND, 3));
                     world.save();
                     check(Bukkit.unloadWorld(world, true), "source unloaded before import");
+                    sourceDigest =
+                            net.fries.zombies.persistence.WorldSnapshot.digest(
+                                    Bukkit.getWorldContainer().toPath().resolve("import_fixture"));
                 }
             }
             case "editor-opened" -> {
                 var s = editor.require(p);
                 check(s.world == p.getWorld() && !s.busy, "isolated editor admission");
                 initialObjects = s.draft.nodes("objects").size();
+                editor.execute(p, "room workshop unlocked".split(" "));
+                check(
+                        ContentYaml.parse(s.draft.bytes())
+                                .strings("initial-rooms")
+                                .contains("workshop"),
+                        "initial room unlocked through authoring");
+                editor.execute(p, "room workshop locked".split(" "));
+                check(
+                        !ContentYaml.parse(s.draft.bytes())
+                                .strings("initial-rooms")
+                                .contains("workshop"),
+                        "room restored to door-dependent access");
                 check(
                         editor.suggest(p, new String[] {"en"}).contains("enter"),
                         "editor command completion");
@@ -50,6 +74,19 @@ final class PaperEditorChecks {
                         s.world.getBlockAt(8, 64, 7).getType() == Material.GOLD_BLOCK,
                         "imported real world geometry");
                 check(p.getGameMode() == GameMode.CREATIVE, "creative building");
+                check(
+                        ((org.bukkit.block.Chest) s.world.getBlockAt(9, 64, 7).getState())
+                                        .getBlockInventory()
+                                        .getItem(0)
+                                        .getAmount()
+                                == 3,
+                        "imported tile entity inventory");
+                check(
+                        ((org.bukkit.block.data.Directional)
+                                                s.world.getBlockAt(9, 64, 7).getBlockData())
+                                        .getFacing()
+                                == org.bukkit.block.BlockFace.EAST,
+                        "imported block state");
                 check(p.getInventory().getItem(4) == null, "original equipment safely captured");
             }
             case "editor-menu-created" -> {
@@ -93,6 +130,21 @@ final class PaperEditorChecks {
                         s.draft.node("objects", "test_hologram") != null,
                         "deletion waits for confirmation");
                 p.closeInventory();
+                editor.execute(p, "select objects test_wall_weapon".split(" "));
+                editor.execute(p, "set weapon friesnet:weapon/mac10".split(" "));
+                editor.execute(p, "set price 123".split(" "));
+                editor.execute(p, "set ammo-price 17".split(" "));
+                editor.execute(p, "set rooms workshop".split(" "));
+                p.teleport(new Location(s.world, -10.5, 64, 4.5));
+                editor.execute(p, "point".split(" "));
+                editor.execute(p, "select objects test_ammo".split(" "));
+                editor.execute(p, "set weapon friesnet:weapon/mac10".split(" "));
+                editor.execute(p, "set ammo-price 11".split(" "));
+                editor.execute(p, "set rooms workshop".split(" "));
+                p.teleport(new Location(s.world, -1.5, 64, 5.5));
+                editor.execute(p, "point".split(" "));
+                editor.execute(p, "select gates workshop".split(" "));
+                editor.execute(p, "set price 71".split(" "));
                 s.world.getBlockAt(8, 64, 7).setType(Material.DIAMOND_BLOCK, false);
                 editor.execute(p, "select windows north".split(" "));
                 p.teleport(new Location(s.world, -4.5, 64, -8.5));
@@ -114,6 +166,25 @@ final class PaperEditorChecks {
                 var s = editor.require(p);
                 s.draft.undo();
                 s.draft.undo();
+                editor.validate(s);
+                // Both points remain safe, but a sealed approach must block publication.
+                var wall = new ArrayList<org.bukkit.block.Block>();
+                for (int x = -6; x <= -4; x++)
+                    for (int z = -12; z <= -11; z++)
+                        for (int y = 64; y <= 66; y++) {
+                            if (x == -5 && z == -11) continue;
+                            var b = s.world.getBlockAt(x, y, z);
+                            wall.add(b);
+                            b.setType(Material.BEDROCK, false);
+                        }
+                boolean rejected = false;
+                try {
+                    editor.validate(s);
+                } catch (IllegalArgumentException invalid) {
+                    rejected = true;
+                }
+                check(rejected, "blocked exterior route prevents publication");
+                wall.forEach(b -> b.setType(Material.AIR, false));
                 editor.validate(s);
             }
             case "editor-incomplete" -> {
@@ -141,6 +212,13 @@ final class PaperEditorChecks {
                 check(
                         s.world.getBlockAt(8, 64, 7).getType() == Material.DIAMOND_BLOCK,
                         "terrain edits survived save");
+                check(
+                        sourceDigest.equals(
+                                net.fries.zombies.persistence.WorldSnapshot.digest(
+                                        Bukkit.getWorldContainer()
+                                                .toPath()
+                                                .resolve("import_fixture"))),
+                        "original imported world remains byte-for-byte unchanged");
             }
             case "editor-closed" -> {
                 check(!editor.contains(p.getUniqueId()), "session closed");
@@ -162,6 +240,41 @@ final class PaperEditorChecks {
                 editor.execute(p, "open authored".split(" "));
                 check(!editor.contains(p.getUniqueId()), "active match admission rejected");
                 check(r.combat.held(p) != null, "active match gear preserved");
+            }
+            case "editor-runtime" -> {
+                var r = plugin.matches().current();
+                var survivor = r.survivor(p.getUniqueId());
+                var weaponId = new net.fries.zombies.common.NamespacedId("friesnet:weapon/mac10");
+                p.teleport(new Location(r.world, -10.5, 64, 4.5));
+                int before = survivor.points();
+                r.interactions.interact(p);
+                check(
+                        survivor.points() == before && !survivor.weapons().containsKey(weaponId),
+                        "published room restriction prevents purchase without charging");
+                p.teleport(new Location(r.world, 5, 64, .5));
+                r.interactions.interact(p);
+                check(
+                        r.interactions.roomUnlocked("workshop") && survivor.points() == before - 71,
+                        "edited door opens room at configured price");
+                check(
+                        r.world.getBlockAt(6, 64, 0).getType() == Material.AIR,
+                        "published physical door removed");
+                p.teleport(new Location(r.world, -10.5, 64, 4.5));
+                r.interactions.interact(p);
+                var weapon = survivor.weapons().get(weaponId);
+                check(
+                        weapon != null && survivor.points() == before - 71 - 123,
+                        "published wall weapon sells selected weapon at selected price");
+                weapon.shoot(r.tick);
+                weapon.reload(r.tick);
+                weapon.tick(r.tick + 1000);
+                p.teleport(new Location(r.world, -1.5, 64, 5.5));
+                r.interactions.interact(p);
+                check(
+                        survivor.points() == before - 71 - 123 - 11
+                                && weapon.reserve() == r.content.weapons().get(weaponId).reserve(),
+                        "published ammunition station refills at configured price");
+                check(survivor.weapons().get(weaponId) == weapon, "ammo preserves weapon instance");
             }
             case "editor-concurrent" -> {
                 var author = Bukkit.getPlayerExact("SurvivorTwo");
@@ -211,6 +324,107 @@ final class PaperEditorChecks {
                                 && r.playing()
                                 && r.world.getBlockAt(8, 64, 7).getType() == Material.EMERALD_BLOCK,
                         "next match loaded new immutable imported geometry");
+            }
+            case "editor-created" -> {
+                var s = editor.require(p);
+                check(
+                        s.map.equals("created_fixture") && s.world == p.getWorld(),
+                        "create enters fresh isolated draft");
+                check(
+                        !plugin.matches().catalog().maps().containsKey(s.map),
+                        "create does not publish");
+                editor.execute(p, "create created_fixture".split(" "));
+                check(
+                        editor.require(p) == s,
+                        "create refuses overwrite without replacing active session");
+                editor.execute(p, new String[] {"exit"});
+                check(
+                        editor.contains(p.getUniqueId()),
+                        "exit requires explicit discard confirmation");
+            }
+            case "editor-duplicate" -> {
+                var s = editor.require(p);
+                check(s.map.equals("duplicate_fixture"), "duplicate opens new draft");
+                check(
+                        ContentYaml.parse(s.draft.bytes())
+                                .text("id")
+                                .equals("friesnet:map/duplicate_fixture"),
+                        "duplicate has independent identity");
+                check(
+                        s.world.getBlockAt(8, 64, 7).getType() == Material.EMERALD_BLOCK,
+                        "duplicate retains source geometry");
+                s.world.getBlockAt(8, 64, 7).setType(Material.REDSTONE_BLOCK, false);
+                s.savedAt = -2400;
+            }
+            case "editor-autosaved" -> {
+                var s = editor.require(p);
+                check(!s.busy && s.world == p.getWorld(), "autosave restored author");
+                var path =
+                        plugin.getDataFolder()
+                                .toPath()
+                                .resolve("maps/drafts/duplicate_fixture.yml");
+                check(
+                        !ContentYaml.parse(ContentYaml.readBytes(path))
+                                .text("world-source")
+                                .equals("blueprint"),
+                        "autosave forced recoverable world snapshot");
+            }
+            case "editor-draft-recovered" -> {
+                var s = editor.require(p);
+                check(
+                        s.world.getBlockAt(8, 64, 7).getType() == Material.REDSTONE_BLOCK,
+                        "autosaved terrain and draft survived forced process termination");
+            }
+            case "editor-roundtrip" -> {
+                var s = editor.require(p);
+                check(
+                        s.world.getBlockAt(8, 64, 7).getType() == Material.DIAMOND_BLOCK,
+                        "export/import geometry roundtrip");
+                check(
+                        s.draft.node("objects", "test_wall_weapon").get("properties")
+                                        instanceof Map<?, ?> props
+                                && props.get("price").equals("123"),
+                        "export/import metadata roundtrip");
+            }
+            case "editor-history-open" -> {
+                try (var files =
+                        java.nio.file.Files.list(
+                                plugin.getDataFolder()
+                                        .toPath()
+                                        .resolve("maps/published/authored"))) {
+                    var versions =
+                            files.filter(f -> f.getFileName().toString().endsWith(".yml"))
+                                    .sorted(
+                                            Comparator.comparingLong(
+                                                    f -> f.toFile().lastModified()))
+                                    .toList();
+                    check(versions.size() >= 2, "immutable publication history retained");
+                    editor.checkout(
+                            p,
+                            "authored",
+                            versions.getFirst().getFileName().toString().replace(".yml", ""));
+                }
+            }
+            case "editor-history-restored" -> {
+                var s = editor.require(p);
+                check(
+                        s.world.getBlockAt(8, 64, 7).getType() == Material.DIAMOND_BLOCK,
+                        "older immutable geometry checked out as editable draft");
+                check(
+                        plugin.matches()
+                                .catalog()
+                                .maps()
+                                .get("authored")
+                                .worldSource()
+                                .equals(
+                                        ContentYaml.parse(
+                                                        ContentYaml.readBytes(
+                                                                plugin.getDataFolder()
+                                                                        .toPath()
+                                                                        .resolve(
+                                                                                "maps/authored.yml")))
+                                                .text("world-source")),
+                        "history checkout does not change published pointer");
             }
             default -> {
                 return false;

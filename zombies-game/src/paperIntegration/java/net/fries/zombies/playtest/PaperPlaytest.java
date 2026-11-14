@@ -32,6 +32,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     private final Map<String, List<Long>> shotTicks = new HashMap<>();
     private final Map<String, Long> observedShots = new HashMap<>();
     private boolean trackingShots;
+    private boolean battleDiagnostics;
     private long switchDeadline;
     private List<Zombie> piercingTargets;
     private Item powerup;
@@ -77,6 +78,62 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         () -> {
                             var r = zombies.matches().current();
                             if (quiet && r != null && r.waves != null) r.waves.pause(true);
+                            if (battleDiagnostics
+                                    && r != null
+                                    && r.playing()
+                                    && r.tick % 200 == 0) {
+                                getLogger()
+                                        .info(
+                                                "PLAYTEST_BATTLE round="
+                                                        + r.waves.round()
+                                                        + " remaining="
+                                                        + r.waves.remaining()
+                                                        + " enemies="
+                                                        + r
+                                                                .world
+                                                                .getEntitiesByClass(Zombie.class)
+                                                                .stream()
+                                                                .filter(
+                                                                        z ->
+                                                                                r.waves.contains(
+                                                                                        z
+                                                                                                .getUniqueId()))
+                                                                .map(
+                                                                        z ->
+                                                                                z.getLocation()
+                                                                                                .toVector()
+                                                                                        + " hp="
+                                                                                        + z
+                                                                                                .getHealth()
+                                                                                        + " ai="
+                                                                                        + z.hasAI()
+                                                                                        + " exterior="
+                                                                                        + r.windows
+                                                                                                .exterior(
+                                                                                                        z
+                                                                                                                .getUniqueId()))
+                                                                .toList());
+                                for (var id : r.players.keySet()) {
+                                    var p = Bukkit.getPlayer(id);
+                                    var w = p == null ? null : r.combat.held(p);
+                                    getLogger()
+                                            .info(
+                                                    "PLAYTEST_BATTLE player="
+                                                            + id
+                                                            + " life="
+                                                            + r.survivor(id).life()
+                                                            + " weapon="
+                                                            + (w == null
+                                                                    ? "none"
+                                                                    : w.definition().name()
+                                                                            + " shots="
+                                                                            + w.shotsFired()
+                                                                            + " ammo="
+                                                                            + w.magazine()
+                                                                            + "/"
+                                                                            + w.reserve()));
+                                }
+                            }
                             if (trackingShots && r != null && r.combat != null)
                                 for (String name : List.of("SurvivorOne", "SurvivorTwo")) {
                                     var p = getServer().getPlayerExact(name);
@@ -817,6 +874,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 "owned sidebar");
                 }
                 case "battle" -> {
+                    battleDiagnostics = true;
                     var r = run();
                     for (var z : r.world.getEntitiesByClass(Zombie.class))
                         if (r.waves.contains(z.getUniqueId())) {
