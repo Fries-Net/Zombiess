@@ -42,6 +42,35 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
         zombies = (ZombiesPlugin) getServer().getPluginManager().getPlugin("FriesNetZombies");
         registerCommand("fnztest", this);
         getServer()
+                .getPluginManager()
+                .registerEvents(
+                        new org.bukkit.event.Listener() {
+                            @org.bukkit.event.EventHandler(
+                                    priority = org.bukkit.event.EventPriority.MONITOR)
+                            public void editorTool(org.bukkit.event.player.PlayerInteractEvent e) {
+                                var session =
+                                        zombies.matches()
+                                                .editor()
+                                                .session(e.getPlayer().getUniqueId());
+                                if (session != null)
+                                    getLogger()
+                                            .info(
+                                                    "PLAYTEST_EDITOR_INPUT action="
+                                                            + e.getAction()
+                                                            + " hand="
+                                                            + e.getHand()
+                                                            + " item="
+                                                            + (e.getItem() == null
+                                                                    ? "none"
+                                                                    : e.getItem().getType())
+                                                            + " block="
+                                                            + e.getClickedBlock()
+                                                            + " selected="
+                                                            + session.selectedId);
+                            }
+                        },
+                        this);
+        getServer()
                 .getScheduler()
                 .runTaskTimer(
                         this,
@@ -923,7 +952,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     return;
                 }
                 case "status" -> getLogger().info("PLAYTEST_STATUS " + zombies.matches().status());
-                default -> throw new IllegalArgumentException("Unknown test step");
+                default -> {
+                    if (!PaperEditorChecks.handle(step, zombies))
+                        throw new IllegalArgumentException("Unknown test step");
+                }
             }
             getLogger().info("PLAYTEST_PASS " + step);
         } catch (Throwable e) {

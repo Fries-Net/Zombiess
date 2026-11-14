@@ -22,6 +22,9 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     const bot = bots.get(command.name);
     if (command.op === 'connect') return connect(command.name);
     if (!bot) throw new Error('Unknown client');
+    if (command.op === 'click') bot.clickWindow(command.slot, 0, 0).catch(e=>console.log('BOT_ERROR click '+e.message));
+    if (command.op === 'closewindow' && bot.currentWindow) bot.closeWindow(bot.currentWindow);
+    if (command.op === 'useblock') {const block=bot.blockAt(new (require('vec3').Vec3)(command.x,command.y,command.z));if(!block)throw new Error('Block not loaded');bot.lookAt(block.position.offset(.5,.5,.5),true).then(()=>bot.activateBlock(block)).then(()=>console.log('BOT_USED_BLOCK '+command.name)).catch(e=>console.log('BOT_ERROR useblock '+e.message));}
     if (command.op === 'chat') bot.chat(command.text);
     if (command.op === 'swap') bot._client.write('block_dig', {status: 6, location: {x: 0, y: 0, z: 0}, face: 0, sequence: 0});
     if (command.op === 'slot') bot.setQuickBarSlot(command.slot);
