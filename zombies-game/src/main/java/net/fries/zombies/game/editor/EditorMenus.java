@@ -50,6 +50,15 @@ final class EditorMenus implements Listener {
         var s = service.session(p.getUniqueId());
         var menu = new Menu(p, s == null ? "Zombies • Map editor" : "Draft • " + s.map);
         if (s == null) {
+            button(
+                    menu,
+                    53,
+                    Material.WRITABLE_BOOK,
+                    "Recover saved drafts",
+                    () -> {
+                        p.closeInventory();
+                        service.drafts(p);
+                    });
             int slot = 0;
             for (var map : new TreeSet<>(service.catalog().maps().keySet())) {
                 String selected = map;
@@ -418,7 +427,7 @@ final class EditorMenus implements Listener {
         message(
                 p,
                 "Exit discards unsaved changes. Confirm in the menu or /zombies editor exit"
-                    + " confirm");
+                        + " confirm");
     }
 
     @EventHandler

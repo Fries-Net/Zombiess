@@ -57,6 +57,10 @@ public final class EditorService {
                 menus.open(player);
                 return;
             }
+            if (args[0].equals("drafts")) {
+                drafts(player);
+                return;
+            }
             if (Set.of("open", "enter").contains(args[0]) && args.length == 2) {
                 open(player, args[1]);
                 return;
@@ -187,6 +191,55 @@ public final class EditorService {
                                         }));
     }
 
+    public void drafts(Player p) {
+        disk.submit(
+                        () -> {
+                            Path directory = data.resolve("maps/drafts");
+                            if (!Files.isDirectory(directory)) return List.<String>of();
+                            try (var files = Files.list(directory)) {
+                                return files.filter(
+                                                f ->
+                                                        f.getFileName()
+                                                                .toString()
+                                                                .matches("[a-z0-9_-]{1,32}\\.yml"))
+                                        .limit(512)
+                                        .map(f -> f.getFileName().toString().replace(".yml", ""))
+                                        .sorted()
+                                        .toList();
+                            }
+                        })
+                .whenComplete(
+                        (names, error) ->
+                                plugin.onServer(
+                                        () -> {
+                                            if (!p.isOnline()) return;
+                                            if (error != null) {
+                                                message(
+                                                        p,
+                                                        "Could not list saved drafts: "
+                                                                + cause(error));
+                                                return;
+                                            }
+                                            if (names.isEmpty()) message(p, "No saved drafts yet");
+                                            else
+                                                for (String name : names)
+                                                    p.sendMessage(
+                                                            Component.text(
+                                                                            "[Enter saved draft] "
+                                                                                    + name)
+                                                                    .clickEvent(
+                                                                            net.kyori.adventure.text
+                                                                                    .event
+                                                                                    .ClickEvent
+                                                                                    .runCommand(
+                                                                                            "/zombies"
+                                                                                                + " editor"
+                                                                                                + " enter"
+                                                                                                + " "
+                                                                                                    + name)));
+                                        }));
+    }
+
     public Collection<String> suggest(Player p, String[] args) {
         String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
         Collection<String> choices = List.of();
@@ -208,6 +261,7 @@ public final class EditorService {
                             "import",
                             "export",
                             "versions",
+                            "drafts",
                             "checkout",
                             "add",
                             "select",
