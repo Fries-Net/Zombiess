@@ -115,6 +115,20 @@ priority is now preserved, and the complete run passed after the fix. The separa
 Verify that branch's latest Actions run before release. Normal-client visual review of the opening
 preview and production-map station spacing remains alongside the editor visual checklist.
 
+Subsequent regression hardening identified two distinct failures. A zombie's centre could enter the
+playable bounds before its body cleared a window, losing entry guidance and becoming stuck near
+the jamb. Guidance now waits for body clearance, aims beyond native waypoint arrival tolerance in
+clear interior space, and reacquires nearby window-owned zombies pushed outside again. Movement
+remains native pathfinding. A four-orientation domain test and a real pushed-back-jamb regression
+were added; the editor branch passed **97 Paper stages** (`.tmp/editor-ci/run/playtest-e3dce700/result.json`).
+The combined unit/H2 suite now contains **94 passing tests**.
+
+Archived CI server logs also showed the idle control player being killed by naturally spawned
+slimes in the flat hub during the other player's editing session. This was distinct from durable
+restoration: the test server now disables ambient monster spawning, while match zombies still spawn
+through the production service. Test clients await windows, teleport state and restoration for both
+participants, and original equipment is checked before as well as after the editor crash.
+
 Next exact implementation step: **Phase 3F** — introduce validated perk definitions and per-survivor
 perk ownership/caps, then connect the existing `PERK` stations to damage, movement, reload, revival
 and weapon-slot lifecycle services. Perks, Pack-a-Punch, power/boss/range/custom gameplay remain
