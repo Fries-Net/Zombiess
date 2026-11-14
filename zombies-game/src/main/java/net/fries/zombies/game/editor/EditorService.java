@@ -650,10 +650,10 @@ public final class EditorService {
                                 if (maps.size() > 32)
                                     throw new IllegalArgumentException("At most 32 published maps");
                                 candidate = new ContentCatalog(current.gameplay(), maps);
-                                DurableFiles.replace(
-                                        data.resolve(
-                                                "maps/published/" + s.map + "/" + token + ".yml"),
-                                        bytes);
+                                Path deployed = data.resolve("maps/" + s.map + ".yml");
+                                if (Files.exists(deployed))
+                                    retainVersion(s.map, ContentYaml.readBytes(deployed));
+                                retainVersion(s.map, bytes);
                             }
                             DurableFiles.replace(
                                     data.resolve("maps/drafts/" + s.map + ".yml"), bytes);
@@ -724,6 +724,15 @@ public final class EditorService {
     }
 
     private record Saved(byte[] bytes, ContentCatalog catalog) {}
+
+    private void retainVersion(String map, byte[] bytes) throws Exception {
+        String key =
+                HexFormat.of()
+                        .formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes))
+                        .substring(0, 32);
+        Path version = data.resolve("maps/published/" + map + "/" + key + ".yml");
+        if (!Files.exists(version)) DurableFiles.replace(version, bytes);
+    }
 
     public void validate(EditorSession s) {
         var map = s.draft.validate(catalog().gameplay());

@@ -265,6 +265,10 @@ public record MapTemplate(
                         : r.nodes("windows").stream().map(WindowDefinition::load).toList();
         if (windows.size() > 64) throw new IllegalArgumentException("Too many windows");
         var initial = schema == 1 ? Set.of("spawn") : Set.copyOf(r.strings("initial-rooms"));
+        if (initial.size() > 64
+                || initial.stream().anyMatch(room -> !room.matches("[a-z0-9_-]{1,32}"))
+                || gates.stream().anyMatch(g -> !g.unlocksRoom().matches("[a-z0-9_-]{1,32}")))
+            throw new IllegalArgumentException("Invalid room identity");
         var rooms = new HashSet<>(initial);
         gates.forEach(g -> rooms.add(g.unlocksRoom()));
         var windowIds = new HashSet<String>();
@@ -312,6 +316,10 @@ public record MapTemplate(
         for (var object : map.objects) {
             if (!objectIds.add(object.id()) || !rooms.containsAll(object.rooms()))
                 throw new IllegalArgumentException("Invalid object identity or room reference");
+            if (object.kind() == MapObject.Kind.PLAYER_SPAWN
+                    && !initial.containsAll(object.rooms()))
+                throw new IllegalArgumentException(
+                        "Player spawn requires a locked room: " + object.id());
             map.requireInside(object.point());
             map.requireInside(object.region());
             if ((object.kind() == MapObject.Kind.WALL_WEAPON
