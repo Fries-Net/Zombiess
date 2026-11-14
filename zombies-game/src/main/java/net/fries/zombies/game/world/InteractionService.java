@@ -68,7 +68,7 @@ public final class InteractionService {
                         }));
     }
 
-    private boolean near(Player p, MapTemplate.Point point, double radius) {
+    public boolean near(Player p, MapTemplate.Point point, double radius) {
         var at = MapWorlds.location(run.world, point);
         if (p.getWorld() != run.world || p.getEyeLocation().distanceSquared(at) > radius * radius)
             return false;
@@ -96,6 +96,7 @@ public final class InteractionService {
                     repairs.put(p.getUniqueId(), new Repair(b.id(), run.tick));
                     return true;
                 }
+        if (run.mysteryBoxes != null && run.mysteryBoxes.interact(p)) return true;
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5)) {
                 if (!survivor.spend(g.price())) {

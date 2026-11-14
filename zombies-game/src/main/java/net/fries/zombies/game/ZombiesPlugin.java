@@ -26,7 +26,11 @@ public final class ZombiesPlugin extends JavaPlugin {
             Files.createDirectories(getDataFolder().toPath());
             for (String resource :
                     new String[] {
-                        "config.yml", "database.yml", "gameplay.yml", "maps/training.yml"
+                        "config.yml",
+                        "database.yml",
+                        "gameplay.yml",
+                        "mystery-boxes.yml",
+                        "maps/training.yml"
                     }) {
                 if (!Files.exists(getDataFolder().toPath().resolve(resource)))
                     saveResource(resource, false);
