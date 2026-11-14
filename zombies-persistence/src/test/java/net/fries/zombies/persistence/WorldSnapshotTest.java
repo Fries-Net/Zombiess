@@ -11,6 +11,23 @@ class WorldSnapshotTest {
     @TempDir Path root;
 
     @Test
+    void refusesLockedWorldWithoutChangingSourceOrCreatingDestination() throws Exception {
+        var from = Files.createDirectory(root.resolve("loaded"));
+        Files.writeString(from.resolve("level.dat"), "original metadata");
+        var lock = from.resolve("session.lock");
+        Files.writeString(lock, "original lock");
+        try (var channel = java.nio.channels.FileChannel.open(lock, StandardOpenOption.WRITE);
+                var lease = channel.lock()) {
+            assertThrows(
+                    java.io.IOException.class,
+                    () -> WorldSnapshot.copy(from, root.resolve("rejected")));
+        }
+        assertFalse(Files.exists(root.resolve("rejected")));
+        assertEquals("original lock", Files.readString(lock));
+        assertEquals("original metadata", Files.readString(from.resolve("level.dat")));
+    }
+
+    @Test
     void copiesGeometryExcludesIdentityAndDetectsTampering() throws Exception {
         var from = Files.createDirectory(root.resolve("from"));
         Files.writeString(from.resolve("level.dat"), "level");

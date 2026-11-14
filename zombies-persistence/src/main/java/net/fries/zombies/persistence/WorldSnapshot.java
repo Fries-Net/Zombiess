@@ -17,6 +17,26 @@ public final class WorldSnapshot {
                     "friesnet-runtime-world");
 
     public static String copy(Path source, Path destination) throws IOException {
+        // Paper holds this native file lock for loaded worlds. Snapshot folders omit it.
+        Path lock = source.resolve("session.lock");
+        if (Files.isSymbolicLink(lock)) throw new IOException("Unsafe world session lock");
+        if (Files.isRegularFile(lock)) {
+            try (var channel =
+                            java.nio.channels.FileChannel.open(
+                                    lock, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                    var lease = channel.tryLock()) {
+                if (lease == null)
+                    throw new IOException("World is loaded or locked; unload it before importing");
+                return copyUnlocked(source, destination);
+            } catch (java.nio.channels.OverlappingFileLockException loaded) {
+                throw new IOException(
+                        "World is loaded or locked; unload it before importing", loaded);
+            }
+        }
+        return copyUnlocked(source, destination);
+    }
+
+    private static String copyUnlocked(Path source, Path destination) throws IOException {
         source = source.toAbsolutePath().normalize();
         destination = destination.toAbsolutePath().normalize();
         if (destination.startsWith(source)
@@ -79,7 +99,7 @@ public final class WorldSnapshot {
 
     private static List<Path> files(Path directory) throws IOException {
         try (var walk = Files.walk(directory)) {
-            var entries = walk.toList();
+            var entries = walk.limit(50001).toList();
             if (entries.size() > 50000 || entries.stream().anyMatch(Files::isSymbolicLink))
                 throw new IOException("Unsafe or oversized world tree");
             return entries.stream()
