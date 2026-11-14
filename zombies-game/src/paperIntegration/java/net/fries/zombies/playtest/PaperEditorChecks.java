@@ -436,4 +436,36 @@ final class PaperEditorChecks {
     private static void check(boolean value, String message) {
         if (!value) throw new AssertionError(message);
     }
+
+    static void awaitClosed(ZombiesPlugin plugin, org.bukkit.plugin.java.JavaPlugin assertions) {
+        new org.bukkit.scheduler.BukkitRunnable() {
+            private int ticks;
+
+            public void run() {
+                var p = Bukkit.getPlayerExact("SurvivorOne");
+                if (++ticks > 200 || p == null) {
+                    assertions
+                            .getLogger()
+                            .severe("PLAYTEST_FAIL editor-closed restoration deadline exceeded");
+                    cancel();
+                    return;
+                }
+                if (plugin.matches().editor().contains(p.getUniqueId())
+                        || plugin.matches().managed(p.getUniqueId())) return;
+                try {
+                    check(
+                            p.getInventory().getItem(4) != null
+                                    && p.getInventory().getItem(4).getType() == Material.EMERALD,
+                            "equipment restored after editor");
+                    check(
+                            p.getGameMode() == GameMode.SURVIVAL,
+                            "original mode restored after editor");
+                    assertions.getLogger().info("PLAYTEST_PASS editor-closed");
+                } catch (Throwable error) {
+                    assertions.getLogger().severe("PLAYTEST_FAIL editor-closed " + error);
+                }
+                cancel();
+            }
+        }.runTaskTimer(assertions, 1, 1);
+    }
 }
