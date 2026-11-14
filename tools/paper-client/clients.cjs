@@ -22,6 +22,15 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     const bot = bots.get(command.name);
     if (command.op === 'connect') return connect(command.name);
     if (!bot) throw new Error('Unknown client');
+    if (command.op === 'waitposition') (async () => {
+      const destination = new (require('vec3').Vec3)(command.x, command.y, command.z);
+      const deadline = Date.now() + 10000;
+      while (!bot.entity || bot.entity.position.distanceTo(destination) > .5 || bot.currentWindow) {
+        if (Date.now() >= deadline) throw new Error('Editor position/window state did not arrive');
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      console.log('BOT_POSITION ' + command.name);
+    })().catch(e=>console.log('BOT_ERROR position '+e.message));
     if (command.op === 'click') (async () => {
       const deadline = Date.now() + 10000;
       while (!bot.currentWindow || (command.title && !JSON.stringify(bot.currentWindow.title).includes(command.title))) {
