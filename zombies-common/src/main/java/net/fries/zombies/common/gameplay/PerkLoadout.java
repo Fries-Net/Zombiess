@@ -67,6 +67,7 @@ public final class PerkLoadout {
             int round,
             boolean solo,
             long tick) {
+        if (price < 0 || price > 100000) throw new IllegalArgumentException("Invalid perk price");
         if (!rejection(s, rules, station, round, solo, tick).isEmpty()
                 || reward.type() == Type.WUNDERFIZZ
                 || !rules.definitions().containsValue(station)

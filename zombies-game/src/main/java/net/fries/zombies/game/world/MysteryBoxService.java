@@ -66,8 +66,6 @@ public final class MysteryBoxService {
     }
 
     private int freeSlot(Player p) {
-        if (run.survivor(p.getUniqueId()).weapons().size()
-                >= run.survivor(p.getUniqueId()).perks().slots(run.perkRules)) return -1;
         for (int i = 0; i < 8; i++) {
             var item = p.getInventory().getItem(i);
             if (item == null || item.getType().isAir()) return i;
@@ -111,6 +109,11 @@ public final class MysteryBoxService {
                 var reward = pool.choose(random.nextInt(pool.totalWeight()));
                 int price = price(station);
                 var survivor = run.survivor(p.getUniqueId());
+                if (!survivor.weapons().containsKey(reward.weapon())
+                        && survivor.weapons().size() >= survivor.perks().slots(run.perkRules)) {
+                    message(p, "Weapon capacity reached; buy Mule Kick first. No gold charged");
+                    return true;
+                }
                 // Construct preview before charging; a spawn failure cannot lose a purchase.
                 var preview =
                         run.world.spawn(
@@ -161,7 +164,10 @@ public final class MysteryBoxService {
         var owned = survivor.weapons().get(reward.weapon());
         int slot = freeSlot(p);
         if (owned != null && owned.reserve() == owned.definition().reserve()
-                || owned == null && slot < 0) {
+                || owned == null
+                        && (slot < 0
+                                || survivor.weapons().size()
+                                        >= survivor.perks().slots(run.perkRules))) {
             refund(purchase, "Reward could not fit or ammo was full; purchase refunded");
             return;
         }

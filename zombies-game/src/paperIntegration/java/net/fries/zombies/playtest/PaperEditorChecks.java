@@ -122,6 +122,7 @@ final class PaperEditorChecks {
                 check(
                         s.draft.nodes("objects").size() == initialObjects + 15,
                         "all gameplay object kinds authored");
+                PaperPerkChecks.author(plugin, p);
                 editor.execute(p, "select objects test_hologram".split(" "));
                 editor.execute(p, "set text Gold {gold} / round {round}".split(" "));
                 check(
@@ -218,7 +219,9 @@ final class PaperEditorChecks {
                 check(
                         map != null && !map.worldSource().equals("blueprint"),
                         "published snapshot installed");
-                check(map.objects().size() == initialObjects + 15, "published complete metadata");
+                check(
+                        map.objects().size() == initialObjects + 22,
+                        "published complete metadata including eight perk stations");
                 publishedVersion = map.version();
                 check(
                         s.world.getBlockAt(8, 64, 7).getType() == Material.DIAMOND_BLOCK,
