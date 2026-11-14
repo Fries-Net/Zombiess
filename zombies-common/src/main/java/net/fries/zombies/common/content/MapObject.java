@@ -48,6 +48,13 @@ public record MapObject(
         return properties.getOrDefault(key, fallback);
     }
 
+    public static boolean active(Kind kind) {
+        return switch (kind) {
+            case PLAYER_SPAWN, SPECTATOR_SPAWN, ZOMBIE_REGION, WALL_WEAPON, AMMO, HOLOGRAM -> true;
+            default -> false;
+        };
+    }
+
     public int integer(String key, int fallback, int min, int max) {
         int value = Integer.parseInt(property(key, Integer.toString(fallback)));
         if (value < min || value > max)

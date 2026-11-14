@@ -5,6 +5,9 @@ api-version: '1.21.11'
 description: Playable standalone FriesNet Zombies matches
 authors: [FriesNet]
 permissions:
+  zombies.editor:
+    description: Author, import and publish maps in isolated worlds
+    default: op
   zombies.use:
     description: Play Zombies matches and view own account
     default: true

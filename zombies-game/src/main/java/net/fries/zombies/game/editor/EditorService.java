@@ -57,16 +57,25 @@ public final class EditorService {
                 menus.open(player);
                 return;
             }
-            if (args[0].equals("open") && args.length == 2) {
+            if (Set.of("open", "enter").contains(args[0]) && args.length == 2) {
                 open(player, args[1]);
+                return;
+            }
+            if (args[0].equals("create") && args.length == 2) {
+                duplicate(player, "training", args[1]);
+                return;
+            }
+            if (args[0].equals("duplicate") && args.length == 3) {
+                duplicate(player, args[1], args[2]);
                 return;
             }
             if (args[0].equals("import") && args.length == 4) {
                 importWorld(player, args[1], args[2], args[3]);
                 return;
             }
-            if (args[0].equals("close")) {
-                close(player);
+            if (Set.of("close", "exit").contains(args[0])) {
+                if (args.length == 2 && args[1].equals("confirm")) close(player);
+                else if (session(player.getUniqueId()) != null) menus.confirmExit(player);
                 return;
             }
             if (args[0].equals("versions") && args.length == 2) {
@@ -80,6 +89,28 @@ public final class EditorService {
             var s = require(player);
             if (s.busy) throw new IllegalStateException("Draft is saving; wait for completion");
             switch (args[0]) {
+                case "delete" -> menus.confirmDelete(player);
+                case "preview" -> {
+                    player.closeInventory();
+                    player.setGameMode(
+                            player.getGameMode() == GameMode.SPECTATOR
+                                    ? GameMode.CREATIVE
+                                    : GameMode.SPECTATOR);
+                    message(
+                            player,
+                            "Geometry preview toggled. Use editor preview to resume building;"
+                                    + " publish and /zombies join "
+                                    + s.map
+                                    + " to test gameplay.");
+                }
+                case "wand" -> {
+                    if (args.length != 2) throw new IllegalArgumentException("wand <material>");
+                    var material = Material.matchMaterial(args[1]);
+                    if (material == null || !material.isItem() || material.isAir())
+                        throw new IllegalArgumentException("Choose an item material");
+                    s.wand = material;
+                    menus.tools(player);
+                }
                 case "save" -> save(player, false);
                 case "export" -> {
                     if (args.length != 2)
@@ -111,8 +142,121 @@ public final class EditorService {
         if (s == null)
             throw new IllegalStateException(
                     "Use /zombies editor open <map>, or import <new-map> <world-folder>"
-                        + " <template-map>");
+                            + " <template-map>");
         return s;
+    }
+
+    public void duplicate(Player p, String source, String target) {
+        checkName(source);
+        checkName(target);
+        if (contains(p.getUniqueId())
+                || catalog().maps().containsKey(target)
+                || !locked.add(target))
+            throw new IllegalArgumentException("Exit your session and choose a new map name");
+        disk.submit(
+                        () -> {
+                            Path destination = data.resolve("maps/drafts/" + target + ".yml");
+                            if (Files.exists(destination)
+                                    || Files.exists(data.resolve("maps/" + target + ".yml")))
+                                throw new java.io.IOException("Map or draft already exists");
+                            Path draft = data.resolve("maps/drafts/" + source + ".yml");
+                            var copy =
+                                    new MapDraft(
+                                            ContentYaml.readBytes(
+                                                    Files.exists(draft)
+                                                            ? draft
+                                                            : data.resolve(
+                                                                    "maps/" + source + ".yml")));
+                            copy.change(
+                                    doc -> {
+                                        doc.put("id", "friesnet:map/" + target);
+                                        doc.put("name", target);
+                                        doc.put("version", "draft");
+                                    });
+                            DurableFiles.replace(destination, copy.bytes());
+                            return null;
+                        })
+                .whenComplete(
+                        (v, error) ->
+                                plugin.onServer(
+                                        () -> {
+                                            locked.remove(target);
+                                            if (error == null && p.isOnline()) open(p, target);
+                                            else if (error != null)
+                                                message(p, "Create failed: " + cause(error));
+                                        }));
+    }
+
+    public Collection<String> suggest(Player p, String[] args) {
+        String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
+        Collection<String> choices = List.of();
+        if (args.length <= 1)
+            choices =
+                    List.of(
+                            "enter",
+                            "open",
+                            "create",
+                            "duplicate",
+                            "menu",
+                            "save",
+                            "validate",
+                            "publish",
+                            "undo",
+                            "redo",
+                            "exit",
+                            "close",
+                            "import",
+                            "export",
+                            "versions",
+                            "checkout",
+                            "add",
+                            "select",
+                            "set",
+                            "point",
+                            "region",
+                            "bounds",
+                            "playable",
+                            "spawn",
+                            "room",
+                            "delete",
+                            "preview",
+                            "wand");
+        else if (args.length == 2
+                && Set.of("enter", "open", "duplicate", "versions", "checkout").contains(args[0]))
+            choices = catalog().maps().keySet();
+        else if (args.length == 2 && args[0].equals("add")) {
+            var kinds =
+                    new ArrayList<>(
+                            Arrays.stream(MapObject.Kind.values())
+                                    .map(k -> k.name().toLowerCase(Locale.ROOT))
+                                    .toList());
+            kinds.addAll(List.of("window", "door"));
+            choices = kinds;
+        } else if (args.length == 2 && args[0].equals("select"))
+            choices = List.of("objects", "windows", "gates", "barricades");
+        else {
+            var s = session(p.getUniqueId());
+            if (s != null
+                    && args.length == 3
+                    && args[0].equals("select")
+                    && Set.of("objects", "windows", "gates", "barricades").contains(args[1]))
+                choices = s.draft.nodes(args[1]).stream().map(n -> n.get("id").toString()).toList();
+            else if (s != null && args[0].equals("set") && !s.selectedId.isEmpty()) {
+                if (args.length == 2) {
+                    var fields = new ArrayList<>(s.selected().keySet());
+                    if (s.selected().get("properties") instanceof Map<?, ?> props)
+                        props.keySet().forEach(k -> fields.add(k.toString()));
+                    choices = fields;
+                } else if (args.length == 3 && args[1].equals("weapon"))
+                    choices =
+                            catalog().gameplay().weapons().keySet().stream()
+                                    .map(Object::toString)
+                                    .toList();
+                else if (args.length == 3 && args[1].equals("orientation"))
+                    choices = List.of("north", "south", "east", "west");
+            }
+        }
+        return choices.stream().filter(c -> c.toLowerCase(Locale.ROOT).startsWith(prefix)).toList();
     }
 
     public void open(Player p, String map) {
@@ -150,7 +294,7 @@ public final class EditorService {
                                                 message(
                                                         p,
                                                         "Could not open draft; your equipment is"
-                                                            + " being restored");
+                                                                + " being restored");
                                                 return;
                                             }
                                             var root = ContentYaml.parse(draft.bytes());
@@ -219,6 +363,8 @@ public final class EditorService {
                                                                                             p
                                                                                                     .getUniqueId(),
                                                                                             s);
+                                                                                    s.savedAt =
+                                                                                            tick;
                                                                                     matches
                                                                                             .editorAdmitted(
                                                                                                     p
@@ -447,7 +593,7 @@ public final class EditorService {
                                                         p,
                                                         e == null
                                                                 ? "Exported the last saved draft"
-                                                                      + " and metadata to "
+                                                                        + " and metadata to "
                                                                         + folder
                                                                 : "Export failed: " + cause(e))));
     }
@@ -456,6 +602,7 @@ public final class EditorService {
         var s = require(p);
         if (s.busy) throw new IllegalStateException("Save already running");
         if (publish) validate(s);
+        s.savedAt = tick;
         s.busy = true;
         p.closeInventory();
         Location returnTo = p.getLocation().clone();
@@ -547,7 +694,7 @@ public final class EditorService {
                                                 message(
                                                         p,
                                                         "Saved world could not reopen; use editor"
-                                                            + " open to recover");
+                                                                + " open to recover");
                                                 return;
                                             }
                                             message(
@@ -598,12 +745,18 @@ public final class EditorService {
             var p = Bukkit.getPlayer(s.player);
             if (p == null || s.busy || p.getWorld() != s.world) continue;
             try {
+                if (tick - s.savedAt >= 2400) {
+                    s.savedAt = tick;
+                    message(p, "Autosaving draft and terrain...");
+                    save(p, false);
+                    continue;
+                }
                 menus.markers(p, s);
             } catch (IllegalArgumentException invalid) {
                 p.sendActionBar(
                         Component.text(
                                 "Draft contains an invalid point; validate and correct its"
-                                    + " metadata"));
+                                        + " metadata"));
             }
         }
     }

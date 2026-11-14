@@ -50,3 +50,15 @@ Object menus expose point tools, region application, individual board selection,
 `export <new-world-folder>` copies the last saved draft into a new server world folder with a `friesnet-map.yml` metadata document. It refuses an existing destination. Save first to include the latest terrain edits.
 
 Closing or crashing discards unsaved changes. On startup, owned disposable worlds are removed and player backups are restored; the last completed draft snapshot remains. Published snapshots and historical versions are retained deliberately; archival retention/pruning is an operator task in this milestone.
+
+`enter` aliases `open`; `exit` aliases `close`. `create <new-map>` starts from the training layout;
+`duplicate <source-map> <new-map>` copies the source draft or published map without modifying it.
+Both refuse existing destinations. `preview` toggles spectator geometry inspection. Publish, exit,
+then `/zombies join <map>` for a gameplay test. `wand <material>` changes the region tool for the
+current session. Commands complete map names, object kinds, selections, properties and weapons.
+Editors need `zombies.editor` (operators by default); `zombies.admin` also grants access.
+
+Drafts and terrain autosave every two minutes of server ticks, briefly unloading and reopening the
+isolated world. Save explicitly before stopping. Exit and object deletion show confirmation menus;
+`exit confirm` explicitly discards changes since the last completed save. Undo covers metadata only.
+Menus identify unimplemented gameplay types as **INACTIVE placeholders**.

@@ -280,7 +280,7 @@ def main():
         check("editor-published", 3)
         bot("SurvivorOne", "chat", text="/zombies editor export export_fixture")
         check("editor-exported", 2)
-        bot("SurvivorOne", "chat", text="/zombies editor close")
+        bot("SurvivorOne", "chat", text="/zombies editor exit confirm")
         check("editor-closed", 1)
         for name in ("SurvivorOne", "SurvivorTwo"):
             bot(name,"chat",text="/zombies join authored")
@@ -295,7 +295,7 @@ def main():
         check("defeat")
         server.wait("event=match_ready",60)
         check("editor-survived-cleanup")
-        bot("SurvivorTwo","chat",text="/zombies editor close")
+        bot("SurvivorTwo","chat",text="/zombies editor exit confirm")
         time.sleep(1)
         for name in ("SurvivorOne", "SurvivorTwo"):
             bot(name,"chat",text="/zombies join authored")

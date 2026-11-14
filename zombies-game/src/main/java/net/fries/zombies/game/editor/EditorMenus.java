@@ -138,7 +138,13 @@ final class EditorMenus implements Listener {
         int slot = 0;
         for (var kind : MapObject.Kind.values()) {
             var k = kind;
-            button(menu, slot++, icon(kind), kind.name().replace('_', ' '), () -> add(p, k.name()));
+            button(
+                    menu,
+                    slot++,
+                    icon(kind),
+                    kind.name().replace('_', ' ')
+                            + (MapObject.active(kind) ? "" : " [INACTIVE placeholder]"),
+                    () -> add(p, k.name()));
         }
         button(
                 menu,
@@ -158,13 +164,18 @@ final class EditorMenus implements Listener {
 
     private void add(Player p, String kind) {
         String id;
-        do {id="object_"+(++sequence);}while(exists(service.require(p),id));
-        service.execute(p,new String[]{"add",kind,id});
+        do {
+            id = "object_" + (++sequence);
+        } while (exists(service.require(p), id));
+        service.execute(p, new String[] {"add", kind, id});
     }
 
-    private boolean exists(EditorSession s,String id) {
-        return List.of("objects","windows","gates","barricades").stream().anyMatch(list->s.draft.nodes(list).stream().anyMatch(n->id.equals(n.get("id"))));
+    private boolean exists(EditorSession s, String id) {
+        return List.of("objects", "windows", "gates", "barricades").stream()
+                .anyMatch(
+                        list -> s.draft.nodes(list).stream().anyMatch(n -> id.equals(n.get("id"))));
     }
+
     private void browse(Player p, int page) {
         var s = service.require(p);
         var menu = new Menu(p, "Objects • page " + (page + 1));
@@ -194,7 +205,14 @@ final class EditorMenus implements Listener {
             open(p);
             return;
         }
-        var selected = s.selected();
+        Map<String, Object> selected;
+        try {
+            selected = s.selected();
+        } catch (IllegalArgumentException removed) {
+            s.selectedId = "";
+            open(p);
+            return;
+        }
         var menu = new Menu(p, s.selectedList + " • " + s.selectedId);
         int slot = 0;
         for (var entry : selected.entrySet()) {
@@ -247,12 +265,7 @@ final class EditorMenus implements Listener {
             } else if (!field.equals("kind"))
                 button(menu, slot++, Material.NAME_TAG, field + ": " + value, () -> edit(p, field));
         }
-        button(
-                menu,
-                45,
-                Material.LAVA_BUCKET,
-                "Delete selected object",
-                () -> service.execute(p, new String[] {"delete"}));
+        button(menu, 45, Material.LAVA_BUCKET, "Delete selected object", () -> confirmDelete(p));
         button(
                 menu,
                 46,
@@ -271,6 +284,16 @@ final class EditorMenus implements Listener {
 
     private void edit(Player p, String field) {
         var menu = new Menu(p, "Value for " + field);
+        if (field.equals("weapon")) {
+            int slot = 9;
+            for (var weapon : service.catalog().gameplay().weapons().values())
+                button(
+                        menu,
+                        slot++,
+                        Material.IRON_HOE,
+                        weapon.name(),
+                        () -> service.execute(p, new String[] {"set", field, weapon.id().value()}));
+        }
         button(
                 menu,
                 0,
@@ -301,7 +324,7 @@ final class EditorMenus implements Listener {
                             p,
                             new String[] {"set", field, Boolean.toString(!Boolean.TRUE.equals(v))});
                 });
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4 && !field.equals("weapon"); i++) {
             int delta = new int[] {-10, -1, 1, 10}[i];
             button(
                     menu,
@@ -311,6 +334,10 @@ final class EditorMenus implements Listener {
                     () -> {
                         var s = service.require(p);
                         Object v = s.selected().get(field);
+                        if (v == null && s.selected().get("properties") instanceof Map<?, ?> props)
+                            v = props.get(field);
+                        if (v instanceof String text && text.matches("[0-9]{1,6}"))
+                            v = Integer.parseInt(text);
                         if (v instanceof Number n)
                             service.execute(
                                     p,
@@ -335,7 +362,7 @@ final class EditorMenus implements Listener {
     public void tools(Player p) {
         String[] tools = {"select", "point", "region", "board"};
         Material[] materials = {
-            Material.NETHER_STAR, Material.STICK, Material.WOODEN_AXE, Material.BLAZE_ROD
+            Material.NETHER_STAR, Material.STICK, service.require(p).wand, Material.BLAZE_ROD
         };
         for (int i = 0; i < tools.length; i++) {
             String tool = tools[i];
@@ -348,6 +375,50 @@ final class EditorMenus implements Listener {
                     });
             p.getInventory().setItem(i, item);
         }
+    }
+
+    public void confirmDelete(Player p) {
+        var s = service.require(p);
+        s.selected();
+        String list = s.selectedList, id = s.selectedId;
+        var menu = new Menu(p, "Delete " + id + "?");
+        button(
+                menu,
+                11,
+                Material.LAVA_BUCKET,
+                "Confirm deletion (metadata undo available)",
+                () -> {
+                    if (service.require(p) != s
+                            || !s.selectedList.equals(list)
+                            || !s.selectedId.equals(id))
+                        throw new IllegalStateException(
+                                "Selection changed; select the object again");
+                    actions.execute(p, s, new String[] {"delete"});
+                });
+        button(menu, 15, Material.ARROW, "Cancel", () -> details(p));
+        p.openInventory(menu.inventory);
+    }
+
+    public void confirmExit(Player p) {
+        var menu = new Menu(p, "Exit draft?");
+        button(
+                menu,
+                11,
+                Material.BARRIER,
+                "Discard changes since last save and exit",
+                () -> service.close(p));
+        button(
+                menu,
+                15,
+                Material.WRITABLE_BOOK,
+                "Save and continue editing",
+                () -> service.execute(p, new String[] {"save"}));
+        button(menu, 22, Material.ARROW, "Cancel", () -> open(p));
+        p.openInventory(menu.inventory);
+        message(
+                p,
+                "Exit discards unsaved changes. Confirm in the menu or /zombies editor exit"
+                    + " confirm");
     }
 
     @EventHandler

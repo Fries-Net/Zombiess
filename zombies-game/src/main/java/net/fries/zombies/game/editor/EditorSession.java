@@ -15,6 +15,8 @@ public final class EditorSession {
     public Location first, second;
     public String selectedList = "objects", selectedId = "", tool = "select", field = "point";
     public boolean busy;
+    public Material wand = Material.WOODEN_AXE;
+    public long savedAt;
 
     public EditorSession(UUID player, String map, String worldName, MapDraft draft, World world) {
         this.player = player;

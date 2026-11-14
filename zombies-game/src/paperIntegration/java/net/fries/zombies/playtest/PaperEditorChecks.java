@@ -37,6 +37,16 @@ final class PaperEditorChecks {
                 check(s.world == p.getWorld() && !s.busy, "isolated editor admission");
                 initialObjects = s.draft.nodes("objects").size();
                 check(
+                        editor.suggest(p, new String[] {"en"}).contains("enter"),
+                        "editor command completion");
+                check(
+                        editor.suggest(p, new String[] {"enter", "tr"}).contains("training"),
+                        "map completion");
+                editor.execute(p, new String[] {"wand", "BONE"});
+                check(
+                        p.getInventory().getItem(2).getType() == Material.BONE,
+                        "configurable selection wand");
+                check(
                         s.world.getBlockAt(8, 64, 7).getType() == Material.GOLD_BLOCK,
                         "imported real world geometry");
                 check(p.getGameMode() == GameMode.CREATIVE, "creative building");
@@ -78,6 +88,11 @@ final class PaperEditorChecks {
                                 .equals("Gold {gold} / round {round}"),
                         "undo");
                 s.draft.redo();
+                editor.execute(p, new String[] {"delete"});
+                check(
+                        s.draft.node("objects", "test_hologram") != null,
+                        "deletion waits for confirmation");
+                p.closeInventory();
                 s.world.getBlockAt(8, 64, 7).setType(Material.DIAMOND_BLOCK, false);
                 editor.execute(p, "select windows north".split(" "));
                 p.teleport(new Location(s.world, -4.5, 64, -8.5));

@@ -83,7 +83,7 @@ public final class EditorActions {
             default ->
                     throw new IllegalArgumentException(
                             "Editor: menu, add, select, set, point, region, bounds, playable,"
-                                + " spawn, room, undo, redo, validate, save, publish, close");
+                                    + " spawn, room, undo, redo, validate, save, publish, close");
         }
     }
 
@@ -213,7 +213,7 @@ public final class EditorActions {
                     throw new IllegalArgumentException("Expected true or false");
                 converted = Boolean.parseBoolean(value);
             } else if (old instanceof List<?>) converted = csv(value);
-            else converted = value;
+            else converted = field.equals("orientation") ? value.toUpperCase(Locale.ROOT) : value;
             if (field.equals("asset")) new NamespacedId(value);
         }
         Object result = converted;
