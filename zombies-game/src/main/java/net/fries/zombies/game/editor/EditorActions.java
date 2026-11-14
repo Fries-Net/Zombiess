@@ -239,7 +239,9 @@ public final class EditorActions {
                             var props =
                                     new LinkedHashMap<String, Object>(
                                             (Map<String, Object>) s.selected().get("properties"));
-                            props.put(field, value);
+                            if (field.equals("price") && value.equals("default"))
+                                props.remove(field);
+                            else props.put(field, value);
                             s.selected().put("properties", props);
                         });
                 return;

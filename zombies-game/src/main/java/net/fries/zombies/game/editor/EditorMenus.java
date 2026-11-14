@@ -308,8 +308,18 @@ final class EditorMenus implements Listener {
                 for (var prop : ((Map<?, ?>) value).entrySet()) {
                     String key = prop.getKey().toString();
                     String v = prop.getValue().toString();
-                    button(menu, slot++, Material.NAME_TAG, key + ": " + v, () -> edit(p, key));
+                    String shown =
+                            key.equals("price") && v.equals("-1") ? "configured tier price" : v;
+                    button(menu, slot++, Material.NAME_TAG, key + ": " + shown, () -> edit(p, key));
                 }
+                if (!((Map<?, ?>) value).containsKey("price")
+                        && Set.of("PERK", "PACK_A_PUNCH").contains(selected.get("kind")))
+                    button(
+                            menu,
+                            slot++,
+                            Material.GOLD_NUGGET,
+                            "Price: definition default",
+                            () -> edit(p, "price"));
                 button(
                         menu,
                         slot++,
@@ -338,6 +348,24 @@ final class EditorMenus implements Listener {
 
     private void edit(Player p, String field) {
         var menu = new Menu(p, "Value for " + field);
+        if (field.equals("price")) {
+            button(
+                    menu,
+                    18,
+                    Material.ENCHANTED_BOOK,
+                    "Use definition price",
+                    () -> service.execute(p, new String[] {"set", "price", "default"}));
+            int slot = 19;
+            for (int price : new int[] {500, 1000, 2500, 5000, 10000})
+                button(
+                        menu,
+                        slot++,
+                        Material.GOLD_INGOT,
+                        price + " gold",
+                        () ->
+                                service.execute(
+                                        p, new String[] {"set", "price", Integer.toString(price)}));
+        }
         if (field.equals("weapons")) {
             button(
                     menu,
