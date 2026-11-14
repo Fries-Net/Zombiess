@@ -14,6 +14,7 @@ final class PaperEditorChecks {
     private static String publishedVersion;
     private static int initialObjects;
     private static String sourceDigest;
+    private static int mysteryGold;
 
     static boolean handle(String step, ZombiesPlugin plugin) throws Exception {
         var p = Bukkit.getPlayerExact("SurvivorOne");
@@ -108,8 +109,18 @@ final class PaperEditorChecks {
                                 "add", kind.name(), "test_" + kind.name().toLowerCase(Locale.ROOT)
                             });
                 }
+                editor.execute(p, "select objects test_mystery_box".split(" "));
+                editor.execute(p, "set box friesnet:box/test".split(" "));
+                editor.execute(p, "set price 41".split(" "));
+                p.teleport(new Location(s.world, -10.5, 64, -4.5));
+                editor.execute(p, new String[] {"point"});
+                editor.execute(p, "add mystery_box test_box_destination".split(" "));
+                editor.execute(p, "set box friesnet:box/test".split(" "));
+                editor.execute(p, "set price 41".split(" "));
+                p.teleport(new Location(s.world, -1.5, 64, -4.5));
+                editor.execute(p, new String[] {"point"});
                 check(
-                        s.draft.nodes("objects").size() == initialObjects + 14,
+                        s.draft.nodes("objects").size() == initialObjects + 15,
                         "all gameplay object kinds authored");
                 editor.execute(p, "select objects test_hologram".split(" "));
                 editor.execute(p, "set text Gold {gold} / round {round}".split(" "));
@@ -207,7 +218,7 @@ final class PaperEditorChecks {
                 check(
                         map != null && !map.worldSource().equals("blueprint"),
                         "published snapshot installed");
-                check(map.objects().size() == initialObjects + 14, "published complete metadata");
+                check(map.objects().size() == initialObjects + 15, "published complete metadata");
                 publishedVersion = map.version();
                 check(
                         s.world.getBlockAt(8, 64, 7).getType() == Material.DIAMOND_BLOCK,
@@ -283,6 +294,96 @@ final class PaperEditorChecks {
                         s.world == author.getWorld(),
                         "second client owns isolated draft while match runs");
                 s.world.getBlockAt(8, 64, 7).setType(Material.EMERALD_BLOCK, false);
+            }
+            case "mystery-start" -> {
+                var r = plugin.matches().current();
+                p.teleport(new Location(r.world, -10.5, 64, -4.5));
+                var other = Bukkit.getPlayerExact("SurvivorTwo");
+                other.teleport(p.getLocation());
+                mysteryGold = r.survivor(p.getUniqueId()).points();
+                int otherGold = r.survivor(other.getUniqueId()).points();
+                check(r.mysteryBoxes.interact(p), "published mystery station starts purchase");
+                r.mysteryBoxes.interact(p);
+                r.mysteryBoxes.interact(other);
+                check(
+                        r.survivor(p.getUniqueId()).points() == mysteryGold - 41,
+                        "opening input cannot duplicate charge");
+                check(
+                        r.survivor(other.getUniqueId()).points() == otherGold,
+                        "teammate cannot steal or buy occupied reward");
+                check(
+                        !r.world.getEntitiesByClass(org.bukkit.entity.ItemDisplay.class).isEmpty(),
+                        "native opening preview created");
+            }
+            case "mystery-collected" -> {
+                var r = plugin.matches().current();
+                var s = r.survivor(p.getUniqueId());
+                var awp = new net.fries.zombies.common.NamespacedId("friesnet:weapon/awp");
+                r.mysteryBoxes.interact(p);
+                check(
+                        s.weapons().containsKey(awp) && s.points() == mysteryGold - 41,
+                        "rare reward collected once at configured price");
+                var instance = s.weapons().get(awp).instanceId();
+                r.mysteryBoxes.interact(p);
+                check(
+                        s.points() == mysteryGold - 41
+                                && s.weapons().get(awp).instanceId().equals(instance),
+                        "relocated station cannot duplicate purchase or reward");
+                check(
+                        r.world.getEntitiesByClass(org.bukkit.entity.ItemDisplay.class).isEmpty(),
+                        "collected preview removed");
+                p.teleport(new Location(r.world, -1.5, 64, -4.5));
+                for (int i = 0; i < 8; i++)
+                    if (p.getInventory().getItem(i) == null)
+                        p.getInventory()
+                                .setItem(i, new org.bukkit.inventory.ItemStack(Material.BARRIER));
+                r.mysteryBoxes.interact(p);
+                check(s.points() == mysteryGold - 41, "full inventory rejected without charging");
+                r.combat.equip(p);
+                r.mysteryBoxes.interact(p);
+                check(
+                        s.points() == mysteryGold - 82,
+                        "relocated destination accepts next purchase");
+            }
+            case "mystery-expired" -> {
+                var r = plugin.matches().current();
+                var s = r.survivor(p.getUniqueId());
+                check(s.points() == mysteryGold - 41, "expired reward refunded exactly once");
+                check(
+                        r.world.getEntitiesByClass(org.bukkit.entity.ItemDisplay.class).isEmpty(),
+                        "expired preview removed");
+                r.mysteryBoxes.tick();
+                check(s.points() == mysteryGold - 41, "refund not repeated");
+            }
+            case "mystery-capacity-start" -> {
+                var r = plugin.matches().current();
+                r.survivor(p.getUniqueId())
+                        .weapons()
+                        .remove(new net.fries.zombies.common.NamespacedId("friesnet:weapon/awp"));
+                r.combat.equip(p);
+                r.mysteryBoxes.interact(p);
+                check(
+                        r.survivor(p.getUniqueId()).points() == mysteryGold - 82,
+                        "capacity recheck fixture paid once");
+                for (int i = 0; i < 8; i++)
+                    if (p.getInventory().getItem(i) == null)
+                        p.getInventory()
+                                .setItem(i, new org.bukkit.inventory.ItemStack(Material.BARRIER));
+            }
+            case "mystery-capacity-refund" -> {
+                var r = plugin.matches().current();
+                r.mysteryBoxes.interact(p);
+                check(
+                        r.survivor(p.getUniqueId()).points() == mysteryGold - 41,
+                        "inventory filled during opening causes full refund");
+                check(
+                        !r.survivor(p.getUniqueId())
+                                .weapons()
+                                .containsKey(
+                                        new net.fries.zombies.common.NamespacedId(
+                                                "friesnet:weapon/awp")),
+                        "failed collection cannot create a hidden weapon");
+                r.combat.equip(p);
             }
             case "editor-version-pinned" -> {
                 var author = Bukkit.getPlayerExact("SurvivorTwo");
