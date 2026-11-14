@@ -54,6 +54,17 @@ public final class MapWorlds {
     }
 
     public CompletableFuture<String> allocate(UUID id, MapTemplate map) {
+        return allocate(
+                id,
+                map == null ? "blueprint" : map.worldSource(),
+                map == null ? "none" : map.worldDigest());
+    }
+
+    public CompletableFuture<String> allocate(UUID id, String sourceId, String expectedDigest) {
+        if (!sourceId.equals("blueprint")
+                && (!sourceId.matches("[0-9a-f]{32}") || !expectedDigest.matches("[0-9a-f]{64}")))
+            return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("Invalid snapshot reference"));
         return disk.submit(
                 () -> {
                     String name = PREFIX + id.toString().replace("-", "");
@@ -62,31 +73,40 @@ public final class MapWorlds {
                     DurableFiles.replace(
                             path.resolve(MARKER),
                             name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    if (map != null && !map.worldSource().equals("blueprint")) {
-                        Path source =
-                                plugin.getDataFolder()
-                                        .toPath()
-                                        .resolve("maps/worlds")
-                                        .resolve(map.worldSource());
-                        String digest =
-                                net.fries.zombies.persistence.WorldSnapshot.copy(
-                                        source, path.resolve("snapshot"));
-                        if (!digest.equals(map.worldDigest()))
-                            throw new IOException("Published world checksum mismatch");
-                        try (var files = Files.list(path.resolve("snapshot"))) {
-                            for (var entry : files.toList())
-                                Files.move(entry, path.resolve(entry.getFileName()));
+                    try {
+                        if (!sourceId.equals("blueprint")) {
+                            Path source =
+                                    plugin.getDataFolder()
+                                            .toPath()
+                                            .resolve("maps/worlds")
+                                            .resolve(sourceId);
+                            String digest =
+                                    net.fries.zombies.persistence.WorldSnapshot.copy(
+                                            source, path.resolve("snapshot"));
+                            if (!digest.equals(expectedDigest))
+                                throw new IOException("Published world checksum mismatch");
+                            try (var files = Files.list(path.resolve("snapshot"))) {
+                                for (var entry : files.toList())
+                                    Files.move(entry, path.resolve(entry.getFileName()));
+                            }
+                            Files.delete(path.resolve("snapshot"));
                         }
-                        Files.delete(path.resolve("snapshot"));
+                        return name;
+                    } catch (Exception failure) {
+                        try {
+                            erase(path);
+                        } catch (IOException cleanup) {
+                            failure.addSuppressed(cleanup);
+                        }
+                        throw failure;
                     }
-                    return name;
                 });
     }
 
-    public World build(String name, MapTemplate map) {
+    public World open(String name, MapTemplate.Point spawnPoint) {
         World world =
                 new WorldCreator(name)
-                        .generator(new EmptyGenerator(map.playerSpawn()))
+                        .generator(new EmptyGenerator(spawnPoint))
                         .generateStructures(false)
                         .createWorld();
         if (world == null) throw new IllegalStateException("Could not create match world");
@@ -105,6 +125,11 @@ public final class MapWorlds {
         world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false);
         world.setGameRule(GameRules.NATURAL_HEALTH_REGENERATION, false);
         world.setGameRule(GameRules.RANDOM_TICK_SPEED, 0);
+        return world;
+    }
+
+    public World build(String name, MapTemplate map) {
+        World world = open(name, map.playerSpawn());
         for (var fill : map.blocks())
             each(world, fill.box(), block -> block.setType(material(fill.material()), false));
         // Verify final template state, including intentional overlays, before admission.
@@ -125,42 +150,8 @@ public final class MapWorlds {
                         if (b.getType() != expected.get(b.getX() + ":" + b.getY() + ":" + b.getZ()))
                             throw new IllegalStateException("Template verification failed");
                     });
+        MapGeometry.validate(world, map);
         var spawn = location(world, map.playerSpawn());
-        if (!spawn.getBlock().isPassable()
-                || !spawn.clone().add(0, 1, 0).getBlock().isPassable()
-                || !spawn.clone().subtract(0, 1, 0).getBlock().getType().isSolid())
-            throw new IllegalArgumentException("Unsafe player spawn");
-        for (var s : map.zombieSpawns()) {
-            var at = location(world, s.point());
-            if (!at.getBlock().isPassable()
-                    || !at.clone().add(0, 1, 0).getBlock().isPassable()
-                    || !at.clone().subtract(0, 1, 0).getBlock().getType().isSolid())
-                throw new IllegalArgumentException("Unsafe zombie spawn");
-        }
-        for (var g : map.gates()) {
-            final int[] solid = {0};
-            each(
-                    world,
-                    g.box(),
-                    b -> {
-                        if (!b.getType().isAir()) solid[0]++;
-                    });
-            if (solid[0] == 0)
-                throw new IllegalArgumentException("Gate template contains no blocks");
-        }
-        for (var b : map.barricades()) {
-            Material type = material(b.material());
-            if (type.isAir())
-                throw new IllegalArgumentException("Barricade material cannot be air");
-            each(
-                    world,
-                    b.box(),
-                    block -> {
-                        if (block.getType() != type)
-                            throw new IllegalArgumentException(
-                                    "Barricade template does not match its material");
-                    });
-        }
         world.setSpawnLocation(spawn);
         plugin.getLogger()
                 .info(

@@ -29,6 +29,16 @@ final class ZombiesCommand implements BasicCommand {
             return;
         }
         String command = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
+        if (command.equals("editor")) {
+            if (!(sender instanceof Player p) || !sender.hasPermission("zombies.admin")) {
+                message(sender, "Editor requires a player with zombies.admin", true);
+                return;
+            }
+            plugin.matches()
+                    .editor()
+                    .execute(p, java.util.Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > (command.equals("join") ? 2 : 1)) {
             message(sender, "Usage: /zombies join [map]|leave|reloadgun|status|profile", true);
             return;
@@ -79,7 +89,7 @@ final class ZombiesCommand implements BasicCommand {
                                                     message(
                                                             online,
                                                             "Account unavailable. Please try again"
-                                                                + " shortly.",
+                                                                    + " shortly.",
                                                             true);
                                                     return;
                                                 }
@@ -149,7 +159,7 @@ final class ZombiesCommand implements BasicCommand {
                             sender,
                             command.equals("reload")
                                     ? "Configuration reloaded. New match rules apply to future"
-                                          + " sessions."
+                                            + " sessions."
                                     : "Configuration is valid.",
                             false);
                 } catch (IOException | IllegalArgumentException e) {
@@ -177,7 +187,8 @@ final class ZombiesCommand implements BasicCommand {
                                 "reload",
                                 "pause",
                                 "resume",
-                                "stop")
+                                "stop",
+                                "editor")
                         : List.of("join", "leave", "reloadgun", "status", "profile");
         String prefix = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
         return choices.stream().filter(choice -> choice.startsWith(prefix)).toList();

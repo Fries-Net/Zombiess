@@ -36,6 +36,7 @@ public final class MatchRun {
     public LifeService lives;
     public InteractionService interactions;
     public MatchHud hud;
+    public net.fries.zombies.game.ui.DynamicHolograms holograms;
     public net.fries.zombies.game.economy.PowerUpService powerups;
     public net.fries.zombies.game.world.WindowService windows;
 
@@ -66,5 +67,6 @@ public final class MatchRun {
         if (waves != null) waves.clear();
         if (interactions != null) interactions.clear();
         if (hud != null) hud.clear();
+        if (holograms != null) holograms.clear();
     }
 }

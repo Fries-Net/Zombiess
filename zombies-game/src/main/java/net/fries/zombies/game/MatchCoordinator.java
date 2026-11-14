@@ -38,6 +38,8 @@ public final class MatchCoordinator {
     private long wallTick, queueAt;
     private MatchRun run;
     private boolean stopped, available;
+    private final Set<UUID> editing = new HashSet<>();
+    private final net.fries.zombies.game.editor.EditorService editor;
 
     public MatchCoordinator(ZombiesPlugin plugin) {
         this.plugin = plugin;
@@ -47,6 +49,7 @@ public final class MatchCoordinator {
                 new PlayerRestoration(
                         plugin, data.resolve("data/players"), disk, plugin::onServer, this::log);
         worlds = new MapWorlds(plugin, disk);
+        editor = new net.fries.zombies.game.editor.EditorService(plugin, this, worlds, disk);
     }
 
     public CompletableFuture<Integer> initialize() {
@@ -84,15 +87,47 @@ public final class MatchCoordinator {
                 + (run.waves == null ? "" : " • round " + run.waves.round());
     }
 
+    public net.fries.zombies.game.editor.EditorService editor() {
+        return editor;
+    }
+
+    public ContentCatalog catalog() {
+        return catalog;
+    }
+
+    public void installCatalog(ContentCatalog next) {
+        catalog = next;
+    }
+
+    public CompletableFuture<Void> captureEditor(Player player) {
+        if (!available
+                || managed(player.getUniqueId())
+                || queued.contains(player.getUniqueId())
+                || editor.contains(player.getUniqueId()))
+            throw new IllegalStateException("Leave your current activity first");
+        return players.capture(player);
+    }
+
+    public void editorAdmitted(UUID id) {
+        editing.add(id);
+        players.admitted(id);
+    }
+
+    public CompletableFuture<Void> editorReturned(Player player) {
+        editing.remove(player.getUniqueId());
+        return players.restore(player);
+    }
+
     public MatchRun current() {
         return run;
     }
 
     public boolean managed(UUID id) {
-        return players.managed(id)
-                || (run != null
-                        && run.players.containsKey(id)
-                        && run.players.get(id).life() != Survivor.Life.LEFT);
+        return !editing.contains(id)
+                && (players.managed(id)
+                        || (run != null
+                                && run.players.containsKey(id)
+                                && run.players.get(id).life() != Survivor.Life.LEFT));
     }
 
     public void join(Player player, String map) {
@@ -100,7 +135,7 @@ public final class MatchCoordinator {
             message(player, "Matches are unavailable while storage or recovery is unavailable.");
             return;
         }
-        if (managed(player.getUniqueId())) {
+        if (managed(player.getUniqueId()) || editor.contains(player.getUniqueId())) {
             message(player, "Finish recovery or leave your current match first.");
             return;
         }
@@ -133,12 +168,14 @@ public final class MatchCoordinator {
     }
 
     public void leave(Player player) {
+        editor.close(player);
         depart(player);
         players.restore(player);
         message(player, "Left Zombies. Your original equipment will be restored.");
     }
 
     public void quit(Player player) {
+        editor.close(player);
         depart(player);
         players.quit(player);
     }
@@ -161,6 +198,7 @@ public final class MatchCoordinator {
     public void tick() {
         if (stopped || !available) return;
         wallTick++;
+        editor.tick();
         try {
             if (run == null) {
                 tickQueue();
@@ -208,6 +246,7 @@ public final class MatchCoordinator {
             r.waves.tick();
             if (!r.playing()) return;
             r.hud.tick();
+            r.holograms.tick();
             r.powerups.tick();
             checkpoint(r);
             events(r);
@@ -335,6 +374,7 @@ public final class MatchCoordinator {
             r.interactions = new InteractionService(r);
             r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
+            r.holograms = new net.fries.zombies.game.ui.DynamicHolograms(r);
             r.hud = new MatchHud(r);
             r.powerups = new net.fries.zombies.game.economy.PowerUpService(r);
             r.interactions.labels();
@@ -454,7 +494,7 @@ public final class MatchCoordinator {
         if (r.session.snapshot().phase() != MatchPhase.CLEANUP) r.session.cleanup();
         r.dispose();
         onServer(
-                players.restoreAll(),
+                players.restoreAll(id -> !editor.contains(id)),
                 (v, e) -> {
                     if (e != null) {
                         retry(r, "cleanup_player_failed", e);
@@ -510,6 +550,7 @@ public final class MatchCoordinator {
     }
 
     public void shutdown() {
+        editor.shutdown();
         stopped = true;
         available = false;
         queued.clear();

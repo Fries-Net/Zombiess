@@ -35,6 +35,19 @@ public final class WorldSnapshot {
             if (!out.startsWith(destination)) throw new IOException("Invalid world entry");
             Files.createDirectories(out.getParent());
             Files.copy(file, out);
+            try (var channel = java.nio.channels.FileChannel.open(out, StandardOpenOption.WRITE)) {
+                channel.force(true);
+            }
+        }
+        if (!System.getProperty("os.name").startsWith("Windows")) {
+            try (var walk = Files.walk(destination)) {
+                for (var dir :
+                        walk.filter(Files::isDirectory).sorted(Comparator.reverseOrder()).toList())
+                    try (var channel =
+                            java.nio.channels.FileChannel.open(dir, StandardOpenOption.READ)) {
+                        channel.force(true);
+                    }
+            }
         }
         return digest(destination);
     }
