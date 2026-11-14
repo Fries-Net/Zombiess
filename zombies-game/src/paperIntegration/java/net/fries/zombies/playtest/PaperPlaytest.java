@@ -1011,6 +1011,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "status" -> getLogger().info("PLAYTEST_STATUS " + zombies.matches().status());
                 default -> {
+                    if (step.equals("editor-closed")) {
+                        PaperEditorChecks.awaitClosed(zombies, this);
+                        return;
+                    }
                     if (!PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");
                 }
