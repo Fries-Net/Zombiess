@@ -22,6 +22,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     private ZombiesPlugin zombies;
     private boolean quiet;
     private UUID target;
+    private UUID jambZombie;
     private double targetHealth;
     private int ammoBefore, pointsBefore;
     private long pausedTick;
@@ -187,6 +188,44 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     previousWorld = r.worldName;
                     previousMatch = r.session.snapshot().identity().matchId();
                     quiet = true;
+                }
+                case "window-jamb-start" -> {
+                    var r = run();
+                    quiet = false;
+                    r.waves.pause(false);
+                    var z =
+                            r.world.getEntitiesByClass(Zombie.class).stream()
+                                    .filter(v -> r.waves.contains(v.getUniqueId()))
+                                    .findFirst()
+                                    .orElseThrow();
+                    var window = r.windows.definition("north");
+                    jambZombie = z.getUniqueId();
+                    r.windows.assign(z, window);
+                    z.teleport(MapWorlds.location(r.world, window.entry()));
+                    check(!r.windows.guide(z), "fully cleared entry releases guidance");
+                    z.teleport(new Location(r.world, -5.5, 64, -9.4875));
+                    check(
+                            r.windows.guide(z) && !z.isCollidable(),
+                            "jamb pushback reacquires physical entry guidance");
+                }
+                case "window-jamb-entered" -> {
+                    var r = run();
+                    var z = (Zombie) Bukkit.getEntity(jambZombie);
+                    check(
+                            z != null
+                                    && !r.windows.exterior(jambZombie)
+                                    && r.map.playableBounds()
+                                            .contains(
+                                                    new net.fries.zombies.common.content.MapTemplate
+                                                            .Point(z.getX(), z.getY(), z.getZ())),
+                            "pushed-back zombie physically clears the jamb again: "
+                                    + (z == null
+                                            ? "missing"
+                                            : z.getLocation()
+                                                    + " exterior="
+                                                    + r.windows.exterior(jambZombie)));
+                    quiet = true;
+                    r.waves.pause(true);
                 }
                 case "body" -> {
                     var r = run();
