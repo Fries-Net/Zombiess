@@ -368,6 +368,10 @@ final class PaperEditorChecks {
                                 .text("world-source")
                                 .equals("blueprint"),
                         "autosave forced recoverable world snapshot");
+                // The author's durable backup is under test; unrelated control profiles are vanilla
+                // state and must be forced before terminating the whole JVM without a clean quit.
+                for (var control : Bukkit.getOnlinePlayers())
+                    if (!editor.contains(control.getUniqueId())) control.saveData();
             }
             case "editor-draft-recovered" -> {
                 var s = editor.require(p);
