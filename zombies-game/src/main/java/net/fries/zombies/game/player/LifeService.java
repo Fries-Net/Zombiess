@@ -53,6 +53,7 @@ public final class LifeService {
             var p = Bukkit.getPlayer(s.id());
             if (s.bleed(run.tick) && p != null) {
                 p.setGameMode(GameMode.SPECTATOR);
+                p.teleport(MapWorlds.location(run.world, run.map.spectatorSpawn()));
                 p.sendMessage(
                         Component.text(
                                 "You bled out. Return next round if your team survives.",
@@ -128,7 +129,7 @@ public final class LifeService {
             p.setWalkSpeed(.2f);
             p.setHealth(20);
             p.setNoDamageTicks(60);
-            p.teleport(MapWorlds.location(run.world, run.map.playerSpawn()));
+            p.teleport(MapWorlds.location(run.world, run.map.playerSpawn(p.getUniqueId())));
             run.combat.equip(p);
         }
     }

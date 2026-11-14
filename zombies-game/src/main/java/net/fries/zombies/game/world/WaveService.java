@@ -60,6 +60,14 @@ public final class WaveService {
                     credits.remove(zombie.getUniqueId());
                     continue;
                 }
+                if (zombie.getLocation().getY() < run.map.bounds().y1()
+                        || zombie.getLocation().getY() > run.map.bounds().y2() + 2) {
+                    zombie.remove();
+                    zombies.remove(zombie.getUniqueId());
+                    remaining++;
+                    continue;
+                }
+                if (run.windows.guide(zombie)) continue;
                 var target =
                         run.players.values().stream()
                                 .filter(s -> s.life() == Survivor.Life.ALIVE)
@@ -87,7 +95,13 @@ public final class WaveService {
             for (var s : run.players.values())
                 if (s.life() != Survivor.Life.LEFT) s.round(run.content);
             run.lives.roundRespawn();
-            broadcast("Round " + round + " cleared!"+(run.content.scoring().fixedRewards()?" +"+run.content.roundPoints()+" gold":""));
+            broadcast(
+                    "Round "
+                            + round
+                            + " cleared!"
+                            + (run.content.scoring().fixedRewards()
+                                    ? " +" + run.content.roundPoints() + " gold"
+                                    : ""));
             if (round >= run.content.waves().finalRound()) {
                 finish.accept(Outcome.WIN);
                 return;
@@ -117,10 +131,53 @@ public final class WaveService {
                 run.map.zombieSpawns().stream()
                         .filter(s -> s.gate().equals("none") || run.interactions.open(s.gate()))
                         .toList();
-        var point = eligible.get(spawnIndex++ % eligible.size()).point();
+        net.fries.zombies.common.content.WindowDefinition window = null;
+        if (!run.map.windows().isEmpty()) {
+            var windows = run.windows.active();
+            if (windows.isEmpty()) throw new IllegalStateException("No unlocked zombie window");
+            window = windows.get(spawnIndex % windows.size());
+        }
+        Location regionSpawn = null;
+        if (window == null) {
+            var regions =
+                    run.map.objects().stream()
+                            .filter(
+                                    o ->
+                                            o.kind()
+                                                            == net.fries.zombies.common.content
+                                                                    .MapObject.Kind.ZOMBIE_REGION
+                                                    && o.rooms().stream()
+                                                            .allMatch(
+                                                                    run.interactions::roomUnlocked))
+                            .toList();
+            if (!regions.isEmpty()) {
+                var safe = new ArrayList<Location>();
+                MapWorlds.each(
+                        run.world,
+                        regions.get(spawnIndex % regions.size()).region(),
+                        b -> {
+                            if (b.isPassable()
+                                    && b.getRelative(0, 1, 0).isPassable()
+                                    && b.getRelative(0, -1, 0).getType().isSolid())
+                                safe.add(b.getLocation().add(.5, 0, .5));
+                        });
+                if (safe.isEmpty())
+                    throw new IllegalStateException("No safe spawn in editor region");
+                regionSpawn = safe.get(spawnIndex % safe.size());
+            }
+        }
+        var spawn =
+                regionSpawn != null
+                        ? regionSpawn
+                        : window == null
+                                ? MapWorlds.location(
+                                        run.world,
+                                        eligible.get(spawnIndex % eligible.size()).point())
+                                : run.windows.spawn(window, spawnIndex);
+        spawnIndex++;
         var zombie =
                 run.world.spawn(
-                        MapWorlds.location(run.world, point),
+                        spawn,
                         Zombie.class,
                         z -> {
                             z.setAdult();
@@ -145,15 +202,17 @@ public final class WaveService {
                         });
         zombies.put(zombie.getUniqueId(), zombie);
         run.points.register(zombie.getUniqueId());
+        if (window != null) run.windows.assign(zombie, window);
     }
 
     public void died(UUID id) {
-        var zombie=zombies.remove(id);if(zombie==null)return;
+        var zombie = zombies.remove(id);
+        if (zombie == null) return;
         var credit = credits.remove(id);
         if (credit != null) {
             var s = run.players.get(credit.player());
             if (s != null) s.kill(credit.headshot(), run.content);
-            if(run.powerups!=null)run.powerups.maybeDrop(zombie.getLocation());
+            if (run.powerups != null) run.powerups.maybeDrop(zombie.getLocation());
         }
     }
 

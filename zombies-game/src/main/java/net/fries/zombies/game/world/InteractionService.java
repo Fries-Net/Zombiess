@@ -18,20 +18,40 @@ public final class InteractionService {
 
     private final MatchRun run;
     private final Set<String> opened = new HashSet<>();
+    private final Set<String> rooms = new HashSet<>();
     private final Map<UUID, Repair> repairs = new HashMap<>();
     private final Map<String, Integer> repairRewards = new HashMap<>();
     private final List<Entity> displays = new ArrayList<>();
 
     public InteractionService(MatchRun run) {
         this.run = run;
+        rooms.addAll(run.map.initialRooms());
     }
 
     public void labels() {
         for (var g : run.map.gates()) label(g.point(), g.name() + " • " + g.price() + " gold");
-        for (var s : run.map.shops()) {
+        for (var s : run.map.wallShops()) {
             var w = run.content.weapons().get(s.weapon());
-            label(s.point(), w.name() + " • " + w.price() + " | Ammo " + w.ammoPrice());
+            label(
+                    s.point(),
+                    w.name()
+                            + (s.ammoOnly() ? " ammo" : " • " + price(s))
+                            + " | Ammo "
+                            + ammoPrice(s));
         }
+        for (var object : run.map.objects())
+            if (!net.fries.zombies.common.content.MapObject.active(object.kind()))
+                label(object.point(), object.kind().name() + " • INACTIVE placeholder");
+    }
+
+    private int price(MapTemplate.Shop shop) {
+        return shop.price() < 0 ? run.content.weapons().get(shop.weapon()).price() : shop.price();
+    }
+
+    private int ammoPrice(MapTemplate.Shop shop) {
+        return shop.ammoPrice() < 0
+                ? run.content.weapons().get(shop.weapon()).ammoPrice()
+                : shop.ammoPrice();
     }
 
     private void label(MapTemplate.Point p, String text) {
@@ -84,14 +104,19 @@ public final class InteractionService {
                 }
                 MapWorlds.each(run.world, g.box(), b -> b.setType(Material.AIR, false));
                 opened.add(g.id());
+                rooms.add(g.unlocksRoom());
                 run.world.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1, .7f);
                 run.world
                         .getPlayers()
                         .forEach(t -> message(t, p.getName() + " opened " + g.name()));
                 return true;
             }
-        for (var shop : run.map.shops())
+        for (var shop : run.map.wallShops())
             if (near(p, shop.point(), 3.5)) {
+                if (!shop.rooms().stream().allMatch(this::roomUnlocked)) {
+                    message(p, "Unlock this station's room first");
+                    return true;
+                }
                 var w = run.content.weapons().get(shop.weapon());
                 var owned = survivor.weapons().get(shop.weapon());
                 if (owned != null) {
@@ -99,15 +124,23 @@ public final class InteractionService {
                         message(p, "Reserve ammo is full");
                         return true;
                     }
-                    if (!survivor.spend(w.ammoPrice())) {
-                        message(p, "Need " + w.ammoPrice() + " gold for ammo");
+                    if (!survivor.spend(ammoPrice(shop))) {
+                        message(p, "Need " + ammoPrice(shop) + " gold for ammo");
                         return true;
                     }
                     owned.refill();
                     message(p, w.name() + " reserve refilled");
                 } else {
-                    if (!survivor.spend(w.price())) {
-                        message(p, "Need " + w.price() + " gold");
+                    if (shop.ammoOnly()) {
+                        message(p, "Own " + w.name() + " before buying ammunition");
+                        return true;
+                    }
+                    if (survivor.weapons().size() >= 8) {
+                        message(p, "Weapon slots are full");
+                        return true;
+                    }
+                    if (!survivor.spend(price(shop))) {
+                        message(p, "Need " + price(shop) + " gold");
                         return true;
                     }
                     var state = new WeaponState(w);
@@ -146,7 +179,15 @@ public final class InteractionService {
             }
             if (run.tick - channel.started >= run.content.repairTicks()) {
                 block.setType(MapWorlds.material(b.material()), false);
-                run.points.repair(id,b.id(),block.getX()+":"+block.getY()+":"+block.getZ(),run.waves.round(),true,run.content.repairPoints(),(int)b.box().volume()*run.content.repairPoints(),run.tick);
+                run.points.repair(
+                        id,
+                        b.id(),
+                        block.getX() + ":" + block.getY() + ":" + block.getZ(),
+                        run.waves.round(),
+                        true,
+                        run.content.repairPoints(),
+                        (int) b.box().volume() * run.content.repairPoints(),
+                        run.tick);
                 p.playSound(p.getLocation(), Sound.BLOCK_WOOD_PLACE, .5f, 1);
                 repairs.put(id, new Repair(b.id(), run.tick));
             }
@@ -196,13 +237,15 @@ public final class InteractionService {
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5))
                 return "Right-click • " + g.name() + " • " + g.price() + " gold";
-        for (var s : run.map.shops())
+        for (var s : run.map.wallShops())
             if (near(p, s.point(), 3.5)) {
+                if (!s.rooms().stream().allMatch(this::roomUnlocked))
+                    return "Station locked • unlock its room";
                 var w = run.content.weapons().get(s.weapon());
                 boolean owned = run.survivor(p.getUniqueId()).weapons().containsKey(s.weapon());
                 return "Right-click • "
                         + w.name()
-                        + (owned ? " ammo • " + w.ammoPrice() : " • " + w.price())
+                        + (owned || s.ammoOnly() ? " ammo • " + ammoPrice(s) : " • " + price(s))
                         + " gold";
             }
         return "";
@@ -210,6 +253,10 @@ public final class InteractionService {
 
     public boolean open(String gate) {
         return opened.contains(gate);
+    }
+
+    public boolean roomUnlocked(String room) {
+        return rooms.contains(room);
     }
 
     public void clear() {

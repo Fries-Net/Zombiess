@@ -52,7 +52,8 @@ public final class PlayerRestoration {
         player.setFallDistance(0);
         player.setNoDamageTicks(60);
         if (!player.teleport(
-                net.fries.zombies.game.world.MapWorlds.location(run.world, run.map.playerSpawn())))
+                net.fries.zombies.game.world.MapWorlds.location(
+                        run.world, run.map.playerSpawn(player.getUniqueId()))))
             throw new IllegalStateException("Admission teleport rejected");
         run.combat.equip(player);
     }
@@ -143,10 +144,15 @@ public final class PlayerRestoration {
     }
 
     public CompletableFuture<Void> restoreAll() {
+        return restoreAll(id -> true);
+    }
+
+    public CompletableFuture<Void> restoreAll(java.util.function.Predicate<UUID> include) {
         var futures = new ArrayList<CompletableFuture<Void>>();
         var returning = new HashSet<>(captured.keySet());
         returning.addAll(pending);
         for (var id : returning) {
+            if (!include.test(id)) continue;
             var player = plugin.getServer().getPlayer(id);
             if (player != null) futures.add(restore(player));
             else {

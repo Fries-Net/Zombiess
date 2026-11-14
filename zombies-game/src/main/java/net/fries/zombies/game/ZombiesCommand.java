@@ -29,6 +29,22 @@ final class ZombiesCommand implements BasicCommand {
             return;
         }
         String command = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
+        if (command.equals("editor")) {
+            if (!(sender instanceof Player p)
+                    || !(sender.hasPermission("zombies.editor")
+                            || sender.hasPermission("zombies.admin"))) {
+                message(sender, "Editor requires a player with zombies.editor", true);
+                return;
+            }
+            if (!plugin.operational()) {
+                message(sender, "Editor is unavailable during startup or recovery", true);
+                return;
+            }
+            plugin.matches()
+                    .editor()
+                    .execute(p, java.util.Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > (command.equals("join") ? 2 : 1)) {
             message(sender, "Usage: /zombies join [map]|leave|reloadgun|status|profile", true);
             return;
@@ -79,7 +95,7 @@ final class ZombiesCommand implements BasicCommand {
                                                     message(
                                                             online,
                                                             "Account unavailable. Please try again"
-                                                                + " shortly.",
+                                                                    + " shortly.",
                                                             true);
                                                     return;
                                                 }
@@ -149,7 +165,7 @@ final class ZombiesCommand implements BasicCommand {
                             sender,
                             command.equals("reload")
                                     ? "Configuration reloaded. New match rules apply to future"
-                                          + " sessions."
+                                            + " sessions."
                                     : "Configuration is valid.",
                             false);
                 } catch (IOException | IllegalArgumentException e) {
@@ -163,7 +179,21 @@ final class ZombiesCommand implements BasicCommand {
 
     @Override
     public Collection<String> suggest(CommandSourceStack source, String[] args) {
-        if (!source.getSender().hasPermission("zombies.use") || args.length > 1) return List.of();
+        if (!source.getSender().hasPermission("zombies.use")) return List.of();
+        if (args.length > 1) {
+            if (args[0].equalsIgnoreCase("editor")
+                    && plugin.operational()
+                    && source.getSender() instanceof Player p
+                    && (p.hasPermission("zombies.editor") || p.hasPermission("zombies.admin")))
+                return plugin.matches()
+                        .editor()
+                        .suggest(p, java.util.Arrays.copyOfRange(args, 1, args.length));
+            if (args[0].equalsIgnoreCase("join") && args.length == 2 && plugin.operational())
+                return plugin.matches().catalog().maps().keySet().stream()
+                        .filter(m -> m.startsWith(args[1].toLowerCase(Locale.ROOT)))
+                        .toList();
+            return List.of();
+        }
         var choices =
                 source.getSender().hasPermission("zombies.admin")
                         ? List.of(
@@ -177,7 +207,8 @@ final class ZombiesCommand implements BasicCommand {
                                 "reload",
                                 "pause",
                                 "resume",
-                                "stop")
+                                "stop",
+                                "editor")
                         : List.of("join", "leave", "reloadgun", "status", "profile");
         String prefix = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
         return choices.stream().filter(choice -> choice.startsWith(prefix)).toList();

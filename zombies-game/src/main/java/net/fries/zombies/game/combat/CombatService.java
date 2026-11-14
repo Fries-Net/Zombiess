@@ -131,8 +131,7 @@ public final class CombatService {
         var w = state.definition();
         var eye = player.getEyeLocation();
         var direction = eye.getDirection();
-        var block =
-                run.world.rayTraceBlocks(eye, direction, w.range(), FluidCollisionMode.NEVER, true);
+        var block = run.windows.blocking(eye, direction, w.range());
         double range = block == null ? w.range() : eye.toVector().distance(block.getHitPosition());
         var hits = new ArrayList<org.bukkit.util.RayTraceResult>();
         for (var z : run.world.getEntitiesByClass(Zombie.class))

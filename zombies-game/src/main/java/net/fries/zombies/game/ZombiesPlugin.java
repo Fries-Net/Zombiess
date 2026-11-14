@@ -47,7 +47,7 @@ public final class ZombiesPlugin extends JavaPlugin {
                                                     getLogger()
                                                             .severe(
                                                                     "event=storage_startup_failed"
-                                                                        + " server="
+                                                                            + " server="
                                                                             + configuration
                                                                                     .serverId()
                                                                             + " cause="
@@ -64,7 +64,7 @@ public final class ZombiesPlugin extends JavaPlugin {
                                                         getLogger()
                                                                 .severe(
                                                                         "event=content_rejected"
-                                                                            + " reason="
+                                                                                + " reason="
                                                                                 + e.getMessage());
                                                         return;
                                                     }
@@ -129,7 +129,7 @@ public final class ZombiesPlugin extends JavaPlugin {
         getLogger().setLevel(candidate.logLevel());
     }
 
-    void onServer(Runnable callback) {
+    public void onServer(Runnable callback) {
         if (stopping.get()) return;
         try {
             getServer()
