@@ -111,7 +111,7 @@ public record MysteryPools(Map<NamespacedId, Pool> pools) {
         for (var object : map.objects())
             if (object.kind() == MapObject.Kind.MYSTERY_BOX) {
                 require(object.property("box", "friesnet:box/default"));
-                object.integer("price", -1, -1, 100000);
+                if (object.properties().containsKey("price")) object.integer("price", 0, 0, 100000);
             }
     }
 }
