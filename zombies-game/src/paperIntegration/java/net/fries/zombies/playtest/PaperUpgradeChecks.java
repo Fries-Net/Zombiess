@@ -173,11 +173,7 @@ final class PaperUpgradeChecks {
                         w.upgradeLevel() == 0 && !w.instanceId().equals(instance),
                         "future match has fresh unupgraded instances");
                 check(
-                        !Boolean.TRUE.equals(
-                                p.getInventory()
-                                        .getItem(0)
-                                        .getItemMeta()
-                                        .getEnchantmentGlintOverride()),
+                        !p.getInventory().getItem(0).getItemMeta().hasEnchantmentGlintOverride(),
                         "future match has base visuals");
             }
             case "pap-down" -> {
