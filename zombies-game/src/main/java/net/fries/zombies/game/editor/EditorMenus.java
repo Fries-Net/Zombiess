@@ -60,6 +60,20 @@ final class EditorMenus implements Listener {
                         service.drafts(p);
                     });
             int slot = 0;
+            button(
+                    menu,
+                    52,
+                    Material.MAP,
+                    "Create map: /zombies editor create <name>",
+                    () -> {
+                        p.closeInventory();
+                        p.sendMessage(
+                                Component.text("[Choose a new map name]")
+                                        .clickEvent(
+                                                net.kyori.adventure.text.event.ClickEvent
+                                                        .suggestCommand(
+                                                                "/zombies editor create ")));
+                    });
             for (var map : new TreeSet<>(service.catalog().maps().keySet())) {
                 String selected = map;
                 button(
@@ -71,6 +85,13 @@ final class EditorMenus implements Listener {
             }
         } else {
             button(menu, 0, Material.CHEST, "Add gameplay object", () -> create(p));
+            button(menu, 5, Material.IRON_DOOR, "Initially unlocked rooms", () -> rooms(p));
+            button(
+                    menu,
+                    6,
+                    Material.ENDER_EYE,
+                    "Toggle spectator geometry preview",
+                    () -> service.execute(p, new String[] {"preview"}));
             button(menu, 1, Material.COMPASS, "Browse objects", () -> browse(p, 0));
             button(
                     menu,
@@ -139,6 +160,30 @@ final class EditorMenus implements Listener {
                     "Tools: axe region • stick point • rod boards",
                     () -> {});
         }
+        p.openInventory(menu.inventory);
+    }
+
+    private void rooms(Player p) {
+        var s = service.require(p);
+        var initial = ContentYaml.parse(s.draft.bytes()).strings("initial-rooms");
+        var ids = new TreeSet<>(initial);
+        s.draft.nodes("gates").forEach(g -> ids.add(g.get("unlocks-room").toString()));
+        var menu = new Menu(p, "Room starting state");
+        int slot = 0;
+        for (String id : ids) {
+            boolean unlocked = initial.contains(id);
+            button(
+                    menu,
+                    slot++,
+                    unlocked ? Material.LIME_DYE : Material.GRAY_DYE,
+                    id + (unlocked ? " • initially unlocked" : " • requires door"),
+                    () -> {
+                        service.execute(
+                                p, new String[] {"room", id, unlocked ? "locked" : "unlocked"});
+                        rooms(p);
+                    });
+        }
+        button(menu, 53, Material.ARROW, "Back", () -> open(p));
         p.openInventory(menu.inventory);
     }
 

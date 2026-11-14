@@ -52,14 +52,24 @@ public final class EditorActions {
             }
             case "spawn" -> s.draft.change(doc -> doc.put("player-spawn", point(p.getLocation())));
             case "room" -> {
-                if (args.length != 2 || !args[1].matches("[a-z0-9_-]{1,32}"))
-                    throw new IllegalArgumentException("room <initial-room-id>");
+                if ((args.length != 2 && args.length != 3)
+                        || !args[1].matches("[a-z0-9_-]{1,32}")
+                        || args.length == 3 && !Set.of("locked", "unlocked").contains(args[2]))
+                    throw new IllegalArgumentException("room <id> [locked|unlocked]");
+                boolean unlocked = args.length == 2 || args[2].equals("unlocked");
                 s.draft.change(
                         doc -> {
                             var rooms = new ArrayList<Object>((List<?>) doc.get("initial-rooms"));
-                            if (!rooms.contains(args[1])) rooms.add(args[1]);
+                            if (unlocked && !rooms.contains(args[1])) rooms.add(args[1]);
+                            if (!unlocked) rooms.remove(args[1]);
                             doc.put("initial-rooms", rooms);
                         });
+                EditorService.message(
+                        p,
+                        "Room "
+                                + args[1]
+                                + " starts "
+                                + (unlocked ? "unlocked" : "locked; a door must unlock it"));
             }
             case "delete" -> {
                 s.selected();
