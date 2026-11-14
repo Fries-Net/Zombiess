@@ -542,16 +542,24 @@ final class PaperEditorChecks {
         if (!value) throw new AssertionError(message);
     }
 
-    static void awaitClosed(ZombiesPlugin plugin, org.bukkit.plugin.java.JavaPlugin assertions) {
+    static void awaitClosed(
+            ZombiesPlugin plugin,
+            org.bukkit.plugin.java.JavaPlugin assertions,
+            String name,
+            String step) {
         new org.bukkit.scheduler.BukkitRunnable() {
             private int ticks;
 
             public void run() {
-                var p = Bukkit.getPlayerExact("SurvivorOne");
+                var p = Bukkit.getPlayerExact(name);
                 if (++ticks > 200 || p == null) {
                     assertions
                             .getLogger()
-                            .severe("PLAYTEST_FAIL editor-closed restoration deadline exceeded");
+                            .severe(
+                                    "PLAYTEST_FAIL "
+                                            + step
+                                            + " restoration deadline exceeded for "
+                                            + name);
                     cancel();
                     return;
                 }
@@ -565,9 +573,11 @@ final class PaperEditorChecks {
                     check(
                             p.getGameMode() == GameMode.SURVIVAL,
                             "original mode restored after editor");
-                    assertions.getLogger().info("PLAYTEST_PASS editor-closed");
+                    assertions.getLogger().info("PLAYTEST_PASS " + step);
                 } catch (Throwable error) {
-                    assertions.getLogger().severe("PLAYTEST_FAIL editor-closed " + error);
+                    assertions
+                            .getLogger()
+                            .severe("PLAYTEST_FAIL " + step + " " + name + " " + error);
                 }
                 cancel();
             }
