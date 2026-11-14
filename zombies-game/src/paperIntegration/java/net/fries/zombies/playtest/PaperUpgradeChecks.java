@@ -22,7 +22,11 @@ final class PaperUpgradeChecks {
         var s = editor.require(p);
         editor.execute(p, "select objects test_pack_a_punch".split(" "));
         editor.execute(p, "set weapons friesnet:weapon/glock18".split(" "));
-        editor.execute(p, "set price -1".split(" "));
+        editor.execute(p, "set price 123".split(" "));
+        editor.execute(p, "set price default".split(" "));
+        check(
+                !((Map<?, ?>) s.selected().get("properties")).containsKey("price"),
+                "editor restores tier pricing without manual YAML edits");
         p.teleport(new Location(s.world, 3.5, 64, 4.5));
         editor.execute(p, new String[] {"point"});
         p.closeInventory();
