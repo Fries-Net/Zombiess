@@ -104,6 +104,7 @@ public final class MatchHud {
                         "§fRound §c" + run.waves.round() + " / " + run.content.waves().finalRound(),
                         "§fZombies §c" + run.waves.remaining(),
                         "§fGold §6" + s.points(),
+                        "§bPerks " + s.perks().owned().size() + "/" + run.perkRules.maxOwned(),
                         "§fKills §e" + s.kills(),
                         "§fTeam §a" + alive + " / " + run.session.snapshot().initialPlayerCount(),
                         "§7" + s.life().name(),

@@ -185,6 +185,7 @@ public final class CombatService {
         if (damageService.apply(
                         bullet, player, zombie, damage, headshot, PointsLedger.Kind.BULLET, w)
                 <= 0) return;
+        run.perks.frozen(player, zombie);
         player.playSound(
                 player.getLocation(),
                 headshot ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.ENTITY_ARROW_HIT_PLAYER,

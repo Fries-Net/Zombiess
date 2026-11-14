@@ -135,7 +135,7 @@ public final class InteractionService {
                         message(p, "Own " + w.name() + " before buying ammunition");
                         return true;
                     }
-                    if (survivor.weapons().size() >= 8) {
+                    if (run.perks.freeWeaponSlot(p) < 0) {
                         message(p, "Weapon slots are full");
                         return true;
                     }
@@ -144,7 +144,7 @@ public final class InteractionService {
                         return true;
                     }
                     var state = new WeaponState(w);
-                    int slot = survivor.weapons().size();
+                    int slot = run.perks.freeWeaponSlot(p);
                     survivor.weapons().put(w.id(), state);
                     p.getInventory().setItem(slot, run.combat.item(state));
                     message(p, "Purchased " + w.name() + " • slot " + (slot + 1));
@@ -152,6 +152,7 @@ public final class InteractionService {
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
                 return true;
             }
+        if (run.perks.interact(p)) return true;
         return run.mysteryBoxes != null && run.mysteryBoxes.interact(p);
     }
 
@@ -248,6 +249,8 @@ public final class InteractionService {
                         + (owned || s.ammoOnly() ? " ammo • " + ammoPrice(s) : " • " + price(s))
                         + " gold";
             }
+        String perk = run.perks.context(p);
+        if (!perk.isEmpty()) return perk;
         return run.mysteryBoxes == null ? "" : run.mysteryBoxes.context(p);
     }
 

@@ -38,6 +38,7 @@ public final class PlayerRestoration {
     }
 
     public void equip(Player player, net.fries.zombies.game.match.MatchRun run) {
+        net.fries.zombies.game.world.PerkService.removeHealth(player);
         player.closeInventory();
         player.setGameMode(org.bukkit.GameMode.ADVENTURE);
         player.setAllowFlight(false);

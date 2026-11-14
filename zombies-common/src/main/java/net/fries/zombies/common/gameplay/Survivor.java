@@ -87,6 +87,7 @@ public final class Survivor {
 
     public void leave() {
         life = Life.LEFT;
+        perks.clear();
         weapons.values().forEach(WeaponState::cancelReload);
     }
 
@@ -141,12 +142,19 @@ public final class Survivor {
     }
 
     public double fireRate() {
-        return fireRate * perks.strength(net.fries.zombies.common.content.Perks.Type.DOUBLE_TAP, 1);
+        return Math.min(
+                10,
+                fireRate
+                        * perks.strength(
+                                net.fries.zombies.common.content.Perks.Type.DOUBLE_TAP, 1));
     }
 
     public double reloadSpeed() {
-        return reloadSpeed
-                * perks.strength(net.fries.zombies.common.content.Perks.Type.SPEED_COLA, 1);
+        return Math.min(
+                10,
+                reloadSpeed
+                        * perks.strength(
+                                net.fries.zombies.common.content.Perks.Type.SPEED_COLA, 1));
     }
 
     public double damageMultiplier() {

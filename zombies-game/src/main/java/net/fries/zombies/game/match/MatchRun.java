@@ -22,6 +22,8 @@ public final class MatchRun {
     public final Gameplay content;
     public final MapTemplate map;
     public final MysteryPools mysteryPools;
+    public final Perks perkRules;
+    public net.fries.zombies.game.world.PerkService perks;
     public net.fries.zombies.game.world.MysteryBoxService mysteryBoxes;
     public final MatchRules rules;
     public final Map<UUID, Survivor> players = new LinkedHashMap<>();
@@ -47,12 +49,14 @@ public final class MatchRun {
             MatchRules rules,
             Gameplay content,
             MapTemplate map,
-            MysteryPools mysteryPools) {
+            MysteryPools mysteryPools,
+            Perks perkRules) {
         this.session = session;
         this.rules = rules;
         this.content = content;
         this.map = map;
         this.mysteryPools = mysteryPools;
+        this.perkRules = perkRules;
         points = new net.fries.zombies.common.gameplay.PointsLedger(content.scoring(), players);
     }
 
@@ -71,6 +75,7 @@ public final class MatchRun {
 
     public void dispose() {
         if (mysteryBoxes != null) mysteryBoxes.clear();
+        if (perks != null) perks.clear();
         if (windows != null) windows.clear();
         if (powerups != null) powerups.clear();
         if (waves != null) waves.clear();

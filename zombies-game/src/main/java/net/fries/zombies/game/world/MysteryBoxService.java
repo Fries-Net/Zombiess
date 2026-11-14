@@ -66,6 +66,8 @@ public final class MysteryBoxService {
     }
 
     private int freeSlot(Player p) {
+        if (run.survivor(p.getUniqueId()).weapons().size()
+                >= run.survivor(p.getUniqueId()).perks().slots(run.perkRules)) return -1;
         for (int i = 0; i < 8; i++) {
             var item = p.getInventory().getItem(i);
             if (item == null || item.getType().isAir()) return i;
