@@ -374,7 +374,7 @@ public final class MatchCoordinator {
             r.interactions = new InteractionService(r);
             r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
-            r.holograms = new net.fries.zombies.game.ui.DynamicHolograms(r);
+            r.holograms = new net.fries.zombies.game.ui.DynamicHolograms(plugin, r);
             r.hud = new MatchHud(r);
             r.powerups = new net.fries.zombies.game.economy.PowerUpService(r);
             r.interactions.labels();

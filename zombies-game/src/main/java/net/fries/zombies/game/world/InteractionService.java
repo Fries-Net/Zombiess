@@ -32,8 +32,26 @@ public final class InteractionService {
         for (var g : run.map.gates()) label(g.point(), g.name() + " • " + g.price() + " gold");
         for (var s : run.map.wallShops()) {
             var w = run.content.weapons().get(s.weapon());
-            label(s.point(), w.name() + " • " + w.price() + " | Ammo " + w.ammoPrice());
+            label(
+                    s.point(),
+                    w.name()
+                            + (s.ammoOnly() ? " ammo" : " • " + price(s))
+                            + " | Ammo "
+                            + ammoPrice(s));
         }
+        for (var object : run.map.objects())
+            if (!net.fries.zombies.common.content.MapObject.active(object.kind()))
+                label(object.point(), object.kind().name() + " • INACTIVE placeholder");
+    }
+
+    private int price(MapTemplate.Shop shop) {
+        return shop.price() < 0 ? run.content.weapons().get(shop.weapon()).price() : shop.price();
+    }
+
+    private int ammoPrice(MapTemplate.Shop shop) {
+        return shop.ammoPrice() < 0
+                ? run.content.weapons().get(shop.weapon()).ammoPrice()
+                : shop.ammoPrice();
     }
 
     private void label(MapTemplate.Point p, String text) {
@@ -95,6 +113,10 @@ public final class InteractionService {
             }
         for (var shop : run.map.wallShops())
             if (near(p, shop.point(), 3.5)) {
+                if (!shop.rooms().stream().allMatch(this::roomUnlocked)) {
+                    message(p, "Unlock this station's room first");
+                    return true;
+                }
                 var w = run.content.weapons().get(shop.weapon());
                 var owned = survivor.weapons().get(shop.weapon());
                 if (owned != null) {
@@ -102,15 +124,23 @@ public final class InteractionService {
                         message(p, "Reserve ammo is full");
                         return true;
                     }
-                    if (!survivor.spend(w.ammoPrice())) {
-                        message(p, "Need " + w.ammoPrice() + " gold for ammo");
+                    if (!survivor.spend(ammoPrice(shop))) {
+                        message(p, "Need " + ammoPrice(shop) + " gold for ammo");
                         return true;
                     }
                     owned.refill();
                     message(p, w.name() + " reserve refilled");
                 } else {
-                    if (!survivor.spend(w.price())) {
-                        message(p, "Need " + w.price() + " gold");
+                    if (shop.ammoOnly()) {
+                        message(p, "Own " + w.name() + " before buying ammunition");
+                        return true;
+                    }
+                    if (survivor.weapons().size() >= 8) {
+                        message(p, "Weapon slots are full");
+                        return true;
+                    }
+                    if (!survivor.spend(price(shop))) {
+                        message(p, "Need " + price(shop) + " gold");
                         return true;
                     }
                     var state = new WeaponState(w);
@@ -209,11 +239,13 @@ public final class InteractionService {
                 return "Right-click • " + g.name() + " • " + g.price() + " gold";
         for (var s : run.map.wallShops())
             if (near(p, s.point(), 3.5)) {
+                if (!s.rooms().stream().allMatch(this::roomUnlocked))
+                    return "Station locked • unlock its room";
                 var w = run.content.weapons().get(s.weapon());
                 boolean owned = run.survivor(p.getUniqueId()).weapons().containsKey(s.weapon());
                 return "Right-click • "
                         + w.name()
-                        + (owned ? " ammo • " + w.ammoPrice() : " • " + w.price())
+                        + (owned || s.ammoOnly() ? " ammo • " + ammoPrice(s) : " • " + price(s))
                         + " gold";
             }
         return "";

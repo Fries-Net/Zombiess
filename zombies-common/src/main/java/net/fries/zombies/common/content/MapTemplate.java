@@ -73,19 +73,40 @@ public record MapTemplate(
 
     public record Barricade(String id, Point point, Box box, String material) {}
 
-    public record Shop(Point point, NamespacedId weapon) {}
+    public record Shop(
+            Point point,
+            NamespacedId weapon,
+            int price,
+            int ammoPrice,
+            Set<String> rooms,
+            boolean ammoOnly) {
+        public Shop {
+            rooms = Set.copyOf(rooms);
+        }
+
+        public Shop(Point point, NamespacedId weapon) {
+            this(point, weapon, -1, -1, Set.of(), false);
+        }
+    }
 
     public List<Shop> wallShops() {
         var all = new java.util.ArrayList<>(shops);
         objects.stream()
-                .filter(o -> o.kind() == MapObject.Kind.WALL_WEAPON)
+                .filter(
+                        o ->
+                                o.kind() == MapObject.Kind.WALL_WEAPON
+                                        || o.kind() == MapObject.Kind.AMMO)
                 .forEach(
                         o ->
                                 all.add(
                                         new Shop(
                                                 o.point(),
                                                 new NamespacedId(
-                                                        o.property("weapon", "missing:weapon")))));
+                                                        o.property("weapon", "missing:weapon")),
+                                                o.integer("price", -1, -1, 100000),
+                                                o.integer("ammo-price", -1, -1, 100000),
+                                                o.rooms(),
+                                                o.kind() == MapObject.Kind.AMMO)));
         return List.copyOf(all);
     }
 
@@ -293,11 +314,25 @@ public record MapTemplate(
                 throw new IllegalArgumentException("Invalid object identity or room reference");
             map.requireInside(object.point());
             map.requireInside(object.region());
-            if (object.kind() == MapObject.Kind.WALL_WEAPON
+            if ((object.kind() == MapObject.Kind.WALL_WEAPON
+                            || object.kind() == MapObject.Kind.AMMO)
                     && !gameplay.weapons()
                             .containsKey(
                                     new NamespacedId(object.property("weapon", "missing:weapon"))))
                 throw new IllegalArgumentException("Unknown wall weapon");
+            if (object.kind() == MapObject.Kind.WALL_WEAPON
+                    || object.kind() == MapObject.Kind.AMMO) {
+                object.integer("price", -1, -1, 100000);
+                object.integer("ammo-price", -1, -1, 100000);
+            }
+            if (object.kind() == MapObject.Kind.HOLOGRAM) {
+                if (!Set.of("CENTER", "LEFT", "RIGHT")
+                                .contains(object.property("alignment", "CENTER"))
+                        || !Set.of("ALL", "ALIVE", "SPECTATORS")
+                                .contains(object.property("visibility", "ALL")))
+                    throw new IllegalArgumentException(
+                            "Invalid hologram alignment or visibility: " + object.id());
+            }
         }
         map.requireInside(map.playableBounds);
         if (!map.playableBounds.contains(map.playerSpawn))

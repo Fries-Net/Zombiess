@@ -160,11 +160,23 @@ public final class EditorActions {
             n.put("asset", "friesnet:object/" + type.toLowerCase(Locale.ROOT));
             var properties = new LinkedHashMap<String, String>();
             switch (kind) {
-                case WALL_WEAPON, AMMO ->
-                        properties.put("weapon", service.catalog().gameplay().starter().value());
+                case WALL_WEAPON, AMMO -> {
+                    var weapon =
+                            service.catalog()
+                                    .gameplay()
+                                    .weapons()
+                                    .get(service.catalog().gameplay().starter());
+                    properties.put("weapon", weapon.id().value());
+                    properties.put("price", Integer.toString(weapon.price()));
+                    properties.put("ammo-price", Integer.toString(weapon.ammoPrice()));
+                }
                 case PERK -> properties.put("perk", "friesnet:perk/extra_health");
                 case MYSTERY_BOX -> properties.put("box", "friesnet:box/default");
-                case HOLOGRAM -> properties.put("text", "Round {round} • {remaining} zombies");
+                case HOLOGRAM -> {
+                    properties.put("text", "Round {round} • {remaining} zombies");
+                    properties.put("alignment", "CENTER");
+                    properties.put("visibility", "ALL");
+                }
                 case CUSTOM -> {
                     properties.put("text", "Activate objective");
                     properties.put("objective", id);

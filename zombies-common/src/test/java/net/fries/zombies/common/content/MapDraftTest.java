@@ -42,6 +42,46 @@ class MapDraftTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void stationSettingsSurvivePublicationAndInvalidReferencesFail() throws Exception {
+        var file = directory.resolve("gameplay.yml");
+        java.nio.file.Files.write(
+                file, getClass().getResourceAsStream("/phase2-gameplay.yml").readAllBytes());
+        var gameplay = Gameplay.load(file);
+        var d = draft();
+        var id =
+                d.nodes("objects").stream()
+                        .filter(n -> n.get("kind").equals("WALL_WEAPON"))
+                        .findFirst()
+                        .orElseThrow()
+                        .get("id")
+                        .toString();
+        d.change(
+                root -> {
+                    var station = d.node("objects", id);
+                    station.put("rooms", new ArrayList<>(List.of("workshop")));
+                    var props = (Map<String, Object>) station.get("properties");
+                    props.put("price", "123");
+                    props.put("ammo-price", "17");
+                });
+        var shop = d.validate(gameplay).wallShops().getFirst();
+        assertEquals(123, shop.price());
+        assertEquals(17, shop.ammoPrice());
+        assertEquals(Set.of("workshop"), shop.rooms());
+        assertFalse(shop.ammoOnly());
+        d.change(root -> d.node("objects", id).put("kind", "AMMO"));
+        assertTrue(d.validate(gameplay).wallShops().getFirst().ammoOnly());
+        d.change(
+                root ->
+                        ((Map<String, Object>) d.node("objects", id).get("properties"))
+                                .put("price", "free"));
+        assertThrows(IllegalArgumentException.class, () -> d.validate(gameplay));
+        assertTrue(d.undo());
+        d.change(root -> d.node("objects", id).put("rooms", List.of("missing_room")));
+        assertThrows(IllegalArgumentException.class, () -> d.validate(gameplay));
+    }
+
+    @Test
     void failedMutationRollsBackAndObjectsAreImmutable() throws Exception {
         var d = draft();
         byte[] before = d.bytes();
