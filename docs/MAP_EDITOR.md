@@ -76,8 +76,13 @@ entity inventories are copied as world files; the original folder is never used 
 Wall weapons and ammunition stations support `weapon`, `price` and `ammo-price` properties and
 room requirements. Prices default to the weapon definition when omitted. Holograms support
 `alignment` (`CENTER`, `LEFT`, `RIGHT`), `visibility` (`ALL`, `ALIVE`, `SPECTATORS`) and room rules.
-Mystery boxes, perks, Pack-a-Punch, power, boss spawns, range targets and custom interactions are
+Perks, Pack-a-Punch, power, boss spawns, range targets and custom interactions are
 currently editable inactive placeholders, including explicit inactive labels during matches.
+Mystery boxes are active: choose their `box` pool reference and optional `price` through the property
+menu. Stations with the same pool reference form relocation destinations; one is active per pool.
+Pool weights, rare rewards, opening/collection durations and relocation probability live in
+`mystery-boxes.yml`. New training maps include a chest station; existing customized maps can add
+stations in the editor without changing their geometry or other objects.
 
 Publication performs conservative two-block walking checks for exterior routes, broken-window
 passages, entries/player spawns and nearby standing space for doors/stations, treating doors as
