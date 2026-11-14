@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 class MysteryPoolsTest {
+    @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory;
     private final NamespacedId common = new NamespacedId("friesnet:weapon/glock18"),
             rare = new NamespacedId("friesnet:weapon/awp"),
             id = new NamespacedId("friesnet:box/default");
@@ -32,6 +33,43 @@ class MysteryPoolsTest {
         assertThrows(IllegalArgumentException.class, () -> pool.choose(-1));
         assertThrows(IllegalArgumentException.class, () -> pool.choose(100));
         assertThrows(UnsupportedOperationException.class, () -> pool.rewards().clear());
+    }
+
+    @Test
+    void parserRejectsUnknownWeaponsAndDuplicatePools() throws Exception {
+        var path = directory.resolve("gameplay.yml");
+        java.nio.file.Files.write(
+                path, getClass().getResourceAsStream("/phase2-gameplay.yml").readAllBytes());
+        var gameplay = Gameplay.load(path);
+        String entry =
+                """
+                  - id: friesnet:box/default
+                    price: 950
+                    open-ticks: 60
+                    claim-ticks: 300
+                    relocate-chance: 0.2
+                    rewards:
+                      - {weapon: 'friesnet:weapon/glock18', weight: 1, rare: false}
+                """;
+        String yaml = "schema-version: 1\npools:\n" + entry;
+        assertEquals(
+                950,
+                MysteryPools.parse(yaml.getBytes(java.nio.charset.StandardCharsets.UTF_8), gameplay)
+                        .require("friesnet:box/default")
+                        .price());
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        MysteryPools.parse(
+                                (yaml + entry).getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                                gameplay));
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        MysteryPools.parse(
+                                yaml.replace("glock18", "missing")
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                                gameplay));
     }
 
     @Test

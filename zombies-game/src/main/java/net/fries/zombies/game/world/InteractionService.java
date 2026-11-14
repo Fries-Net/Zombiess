@@ -96,7 +96,6 @@ public final class InteractionService {
                     repairs.put(p.getUniqueId(), new Repair(b.id(), run.tick));
                     return true;
                 }
-        if (run.mysteryBoxes != null && run.mysteryBoxes.interact(p)) return true;
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && near(p, g.point(), 3.5)) {
                 if (!survivor.spend(g.price())) {
@@ -153,7 +152,7 @@ public final class InteractionService {
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
                 return true;
             }
-        return false;
+        return run.mysteryBoxes != null && run.mysteryBoxes.interact(p);
     }
 
     public void tick() {
@@ -249,7 +248,7 @@ public final class InteractionService {
                         + (owned || s.ammoOnly() ? " ammo • " + ammoPrice(s) : " • " + price(s))
                         + " gold";
             }
-        return "";
+        return run.mysteryBoxes == null ? "" : run.mysteryBoxes.context(p);
     }
 
     public boolean open(String gate) {

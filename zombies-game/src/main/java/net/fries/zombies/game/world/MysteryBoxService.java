@@ -75,7 +75,12 @@ public final class MysteryBoxService {
 
     public boolean interact(Player p) {
         if (!run.alive(p.getUniqueId())) return false;
-        for (var station : stations)
+        for (var station :
+                stations.stream()
+                        .sorted(
+                                Comparator.comparingDouble(
+                                        s -> p.getEyeLocation().distanceSquared(at(s))))
+                        .toList())
             if (run.interactions.near(p, station.point(), 3.5)) {
                 if (!unlocked(station)) {
                     message(p, "Unlock this mystery box's room first");
@@ -269,6 +274,28 @@ public final class MysteryBoxService {
         labels.values().forEach(Entity::remove);
         labels.clear();
         active.clear();
+    }
+
+    public String context(Player p) {
+        for (var station :
+                stations.stream()
+                        .sorted(
+                                Comparator.comparingDouble(
+                                        s -> p.getEyeLocation().distanceSquared(at(s))))
+                        .toList())
+            if (run.interactions.near(p, station.point(), 3.5)) {
+                if (!unlocked(station)) return "Mystery box • room locked";
+                if (!active(station)) return "Mystery box • dormant location";
+                var purchase = pending.get(station.id());
+                if (purchase == null)
+                    return "Right-click • mystery box • " + price(station) + " gold";
+                if (!purchase.roll.owner().equals(p.getUniqueId()))
+                    return "Mystery box • another survivor's reward";
+                return purchase.roll.ready(run.tick)
+                        ? "Right-click to collect your mystery reward"
+                        : "Mystery box opening...";
+            }
+        return "";
     }
 
     private static void message(Player p, String text) {
