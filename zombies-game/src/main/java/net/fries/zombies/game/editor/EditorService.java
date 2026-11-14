@@ -69,8 +69,8 @@ public final class EditorService {
                 duplicate(player, args[1], args[2]);
                 return;
             }
-            if (args[0].equals("import") && args.length == 4) {
-                importWorld(player, args[1], args[2], args[3]);
+            if (args[0].equals("import") && (args.length == 3 || args.length == 4)) {
+                importWorld(player, args[1], args[2], args.length == 4 ? args[3] : "training");
                 return;
             }
             if (Set.of("close", "exit").contains(args[0])) {
@@ -440,10 +440,14 @@ public final class EditorService {
                             Path file = data.resolve("maps/drafts/" + map + ".yml");
                             if (Files.exists(file))
                                 throw new IllegalArgumentException("Draft already exists");
+                            Path embedded = source.resolve("friesnet-map.yml");
                             var d =
                                     new MapDraft(
                                             ContentYaml.readBytes(
-                                                    data.resolve("maps/" + template + ".yml")));
+                                                    Files.isRegularFile(embedded)
+                                                            ? embedded
+                                                            : data.resolve(
+                                                                    "maps/" + template + ".yml")));
                             String token = UUID.randomUUID().toString().replace("-", "");
                             String digest =
                                     WorldSnapshot.copy(
@@ -621,6 +625,7 @@ public final class EditorService {
         byte[] before = s.draft.bytes();
         String token = UUID.randomUUID().toString().replace("-", "");
         Path source = plugin.getServer().getWorldContainer().toPath().resolve(s.worldName);
+        var gameplay = catalog().gameplay();
         disk.submit(
                         () -> {
                             String digest =
@@ -636,17 +641,27 @@ public final class EditorService {
                                             doc.put("version", "v" + System.currentTimeMillis());
                                     });
                             byte[] bytes = snapshot.bytes();
+                            ContentCatalog candidate = null;
                             if (publish) {
-                                snapshot.validate(catalog().gameplay());
+                                var published = snapshot.validate(gameplay);
+                                var current = ContentCatalog.load(data);
+                                var maps = new LinkedHashMap<>(current.maps());
+                                maps.put(s.map, published);
+                                if (maps.size() > 32)
+                                    throw new IllegalArgumentException("At most 32 published maps");
+                                candidate = new ContentCatalog(current.gameplay(), maps);
                                 DurableFiles.replace(
                                         data.resolve(
                                                 "maps/published/" + s.map + "/" + token + ".yml"),
                                         bytes);
-                                DurableFiles.replace(data.resolve("maps/" + s.map + ".yml"), bytes);
                             }
                             DurableFiles.replace(
                                     data.resolve("maps/drafts/" + s.map + ".yml"), bytes);
-                            return new Saved(bytes, publish ? ContentCatalog.load(data) : null);
+                            // Commit the public pointer last, after every fallible
+                            // validation/write.
+                            if (publish)
+                                DurableFiles.replace(data.resolve("maps/" + s.map + ".yml"), bytes);
+                            return new Saved(bytes, candidate);
                         })
                 .whenComplete(
                         (saved, error) ->
@@ -713,6 +728,7 @@ public final class EditorService {
     public void validate(EditorSession s) {
         var map = s.draft.validate(catalog().gameplay());
         MapGeometry.validate(s.world, map);
+        MapRoutes.validate(s.world, map);
     }
 
     public void close(Player p) {
