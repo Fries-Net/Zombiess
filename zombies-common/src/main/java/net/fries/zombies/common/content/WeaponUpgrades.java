@@ -149,7 +149,8 @@ public record WeaponUpgrades(Map<NamespacedId, List<Tier>> weapons) {
     public void validate(MapTemplate map) {
         for (var object : map.objects())
             if (object.kind() == MapObject.Kind.PACK_A_PUNCH) {
-                if (object.properties().containsKey("price")) object.integer("price", 0, 0, 100000);
+                if (object.properties().containsKey("price"))
+                    object.integer("price", -1, -1, 100000);
                 var allowed = object.property("weapons", "*");
                 if (!allowed.equals("*")) {
                     var ids = allowed.split(",", -1);

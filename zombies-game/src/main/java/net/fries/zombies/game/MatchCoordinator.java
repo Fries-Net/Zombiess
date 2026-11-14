@@ -281,7 +281,8 @@ public final class MatchCoordinator {
                         catalog.gameplay(),
                         map,
                         catalog.mysteryPools(),
-                        catalog.perks());
+                        catalog.perks(),
+                        catalog.upgrades());
         run.countdownEnds = Instant.now().plus(rules.countdown());
         queued.clear();
         events(run);
@@ -383,6 +384,7 @@ public final class MatchCoordinator {
             r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
             r.perks = new net.fries.zombies.game.world.PerkService(r);
+            r.packAPunch = new net.fries.zombies.game.world.PackAPunchService(r);
             r.mysteryBoxes = new net.fries.zombies.game.world.MysteryBoxService(r);
             r.holograms = new net.fries.zombies.game.ui.DynamicHolograms(plugin, r);
             r.hud = new MatchHud(r);

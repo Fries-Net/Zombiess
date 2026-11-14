@@ -57,7 +57,8 @@ public record MapObject(
                     AMMO,
                     HOLOGRAM,
                     MYSTERY_BOX,
-                    PERK ->
+                    PERK,
+                    PACK_A_PUNCH ->
                     true;
             default -> false;
         };

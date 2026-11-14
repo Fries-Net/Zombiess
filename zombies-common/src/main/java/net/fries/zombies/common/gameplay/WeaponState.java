@@ -89,7 +89,7 @@ public final class WeaponState {
                 || tier == null
                 || expectedLevel != upgradeLevel
                 || reloading()
-                || upgradedAt == tick
+                || upgradedAt >= 0 && tick - upgradedAt < 10
                 || !owner.spend(price)) return false;
         definition = tier.apply(definition);
         upgradeLevel++;

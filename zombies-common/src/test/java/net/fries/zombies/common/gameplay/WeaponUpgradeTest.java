@@ -57,6 +57,7 @@ class WeaponUpgradeTest {
         assertEquals(gold - 10, s.points());
         assertEquals(WeaponState.Shot.COOLDOWN, w.shoot(1));
         assertFalse(w.upgrade(s, r, 0, 10, 2));
+        assertFalse(w.upgrade(s, r, 1, 20, 2));
         assertEquals(gold - 10, s.points());
         assertTrue(w.upgrade(s, r, 1, 20, 20));
         assertFalse(w.upgrade(s, r, 2, 20, 40));

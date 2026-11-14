@@ -54,15 +54,46 @@ public final class CombatService {
     }
 
     public ItemStack item(WeaponState state) {
-        var item = new ItemStack(Material.valueOf(state.definition().material()));
+        return item(state, state.definition(), state.upgradeLevel());
+    }
+
+    public ItemStack upgradeItem(
+            WeaponState state, net.fries.zombies.common.content.WeaponUpgrades.Tier tier) {
+        return item(state, tier.apply(state.definition()), state.upgradeLevel() + 1);
+    }
+
+    private ItemStack item(
+            WeaponState state,
+            net.fries.zombies.common.content.Gameplay.Weapon definition,
+            int level) {
+        var item = new ItemStack(Material.valueOf(definition.material()));
         var meta = item.getItemMeta();
-        meta.displayName(Component.text(state.definition().name(), NamedTextColor.GOLD));
+        meta.displayName(Component.text(definition.name(), NamedTextColor.GOLD));
         meta.lore(
                 List.of(
                         Component.text("Right-click: fire | F: reload", NamedTextColor.GRAY),
                         Component.text(
                                 "Ammo is shown in the action bar", NamedTextColor.DARK_GRAY)));
         meta.setUnbreakable(true);
+        if (level > 0) {
+            meta.setEnchantmentGlintOverride(true);
+            meta.lore(
+                    List.of(
+                            Component.text(
+                                    "Pack-a-Punch "
+                                            + level
+                                            + " • "
+                                            + definition.magazine()
+                                            + " / "
+                                            + definition.reserve(),
+                                    NamedTextColor.LIGHT_PURPLE),
+                            Component.text("Right-click: fire | F: reload", NamedTextColor.GRAY)));
+        }
+        meta.getPersistentDataContainer()
+                .set(
+                        new NamespacedKey(instanceKey.getNamespace(), "upgrade_level"),
+                        PersistentDataType.INTEGER,
+                        level);
         meta.getPersistentDataContainer()
                 .set(instanceKey, PersistentDataType.STRING, state.instanceId().toString());
         item.setItemMeta(meta);
@@ -72,7 +103,7 @@ public final class CombatService {
                                 .set(
                                         new NamespacedKey(instanceKey.getNamespace(), "asset"),
                                         PersistentDataType.STRING,
-                                        state.definition().behaviour().asset().value()));
+                                        definition.behaviour().asset().value()));
         // Native start/stop-use provides real hold/release semantics instead of a guessed click
         // lease.
         item.setData(

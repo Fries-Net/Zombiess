@@ -338,6 +338,22 @@ final class EditorMenus implements Listener {
 
     private void edit(Player p, String field) {
         var menu = new Menu(p, "Value for " + field);
+        if (field.equals("weapons")) {
+            button(
+                    menu,
+                    9,
+                    Material.NETHER_STAR,
+                    "All configured upgrades",
+                    () -> service.execute(p, new String[] {"set", "weapons", "*"}));
+            int slot = 10;
+            for (var id : service.catalog().upgrades().weapons().keySet())
+                button(
+                        menu,
+                        slot++,
+                        Material.ANVIL,
+                        id.value(),
+                        () -> service.execute(p, new String[] {"set", "weapons", id.value()}));
+        }
         if (field.equals("weapon")) {
             int slot = 9;
             for (var weapon : service.catalog().gameplay().weapons().values())
@@ -398,7 +414,7 @@ final class EditorMenus implements Listener {
                             p,
                             new String[] {"set", field, Boolean.toString(!Boolean.TRUE.equals(v))});
                 });
-        for (int i = 0; i < 4 && !Set.of("weapon", "box", "perk").contains(field); i++) {
+        for (int i = 0; i < 4 && !Set.of("weapon", "weapons", "box", "perk").contains(field); i++) {
             int delta = new int[] {-10, -1, 1, 10}[i];
             button(
                     menu,

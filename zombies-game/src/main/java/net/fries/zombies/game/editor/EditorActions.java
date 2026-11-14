@@ -190,6 +190,10 @@ public final class EditorActions {
                                             .require("friesnet:perk/extra_health")
                                             .price()));
                 }
+                case PACK_A_PUNCH -> {
+                    properties.put("weapons", "*");
+                    properties.put("price", "-1");
+                }
                 case MYSTERY_BOX -> {
                     properties.put("box", "friesnet:box/default");
                     properties.put(

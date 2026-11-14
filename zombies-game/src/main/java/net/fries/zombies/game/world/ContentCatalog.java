@@ -8,7 +8,11 @@ import java.util.*;
 
 /** One immutable startup snapshot. Active matches retain these exact content values. */
 public record ContentCatalog(
-        Gameplay gameplay, Map<String, MapTemplate> maps, MysteryPools mysteryPools, Perks perks) {
+        Gameplay gameplay,
+        Map<String, MapTemplate> maps,
+        MysteryPools mysteryPools,
+        Perks perks,
+        WeaponUpgrades upgrades) {
     public ContentCatalog {
         maps = Map.copyOf(maps);
     }
@@ -38,6 +42,7 @@ public record ContentCatalog(
         var gameplay = Gameplay.load(directory.resolve("gameplay.yml"));
         var mysteryPools = MysteryPools.load(directory.resolve("mystery-boxes.yml"), gameplay);
         var perks = Perks.load(directory.resolve("perks.yml"));
+        var upgrades = WeaponUpgrades.load(directory.resolve("weapon-upgrades.yml"), gameplay);
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {
             var files =
@@ -52,12 +57,13 @@ public record ContentCatalog(
                 var map = MapTemplate.load(path, gameplay);
                 mysteryPools.validate(map);
                 perks.validate(map);
+                upgrades.validate(map);
                 if (maps.values().stream().anyMatch(m -> m.id().equals(map.id())))
                     throw new IOException("Duplicate map identity");
                 maps.put(key, map);
             }
         }
-        return new ContentCatalog(gameplay, maps, mysteryPools, perks);
+        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades);
     }
 
     private static void migrateTraining(Path directory, Path file) throws IOException {
