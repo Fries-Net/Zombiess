@@ -42,6 +42,13 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     @Override
     public void onEnable() {
         zombies = (ZombiesPlugin) getServer().getPluginManager().getPlugin("FriesNetZombies");
+        // Idle control players must not be killed by flat-world slimes while another client edits.
+        // Match/draft worlds explicitly retain NORMAL difficulty and production zombie spawning.
+        var hub = Bukkit.getWorld("world");
+        if (hub != null) {
+            hub.setGameRule(GameRules.SPAWN_MOBS, false);
+            hub.setDifficulty(Difficulty.PEACEFUL);
+        }
         registerCommand("fnztest", this);
         getServer()
                 .getPluginManager()
@@ -170,6 +177,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         p.getInventory().clear();
                         p.getInventory().setItem(4, new ItemStack(Material.EMERALD, 7));
                         p.setGameMode(GameMode.SURVIVAL);
+                        p.setHealth(20);
                         p.setLevel(17);
                         p.setExp(.3f);
                         p.setFoodLevel(19);
