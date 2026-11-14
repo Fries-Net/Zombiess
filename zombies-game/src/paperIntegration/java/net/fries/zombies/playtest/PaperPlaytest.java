@@ -1015,8 +1015,12 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "status" -> getLogger().info("PLAYTEST_STATUS " + zombies.matches().status());
                 default -> {
-                    if (step.equals("editor-closed")) {
-                        PaperEditorChecks.awaitClosed(zombies, this);
+                    if (step.equals("editor-closed") || step.equals("editor-second-closed")) {
+                        PaperEditorChecks.awaitClosed(
+                                zombies,
+                                this,
+                                step.equals("editor-closed") ? "SurvivorOne" : "SurvivorTwo",
+                                step);
                         return;
                     }
                     if (!PaperEditorChecks.handle(step, zombies))
