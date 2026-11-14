@@ -77,7 +77,59 @@ bounded and conservative ordinary walking checks. Optional schematic placement c
 installed WorldEdit/FAWE tool in the draft; no bundled schematic parser is claimed. Metadata undo
 does not undo arbitrary terrain. See [authoring instructions and limits](MAP_EDITOR.md).
 
-Next gameplay checkpoint: **Phase 3E** — add validated weighted mystery-box pools, then connect
-the existing `MYSTERY_BOX` objects to a server-tick purchase/animation/collection service with
-refunds on cancellation and inventory-capacity checks. Perks, Pack-a-Punch, power/boss/range/custom
-objects remain explicitly inactive editor placeholders until their respective runtime checkpoints.
+The editor milestone is proposed in [PR #5](https://github.com/Fries-Net/Zombiess/pull/5), targeting
+master. Later CI exposed client window/teleport ordering and assertions that ran before asynchronous
+restoration finished. The test clients now await expected windows, position and click acknowledgements;
+editor exit checks await restoration readiness. Crash fixtures force unrelated vanilla control-player
+profiles before killing Paper. These changes do not replace production restoration with a test shortcut.
+The [editor PR verification at d09fbd1](https://github.com/Fries-Net/Zombiess/actions/runs/43583782901)
+passed build, PostgreSQL and Paper. Later fixture changes require their own CI result.
+
+## E. Mystery boxes
+
+`mystery-boxes.yml` defines bounded immutable weighted pools, rare flags, price, opening/collection
+durations and relocation probability. Every weapon reference is validated. The default AWP weight
+is 3 of 100. Each match captures its registry. `MYSTERY_BOX` editor objects select a pool and an
+optional price; locations sharing a pool form relocation destinations. New training definitions
+include a functional chest station. Existing customized maps are preserved and can add stations
+through the editor.
+
+Paid rolls use match ticks, native item-display previews, particles, sounds and prompts. Only the
+buyer can collect. One pending roll per buyer and one per active station prevent duplicate charges.
+Collection preserves owned weapon identity when refilling ammunition. Full inventories reject
+purchase, and capacity is checked again before collection. Expired/cancelled rewards refund once;
+already-full duplicate ammunition refunds the price. Successful collection can relocate to another
+unlocked location. Match cleanup owns/removes all previews and labels. Match gold remains separate
+from persistent accounts, and active purchases are not resumed after a crashed/abandoned match.
+
+Verification: **93 unit/H2 tests, zero failures/skips**, including exact weighted-ticket boundaries,
+invalid pool definitions, unknown weapon references and claim/refund idempotency. Real Paper with
+two protocol clients passed **98 stages** (`run/playtest-cc0f9c76/result.json`): the full A–D regression
+suite plus published mystery-box purchases, owner-only collection, rare AWP rewards, relocation,
+full inventory rejection, expiry refunds and inventory filling during opening. The run retains both
+match and editor forced-crash/recovery checks and historical map checkout.
+
+The full run caught a regression where a nearby box consumed a door purchase. Door/weapon-station
+priority is now preserved, and the complete run passed after the fix. The separate branch is
+`feature/phase-3-mystery-boxes`; it includes editor CI corrections through normal history merges.
+Verify that branch's latest Actions run before release. Normal-client visual review of the opening
+preview and production-map station spacing remains alongside the editor visual checklist.
+
+Subsequent regression hardening identified two distinct failures. A zombie's centre could enter the
+playable bounds before its body cleared a window, losing entry guidance and becoming stuck near
+the jamb. Guidance now waits for body clearance, aims beyond native waypoint arrival tolerance in
+clear interior space, and reacquires nearby window-owned zombies pushed outside again. Movement
+remains native pathfinding. A four-orientation domain test and a real pushed-back-jamb regression
+were added; the editor branch passed **97 Paper stages** (`.tmp/editor-ci/run/playtest-e3dce700/result.json`).
+The combined unit/H2 suite now contains **94 passing tests**.
+
+Archived CI server logs also showed the idle control player being killed by naturally spawned
+slimes in the flat hub during the other player's editing session. This was distinct from durable
+restoration: the test server now disables ambient monster spawning, while match zombies still spawn
+through the production service. Test clients await windows, teleport state and restoration for both
+participants, and original equipment is checked before as well as after the editor crash.
+
+Next exact implementation step: **Phase 3F** — introduce validated perk definitions and per-survivor
+perk ownership/caps, then connect the existing `PERK` stations to damage, movement, reload, revival
+and weapon-slot lifecycle services. Perks, Pack-a-Punch, power/boss/range/custom gameplay remain
+explicitly inactive placeholders. Production resource-pack assets and orchestration are later work.

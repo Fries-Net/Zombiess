@@ -28,7 +28,7 @@ Connect a Java 1.21.11 client, then use `/zombies join training`. The lobby gath
 - Sneak within 2.5 blocks of a downed teammate, with line of sight, for five seconds to revive them. Bleedout takes 25 seconds. Dead teammates spectate and return after a round clear; a team with no standing survivor loses.
 - Clear all 30 configured rounds to win. Results award tokens and experience separately from temporary match points. Cleanup restores original equipment, location, experience and game mode, removes the disposable world, and permits another match in the same JVM.
 
-The supplied Foundry Training map is pinned by version and content digest. Each match gets a new world and UUID. Operators can [author maps in game](docs/MAP_EDITOR.md), import unloaded Java world folders, and publish immutable versions while matches retain their original map. Perks, mystery boxes, Pack-a-Punch, production packs and network services remain later milestones.
+The supplied Foundry Training map is pinned by version and content digest. Each match gets a new world and UUID. Operators can [author maps in game](docs/MAP_EDITOR.md), import unloaded Java world folders, and publish immutable versions while matches retain their original map. Mystery boxes provide weighted weapon rewards, previews, collection and relocation. Perks, Pack-a-Punch, production packs and network services remain later milestones.
 
 Phase 3 weapon/economy changes are being delivered in focused checkpoints; see [the verification report](docs/PHASE_3.md). Glock-18 now has 10 rounds and a 30-tick interval; AK-47 20/20; MAC-10 20/10; revolver 6/40; AWP 1/50 with a long reload and piercing. Fire and reload timings, trigger modes, sounds and placeholder visuals are configurable. A knife is available in slot 9.
 
@@ -48,7 +48,7 @@ Match gold now comes from actual damaging hits. Glock body/head hits grant 10/15
 | `editor enter <map>`, `editor create <map>`, `editor menu` | `zombies.editor` (op), or `zombies.admin` | Open an isolated Creative map editor with selection/placement tools |
 | `editor save`, `validate`, `publish`, `undo`, `redo`, `exit` | `zombies.editor`, or `zombies.admin` | Save drafts, validate routes and geometry, publish versions, undo metadata and exit with confirmation |
 
-The plugin creates `config.yml`, `database.yml`, `gameplay.yml`, `maps/training.yml` and `data/` inside `plugins/FriesNetZombies/`. Core rules can reload for future sessions; gameplay and map snapshots load at startup. Existing legacy configs and `players.yml` are preserved without automatic migration.
+The plugin creates `config.yml`, `database.yml`, `gameplay.yml`, `mystery-boxes.yml`, `maps/training.yml` and `data/` inside `plugins/FriesNetZombies/`. Core rules can reload for future sessions; gameplay and map snapshots load at startup. Existing legacy configs and `players.yml` are preserved without automatic migration.
 
 ## Verification
 

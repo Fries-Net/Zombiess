@@ -50,7 +50,14 @@ public record MapObject(
 
     public static boolean active(Kind kind) {
         return switch (kind) {
-            case PLAYER_SPAWN, SPECTATOR_SPAWN, ZOMBIE_REGION, WALL_WEAPON, AMMO, HOLOGRAM -> true;
+            case PLAYER_SPAWN,
+                    SPECTATOR_SPAWN,
+                    ZOMBIE_REGION,
+                    WALL_WEAPON,
+                    AMMO,
+                    HOLOGRAM,
+                    MYSTERY_BOX ->
+                    true;
             default -> false;
         };
     }

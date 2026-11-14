@@ -703,7 +703,10 @@ public final class EditorService {
                                 maps.put(s.map, published);
                                 if (maps.size() > 32)
                                     throw new IllegalArgumentException("At most 32 published maps");
-                                candidate = new ContentCatalog(current.gameplay(), maps);
+                                current.mysteryPools().validate(published);
+                                candidate =
+                                        new ContentCatalog(
+                                                current.gameplay(), maps, current.mysteryPools());
                                 Path deployed = data.resolve("maps/" + s.map + ".yml");
                                 if (Files.exists(deployed))
                                     retainVersion(s.map, ContentYaml.readBytes(deployed));
@@ -790,6 +793,7 @@ public final class EditorService {
 
     public void validate(EditorSession s) {
         var map = s.draft.validate(catalog().gameplay());
+        catalog().mysteryPools().validate(map);
         MapGeometry.validate(s.world, map);
         MapRoutes.validate(s.world, map);
     }

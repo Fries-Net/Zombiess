@@ -348,6 +348,16 @@ final class EditorMenus implements Listener {
                         weapon.name(),
                         () -> service.execute(p, new String[] {"set", field, weapon.id().value()}));
         }
+        if (field.equals("box")) {
+            int slot = 9;
+            for (var pool : service.catalog().mysteryPools().pools().values())
+                button(
+                        menu,
+                        slot++,
+                        Material.CHEST,
+                        pool.id().value(),
+                        () -> service.execute(p, new String[] {"set", "box", pool.id().value()}));
+        }
         button(
                 menu,
                 0,
@@ -378,7 +388,7 @@ final class EditorMenus implements Listener {
                             p,
                             new String[] {"set", field, Boolean.toString(!Boolean.TRUE.equals(v))});
                 });
-        for (int i = 0; i < 4 && !field.equals("weapon"); i++) {
+        for (int i = 0; i < 4 && !Set.of("weapon", "box").contains(field); i++) {
             int delta = new int[] {-10, -1, 1, 10}[i];
             button(
                     menu,

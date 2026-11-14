@@ -36,6 +36,9 @@ public final class MapRoutes {
         var interactions = new ArrayList<Set<Cell>>();
         map.gates().forEach(g -> interactions.add(nearby(world, doors, g.point())));
         map.wallShops().forEach(s -> interactions.add(nearby(world, doors, s.point())));
+        map.objects().stream()
+                .filter(o -> o.kind() == MapObject.Kind.MYSTERY_BOX)
+                .forEach(o -> interactions.add(nearby(world, doors, o.point())));
         walk(
                 world,
                 map.bounds(),

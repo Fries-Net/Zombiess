@@ -181,7 +181,16 @@ public final class EditorActions {
                     properties.put("ammo-price", Integer.toString(weapon.ammoPrice()));
                 }
                 case PERK -> properties.put("perk", "friesnet:perk/extra_health");
-                case MYSTERY_BOX -> properties.put("box", "friesnet:box/default");
+                case MYSTERY_BOX -> {
+                    properties.put("box", "friesnet:box/default");
+                    properties.put(
+                            "price",
+                            Integer.toString(
+                                    service.catalog()
+                                            .mysteryPools()
+                                            .require("friesnet:box/default")
+                                            .price()));
+                }
                 case HOLOGRAM -> {
                     properties.put("text", "Round {round} • {remaining} zombies");
                     properties.put("alignment", "CENTER");
