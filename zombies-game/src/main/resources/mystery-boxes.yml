@@ -1,0 +1,13 @@
+schema-version: 1
+pools:
+  - id: friesnet:box/default
+    price: 950
+    open-ticks: 60
+    claim-ticks: 300
+    relocate-chance: 0.15
+    rewards:
+      - {weapon: 'friesnet:weapon/glock18', weight: 30, rare: false}
+      - {weapon: 'friesnet:weapon/ak47', weight: 30, rare: false}
+      - {weapon: 'friesnet:weapon/mac10', weight: 25, rare: false}
+      - {weapon: 'friesnet:weapon/revolver', weight: 12, rare: false}
+      - {weapon: 'friesnet:weapon/awp', weight: 3, rare: true}
