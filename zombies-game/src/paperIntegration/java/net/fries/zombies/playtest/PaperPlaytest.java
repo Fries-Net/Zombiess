@@ -172,6 +172,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         p.setLevel(17);
                         p.setExp(.3f);
                         p.setFoodLevel(19);
+                        p.saveData();
                     }
                     check(getServer().getOnlinePlayers().size() == 2, "two connected clients");
                 }
@@ -923,7 +924,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 p.getInventory().getItem(4) != null
                                         && p.getInventory().getItem(4).getType() == Material.EMERALD
                                         && p.getInventory().getItem(4).getAmount() == 7,
-                                "original inventory");
+                                "original inventory for "
+                                        + p.getName()
+                                        + ": "
+                                        + p.getInventory().getItem(4));
                         check(
                                 p.getLevel() == 17 && Math.abs(p.getExp() - .3) < .01,
                                 "original experience");
