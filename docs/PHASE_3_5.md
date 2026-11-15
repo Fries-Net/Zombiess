@@ -46,7 +46,7 @@ All branches start from master `6e9369f`; no feature has been merged into master
 | --- | --- | --- | --- |
 | [10](https://github.com/Fries-Net/Zombiess/pull/10) | gun-handling | `e40c579` | Native use effects, balance, coordinated HUD |
 | [11](https://github.com/Fries-Net/Zombiess/pull/11) | targeting-windows | `c28f141` | Crosshair purchases, full boards, framed adult/baby traversal |
-| [12](https://github.com/Fries-Net/Zombiess/pull/12) | enemies-powerups | `bf7f5a2` | Six bounded archetypes, five classic power-ups |
+| [12](https://github.com/Fries-Net/Zombiess/pull/12) | enemies-powerups | `97c7700` | Six bounded archetypes, five classic power-ups |
 | [13](https://github.com/Fries-Net/Zombiess/pull/13) | presentation-training | `eb6a9c2` | Staged mystery rendering, unpaid preview, separate training lab |
 | [14](https://github.com/Fries-Net/Zombiess/pull/14) | discord | `d40f44f` | Optional bounded staff logging and two-way chat |
 
