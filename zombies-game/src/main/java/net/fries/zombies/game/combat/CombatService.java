@@ -2,8 +2,8 @@ package net.fries.zombies.game.combat;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Consumable;
-import io.papermc.paper.datacomponent.item.UseEffects;
 import io.papermc.paper.datacomponent.item.SwingAnimation;
+import io.papermc.paper.datacomponent.item.UseEffects;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 
 import net.fries.zombies.common.gameplay.PointsLedger;
@@ -108,10 +108,16 @@ public final class CombatService {
                                         definition.behaviour().asset().value()));
         // 1.21.11 separates use input from movement effects. Preserve native hold/release while
         // explicitly disabling the default 0.2 movement multiplier and sprint cancellation.
-        item.setData(DataComponentTypes.USE_EFFECTS, UseEffects.useEffects()
-                .canSprint(true).speedMultiplier(1).interactVibrations(false).build());
-        item.setData(DataComponentTypes.SWING_ANIMATION, SwingAnimation.swingAnimation()
-                .type(SwingAnimation.Animation.NONE).build());
+        item.setData(
+                DataComponentTypes.USE_EFFECTS,
+                UseEffects.useEffects()
+                        .canSprint(true)
+                        .speedMultiplier(1)
+                        .interactVibrations(false)
+                        .build());
+        item.setData(
+                DataComponentTypes.SWING_ANIMATION,
+                SwingAnimation.swingAnimation().type(SwingAnimation.Animation.NONE).build());
         item.setData(
                 DataComponentTypes.CONSUMABLE,
                 Consumable.consumable()
@@ -228,10 +234,7 @@ public final class CombatService {
                 headshot ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.ENTITY_ARROW_HIT_PLAYER,
                 .5f,
                 headshot ? 1.8f : 1.2f);
-        player.sendActionBar(
-                Component.text(
-                        headshot ? "HEADSHOT" : "HIT",
-                        headshot ? NamedTextColor.GOLD : NamedTextColor.WHITE));
+        run.hud.hit(player, headshot);
     }
 
     public void reload(Player player) {

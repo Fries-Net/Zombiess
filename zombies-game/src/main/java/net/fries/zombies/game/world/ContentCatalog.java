@@ -12,7 +12,8 @@ public record ContentCatalog(
         Map<String, MapTemplate> maps,
         MysteryPools mysteryPools,
         Perks perks,
-        WeaponUpgrades upgrades) {
+        WeaponUpgrades upgrades,
+        HudSettings hud) {
     public ContentCatalog {
         maps = Map.copyOf(maps);
     }
@@ -43,6 +44,7 @@ public record ContentCatalog(
         var mysteryPools = MysteryPools.load(directory.resolve("mystery-boxes.yml"), gameplay);
         var perks = Perks.load(directory.resolve("perks.yml"));
         var upgrades = WeaponUpgrades.load(directory.resolve("weapon-upgrades.yml"), gameplay);
+        var hud = HudSettings.load(directory.resolve("hud.yml"));
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {
             var files =
@@ -63,7 +65,7 @@ public record ContentCatalog(
                 maps.put(key, map);
             }
         }
-        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades);
+        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades, hud);
     }
 
     private static void migrateTraining(Path directory, Path file) throws IOException {
@@ -84,4 +86,5 @@ public record ContentCatalog(
             }
         }
     }
+
 }

@@ -272,6 +272,6 @@ public final class InteractionService {
     }
 
     private void message(Player p, String text) {
-        p.sendMessage(Component.text(text, NamedTextColor.GOLD));
+        run.hud.notice(p, "purchase", text, 30, run.hudSettings.purchaseTicks());
     }
 }
