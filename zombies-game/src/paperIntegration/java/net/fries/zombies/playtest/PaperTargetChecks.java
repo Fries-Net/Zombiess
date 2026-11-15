@@ -29,6 +29,26 @@ final class PaperTargetChecks {
         editor.execute(p, "add mystery_box door_overlap".split(" "));
         p.teleport(new Location(s.world, 7.4, 65, .5));
         editor.execute(p, new String[] {"point"});
+        // Equal Shop values may belong to different editor IDs/hitboxes. Index by position,
+        // never List.indexOf(value), so the smaller intersected station remains functional.
+        editor.execute(p, "add wall_weapon nested_wall".split(" "));
+        editor.execute(p, "set weapon friesnet:weapon/mac10".split(" "));
+        editor.execute(p, "set price 123".split(" "));
+        editor.execute(p, "set ammo-price 17".split(" "));
+        editor.execute(p, "set rooms workshop".split(" "));
+        p.teleport(new Location(s.world, -10.5, 64, 4.5));
+        editor.execute(p, new String[] {"point"});
+        s.draft.change(
+                doc -> {
+                    s.selected()
+                            .put(
+                                    "region",
+                                    new LinkedHashMap<>(
+                                            Map.of(
+                                                    "x1", -11, "y1", 65, "z1", 4, "x2", -11, "y2",
+                                                    65, "z2", 4)));
+                });
+        editor.execute(p, "set hitbox REGION".split(" "));
         p.closeInventory();
     }
 
