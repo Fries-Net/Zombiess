@@ -231,8 +231,7 @@ public final class PerkService {
         }
     }
 
-    private static void message(Player p, String text) {
-        p.sendActionBar(Component.text(text, NamedTextColor.AQUA));
-        p.sendMessage(Component.text(text, NamedTextColor.AQUA));
+    private void message(Player p, String text) {
+        run.hud.notice(p, "purchase", text, 30, run.hudSettings.purchaseTicks());
     }
 }

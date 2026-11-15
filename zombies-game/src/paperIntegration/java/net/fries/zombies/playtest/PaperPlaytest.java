@@ -238,7 +238,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 getLogger()
                                         .severe(
                                                 "PLAYTEST_FAIL window-jamb-entered native entry did"
-                                                    + " not clear: "
+                                                        + " not clear: "
                                                         + (z == null
                                                                 ? "missing"
                                                                 : z.getLocation()));
@@ -258,8 +258,9 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     int gold = r.survivor(p.getUniqueId()).points();
                     r.combat.shoot(p);
                     check(
-                            r.survivor(p.getUniqueId()).points() == gold + 10,
-                            "body hit grants 10 gold");
+                            r.survivor(p.getUniqueId()).points()
+                                    == gold + w.definition().behaviour().bodyGold(),
+                            "configured body gold");
                     check(
                             Math.abs(z.getHealth() - (targetHealth - w.definition().damage()))
                                     < .01,
@@ -289,7 +290,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                             + shotTicks.get("SurvivorOne")
                                             + " ak="
                                             + shotTicks.get("SurvivorTwo"));
-                    for (var entry : Map.of("SurvivorOne", 30L, "SurvivorTwo", 20L).entrySet()) {
+                    for (var entry : Map.of("SurvivorOne", 8L, "SurvivorTwo", 4L).entrySet()) {
                         var ticks = shotTicks.get(entry.getKey());
                         check(
                                 ticks.size() >= 3,
@@ -313,8 +314,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                             shotTicks.get("SurvivorOne").size() == 1,
                             "semi-auto holds fire once " + shotTicks);
                     check(
-                            shotTicks.get("SurvivorTwo").size() == 3,
-                            "automatic native hold fires every 20 ticks " + shotTicks);
+                            shotTicks.get("SurvivorTwo").size() >= 4,
+                            "automatic native hold sustains rapid fire " + shotTicks);
                 }
                 case "timing-reset" -> {
                     trackingShots = false;
@@ -344,7 +345,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var w = run().combat.held(player("SurvivorOne"));
                     check(w.definition().name().equals("AK-47"), "actual client hotbar switch");
                     check(
-                            w.shotsFired() == 1 && w.magazine() == 19,
+                            w.shotsFired() >= 1
+                                    && w.magazine() == w.definition().magazine() - w.shotsFired(),
                             "switch spam cannot bypass previous recovery");
                     check(w.lastShotTick() >= switchDeadline, "Glock recovery survives AK switch");
                 }
@@ -359,8 +361,9 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     int gold = r.survivor(p.getUniqueId()).points();
                     r.combat.shoot(p);
                     check(
-                            r.survivor(p.getUniqueId()).points() == gold + 15,
-                            "head hit grants 15 gold");
+                            r.survivor(p.getUniqueId()).points()
+                                    == gold + w.definition().behaviour().headGold(),
+                            "configured headshot gold");
                     check(
                             Math.abs(
                                             z.getHealth()
@@ -485,7 +488,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     p.teleport(new Location(r.world, 11.5, 64, .5));
                     r.interactions.interact(p);
                     check(
-                            w.reserve() == 240 && s.points() == points - w.definition().ammoPrice(),
+                            w.reserve() == w.definition().reserve()
+                                    && s.points() == points - w.definition().ammoPrice(),
                             "purchased reserve ammo");
                     p.getInventory().setHeldItemSlot(0);
                 }
@@ -592,11 +596,15 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     r.combat.shoot(p);
                     for (int i = 0; i < 3; i++)
                         check(
-                                Math.abs(piercingTargets.get(i).getHealth() - (health.get(i) - 30))
+                                Math.abs(
+                                                piercingTargets.get(i).getHealth()
+                                                        - (health.get(i) - w.definition().damage()))
                                         < .01,
                                 "AWP damages each pierced enemy once");
                     check(
-                            w.magazine() == 0 && r.survivor(p.getUniqueId()).points() == gold + 60,
+                            w.magazine() == w.definition().magazine() - 1
+                                    && r.survivor(p.getUniqueId()).points()
+                                            == gold + 3 * w.definition().behaviour().bodyGold(),
                             "AWP single round and three distinct hit rewards");
                     r.combat.reload(p);
                     check(w.reloading(), "AWP long reload starts");
@@ -606,7 +614,9 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var p = player("SurvivorOne");
                     var w = r.combat.held(p);
                     check(
-                            w.magazine() == 1 && w.reserve() == 39 && !w.reloading(),
+                            w.magazine() == w.definition().magazine()
+                                    && w.reserve() == w.definition().reserve() - 1
+                                    && !w.reloading(),
                             "AWP long reload conserves ammo");
                     r.combat.switched(p);
                     p.getInventory().setHeldItemSlot(0);
@@ -666,8 +676,15 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                     PointsLedger.Kind.BULLET,
                                     r.content.weapons().get(r.content.starter()));
                     check(
-                            r.survivor(p.getUniqueId()).points() == gold + 20,
-                            "powerup doubles hit gold");
+                            r.survivor(p.getUniqueId()).points()
+                                    == gold
+                                            + 2
+                                                    * r.combat
+                                                            .held(p)
+                                                            .definition()
+                                                            .behaviour()
+                                                            .bodyGold(),
+                            "powerup doubles configured hit gold");
                 }
                 case "window-shoot" -> {
                     var r = run();
@@ -693,7 +710,13 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     r.combat.shoot(p);
                     check(
                             z.getHealth() == 94
-                                    && r.survivor(p.getUniqueId()).points() == gold + 10,
+                                    && r.survivor(p.getUniqueId()).points()
+                                            == gold
+                                                    + r.combat
+                                                            .held(p)
+                                                            .definition()
+                                                            .behaviour()
+                                                            .bodyGold(),
                             "intact designated boards permit valid shots");
                     check(
                             r.windows.state("north").intactCount() == 6,
@@ -1088,7 +1111,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperUpgradeChecks.handle(step, zombies)
+                    if (!PaperGunChecks.handle(step, zombies)
+                            && !PaperUpgradeChecks.handle(step, zombies)
                             && !PaperPerkChecks.handle(step, zombies)
                             && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");

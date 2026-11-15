@@ -20,14 +20,53 @@ class WeaponTimingTest {
     }
 
     @Test
+    void fasterWeaponsDoNotPayMoreForTheSameEnemyHealth() throws Exception {
+        var content = content();
+        int baseline = goldForEnemy(content, "glock18", 180);
+        assertTrue(goldForEnemy(content, "ak47", 180) <= baseline);
+        assertTrue(goldForEnemy(content, "mac10", 180) <= baseline);
+        for (String name : java.util.List.of("glock18", "ak47", "mac10", "revolver", "awp"))
+            assertTrue(goldForEnemy(content, name, 18) <= 15, "bounded normal-enemy gold: " + name);
+    }
+
+    private int goldForEnemy(Gameplay content, String name, double health) {
+        var survivor = new Survivor(java.util.UUID.randomUUID(), content);
+        var ledger = new PointsLedger(content.scoring(), java.util.Map.of(survivor.id(), survivor));
+        var enemy = java.util.UUID.randomUUID();
+        ledger.register(enemy);
+        var w = content.weapons().get(new NamespacedId("friesnet:weapon/" + name));
+        long tick = 0;
+        while (health > 0) {
+            double after = Math.max(0, health - w.damage());
+            ledger.damage(
+                    new PointsLedger.Damage(
+                            java.util.UUID.randomUUID(),
+                            enemy,
+                            survivor.id(),
+                            tick,
+                            PointsLedger.Kind.BULLET,
+                            false,
+                            health,
+                            after),
+                    w);
+            health = after;
+            tick += w.cooldownTicks();
+        }
+        return survivor.points() - content.startingPoints();
+    }
+
+    @Test
     void distinctCadencesConsumeExactAmmoUnderEveryTickSpam() throws Exception {
-        for (var entry : java.util.Map.of("glock18", 30, "ak47", 20, "mac10", 10).entrySet()) {
+        for (var entry :
+                java.util.Map.of("glock18", 8, "ak47", 4, "mac10", 2, "revolver", 15, "awp", 30)
+                        .entrySet()) {
             var weapon = weapon(entry.getKey());
             var control = new FireControl();
             int fired = 0;
             for (long tick = 0; tick < 60; tick++)
                 if (control.attempt(weapon, tick, 1) == WeaponState.Shot.FIRED) fired++;
-            assertEquals(60 / entry.getValue(), fired);
+            assertEquals(
+                    Math.min(weapon.definition().magazine(), (59 / entry.getValue()) + 1), fired);
             assertEquals(weapon.definition().magazine() - fired, weapon.magazine());
         }
     }
@@ -40,15 +79,15 @@ class WeaponTimingTest {
         assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 0, 1));
         c.cancel();
         assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(ak, 1, 1));
-        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(ak, 29, 1));
-        assertEquals(WeaponState.Shot.FIRED, c.attempt(ak, 30, 1));
+        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(ak, 7, 1));
+        assertEquals(WeaponState.Shot.FIRED, c.attempt(ak, 8, 1));
         c.cancel();
-        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 49, 1));
-        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 50, 1));
-        assertTrue(glock.reload(50, 10));
-        glock.tick(54);
-        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 54, 1));
-        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 80, 1));
+        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 11, 1));
+        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 12, 1));
+        assertTrue(glock.reload(12, 10));
+        glock.tick(16);
+        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 16, 1));
+        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 20, 1));
     }
 
     @Test
@@ -65,7 +104,7 @@ class WeaponTimingTest {
         assertEquals(WeaponState.Shot.FIRED, c.press(ak, 0, 1));
         int shots = 1;
         for (int t = 1; t < 61; t++) if (c.poll(ak, t, 1, true) == WeaponState.Shot.FIRED) shots++;
-        assertEquals(4, shots);
+        assertEquals(16, shots);
         c.release();
         assertNotEquals(WeaponState.Shot.FIRED, c.poll(ak, 80, 1, false));
     }
@@ -116,9 +155,9 @@ class WeaponTimingTest {
         var glock = weapon("glock18");
         var c = new FireControl();
         c.attempt(glock, 0, 1);
-        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 15, 2));
-        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 30, 2));
-        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 45, 2));
+        assertEquals(WeaponState.Shot.COOLDOWN, c.attempt(glock, 7, 2));
+        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 8, 2));
+        assertEquals(WeaponState.Shot.FIRED, c.attempt(glock, 12, 2));
         assertEquals(1, WeaponTiming.duration(1, 10));
         assertThrows(IllegalArgumentException.class, () -> WeaponTiming.duration(10, 0));
     }
@@ -158,13 +197,15 @@ class WeaponTimingTest {
         assertTrue(
                 revolver.definition().damage() * revolver.definition().headshotMultiplier() >= 36);
         var awp = weapon("awp");
-        assertEquals(1, awp.magazine());
+        assertEquals(3, awp.magazine());
         assertEquals(4, awp.definition().behaviour().pierceTargets());
         assertEquals(WeaponState.Shot.FIRED, awp.shoot(0));
-        assertEquals(WeaponState.Shot.EMPTY, awp.shoot(50));
-        assertTrue(awp.reload(50));
-        assertEquals(WeaponState.Shot.RELOADING, awp.shoot(149));
-        assertEquals(WeaponState.Shot.FIRED, awp.shoot(150));
-        assertEquals(39, awp.reserve());
+        assertEquals(WeaponState.Shot.FIRED, awp.shoot(30));
+        assertEquals(WeaponState.Shot.FIRED, awp.shoot(60));
+        assertEquals(WeaponState.Shot.EMPTY, awp.shoot(90));
+        assertTrue(awp.reload(90));
+        assertEquals(WeaponState.Shot.RELOADING, awp.shoot(159));
+        assertEquals(WeaponState.Shot.FIRED, awp.shoot(160));
+        assertEquals(45, awp.reserve());
     }
 }
