@@ -208,10 +208,16 @@ public final class CombatService {
                 || zombie.isInvulnerable()
                 || !run.waves.contains(zombie.getUniqueId())) return;
         var w = state.definition();
-        boolean headshot = hit.getY() >= zombie.getEyeLocation().getY() - .25;
+        boolean headshot =
+                hit.getY() >= zombie.getEyeLocation().getY() - .25
+                        && run.waves.headshotScale(zombie.getUniqueId()) > 0;
         double damage =
                 w.damage()
-                        * (headshot ? w.headshotMultiplier() : 1)
+                        * (headshot
+                                ? 1
+                                        + (w.headshotMultiplier() - 1)
+                                                * run.waves.headshotScale(zombie.getUniqueId())
+                                : 1)
                         * run.survivor(player.getUniqueId()).damageMultiplier();
         if (damageService.apply(
                         bullet, player, zombie, damage, headshot, PointsLedger.Kind.BULLET, w)

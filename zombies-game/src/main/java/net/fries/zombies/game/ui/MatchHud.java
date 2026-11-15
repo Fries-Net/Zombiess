@@ -67,6 +67,7 @@ public final class MatchHud {
             p.sendActionBar(
                     Component.text(
                             text
+                                    + run.powerups.status()
                                     + s.goldFeedback(run.tick)
                                     + (run.points.doubleGoldRemaining(run.tick) > 0
                                             ? " • DOUBLE GOLD"

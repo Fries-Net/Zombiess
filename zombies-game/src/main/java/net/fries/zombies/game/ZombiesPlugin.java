@@ -32,6 +32,8 @@ public final class ZombiesPlugin extends JavaPlugin {
                         "mystery-boxes.yml",
                         "perks.yml",
                         "weapon-upgrades.yml",
+                        "zombie-archetypes.yml",
+                        "power-ups.yml",
                         "maps/training.yml"
                     }) {
                 if (!Files.exists(getDataFolder().toPath().resolve(resource)))

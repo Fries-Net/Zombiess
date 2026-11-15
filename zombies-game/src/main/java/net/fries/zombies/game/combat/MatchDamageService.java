@@ -50,8 +50,14 @@ public final class MatchDamageService {
                 .targets()
                 .add(enemy.getUniqueId())) return 0;
         double before = enemy.getHealth();
+        if (run.powerups != null && run.powerups.instaKill(enemy.getUniqueId(), kind))
+            amount = Math.max(amount, before * 100);
         enemy.setNoDamageTicks(0);
-        run.waves.attribute(enemy.getUniqueId(), player.getUniqueId(), headshot);
+        run.waves.attribute(
+                enemy.getUniqueId(),
+                player.getUniqueId(),
+                headshot,
+                kind != PointsLedger.Kind.POWER_UP);
         authorized = enemy.getUniqueId();
         try {
             enemy.damage(amount, player);

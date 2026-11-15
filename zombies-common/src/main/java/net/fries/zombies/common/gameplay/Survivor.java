@@ -47,9 +47,13 @@ public final class Survivor {
     }
 
     public void kill(boolean headshot, Gameplay content) {
+        kill(headshot, content, true);
+    }
+
+    public void kill(boolean headshot, Gameplay content, boolean fixedReward) {
         kills++;
         if (headshot) headshots++;
-        if (content.scoring().fixedRewards())
+        if (fixedReward && content.scoring().fixedRewards())
             credit(content.killPoints() + (headshot ? content.headshotPoints() : 0));
     }
 

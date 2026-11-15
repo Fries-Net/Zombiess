@@ -240,6 +240,31 @@ public final class WindowService {
         }
     }
 
+    /** Repairs only windows whose complete missing geometry is safe; never pays repair gold. */
+    public int carpenter() {
+        int repaired = 0;
+        for (var d : definitions.values()) {
+            var state = states.get(d.id());
+            if (state.intactCount() == d.boards().size()) continue;
+            boolean safe = true;
+            for (int i = 0; i < d.boards().size(); i++)
+                if (!state.intact(i) && !available(d.boards().get(i))) safe = false;
+            if (!safe) continue;
+            for (int i = 0; i < d.boards().size(); i++)
+                if (!state.intact(i)) {
+                    place(d, d.boards().get(i));
+                    clearCracks(d, d.boards().get(i));
+                    effects(d.boards().get(i), true);
+                    repaired++;
+                }
+            states.put(
+                    d.id(),
+                    new net.fries.zombies.common.gameplay.WindowState(
+                            d.boards().size(), d.breakTicks(), d.repairTicks()));
+        }
+        return repaired;
+    }
+
     private boolean available(WindowDefinition.Board board) {
         var b = block(board);
         if (!b.getType().isAir()) return false;
