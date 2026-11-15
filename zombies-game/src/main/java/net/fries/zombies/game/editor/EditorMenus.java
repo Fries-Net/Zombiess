@@ -329,6 +329,21 @@ final class EditorMenus implements Listener {
             } else if (!field.equals("kind"))
                 button(menu, slot++, Material.NAME_TAG, field + ": " + value, () -> edit(p, field));
         }
+        if (s.selectedList.equals("windows") && !selected.containsKey("entry-policy"))
+            button(
+                    menu,
+                    slot++,
+                    Material.OAK_TRAPDOOR,
+                    "Entry policy: all boards (default)",
+                    () -> edit(p, "entry-policy"));
+        if (s.selectedList.equals("objects")
+                && !((Map<?, ?>) selected.get("properties")).containsKey("hitbox"))
+            button(
+                    menu,
+                    slot++,
+                    Material.GLASS,
+                    "Interaction hitbox: point (default)",
+                    () -> edit(p, "hitbox"));
         button(menu, 45, Material.LAVA_BUCKET, "Delete selected object", () -> confirmDelete(p));
         button(
                 menu,
@@ -381,6 +396,43 @@ final class EditorMenus implements Listener {
                         Material.ANVIL,
                         id.value(),
                         () -> service.execute(p, new String[] {"set", "weapons", id.value()}));
+        }
+        if (field.equals("entry-policy")) {
+            button(
+                    menu,
+                    9,
+                    Material.OAK_PLANKS,
+                    "Break every board before entry",
+                    () -> service.execute(p, new String[] {"set", field, "ALL_BOARDS"}));
+            button(
+                    menu,
+                    10,
+                    Material.OAK_TRAPDOOR,
+                    "Enter after a passable central opening",
+                    () -> service.execute(p, new String[] {"set", field, "PASSABLE_OPENING"}));
+        }
+        if (field.equals("hitbox")) {
+            button(
+                    menu,
+                    9,
+                    Material.ENDER_EYE,
+                    "Point hitbox",
+                    () -> service.execute(p, new String[] {"set", field, "POINT"}));
+            button(
+                    menu,
+                    10,
+                    Material.GLASS,
+                    "Use object region",
+                    () -> service.execute(p, new String[] {"set", field, "REGION"}));
+            button(
+                    menu,
+                    11,
+                    Material.WOODEN_AXE,
+                    "Use selected blocks as interaction region",
+                    () -> {
+                        service.execute(p, new String[] {"region", "region"});
+                        service.execute(p, new String[] {"set", field, "REGION"});
+                    });
         }
         if (field.equals("weapon")) {
             int slot = 9;
@@ -442,7 +494,11 @@ final class EditorMenus implements Listener {
                             p,
                             new String[] {"set", field, Boolean.toString(!Boolean.TRUE.equals(v))});
                 });
-        for (int i = 0; i < 4 && !Set.of("weapon", "weapons", "box", "perk").contains(field); i++) {
+        for (int i = 0;
+                i < 4
+                        && !Set.of("weapon", "weapons", "box", "perk", "entry-policy", "hitbox")
+                                .contains(field);
+                i++) {
             int delta = new int[] {-10, -1, 1, 10}[i];
             button(
                     menu,
@@ -688,6 +744,30 @@ final class EditorMenus implements Listener {
                             .12,
                             0);
             }
+        if (!s.selectedId.isEmpty()) {
+            try {
+                var selected = s.selected();
+                net.fries.zombies.common.gameplay.InteractionRay.Box hitbox = null;
+                if (s.selectedList.equals("objects")) {
+                    var object = MapObject.load(new ContentYaml(selected));
+                    if (java.util.Set.of(
+                                    MapObject.Kind.WALL_WEAPON,
+                                    MapObject.Kind.AMMO,
+                                    MapObject.Kind.PERK,
+                                    MapObject.Kind.PACK_A_PUNCH,
+                                    MapObject.Kind.MYSTERY_BOX)
+                            .contains(object.kind()))
+                        hitbox = net.fries.zombies.game.world.InteractionTargeting.object(object);
+                } else if (s.selectedList.equals("gates"))
+                    hitbox =
+                            net.fries.zombies.game.world.InteractionTargeting.box(
+                                    MapTemplate.box(
+                                            new ContentYaml((Map<?, ?>) selected.get("box"))));
+                if (hitbox != null) drawHitbox(p, s.world, hitbox);
+            } catch (IllegalArgumentException ignored) {
+                /* Incomplete drafts still display point markers. */
+            }
+        }
         if (s.first != null && s.second != null) {
             double x1 = Math.min(s.first.getX(), s.second.getX()),
                     x2 = Math.max(s.first.getX(), s.second.getX()) + 1,
@@ -717,6 +797,22 @@ final class EditorMenus implements Listener {
                                         ? "Sneak + star: menu"
                                         : s.selectedId + " / " + s.field)
                                 + " • /zombies editor menu"));
+    }
+
+    private static void drawHitbox(
+            Player p, World world, net.fries.zombies.common.gameplay.InteractionRay.Box b) {
+        for (int i = 0; i <= 8; i++) {
+            double t = i / 8.0;
+            for (double x : new double[] {b.x1(), b.x2()})
+                for (double y : new double[] {b.y1(), b.y2()})
+                    particle(p, world, x, y, b.z1() + (b.z2() - b.z1()) * t);
+            for (double x : new double[] {b.x1(), b.x2()})
+                for (double z : new double[] {b.z1(), b.z2()})
+                    particle(p, world, x, b.y1() + (b.y2() - b.y1()) * t, z);
+            for (double y : new double[] {b.y1(), b.y2()})
+                for (double z : new double[] {b.z1(), b.z2()})
+                    particle(p, world, b.x1() + (b.x2() - b.x1()) * t, y, z);
+        }
     }
 
     private static void particle(Player p, World w, double x, double y, double z) {
