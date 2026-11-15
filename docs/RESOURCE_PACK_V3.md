@@ -83,3 +83,33 @@ Repeat with `glock18`, `awp`, `mac10` and `raygun`. For each:
 Record screenshots, client version, FOV and the tested pack SHA-256 before adding
 an acceptance entry. A parsing test or browser screenshot alone cannot approve a
 Minecraft pose. Keep automatic custom-model activation disabled until approved.
+
+## Optional server delivery after acceptance
+
+`resource-pack.yml` is copied only when absent and defaults to disabled with no
+approved models. Host the immutable ZIP at a public HTTPS URL, copy its SHA-1 from
+the build report, enable delivery, and add only approved gameplay-to-item-model
+mappings. Restart to apply a new immutable policy. Example after approval:
+
+```yaml
+enabled: true
+url: 'https://your-public-host.example/friesnet-zombies-v3-approved.zip'
+sha1: '<40 lowercase hexadecimal characters from the exact ZIP>'
+approved-models:
+  'friesnet:weapon/ak47': 'friesnet:weapon/ak47'
+  'friesnet:weapon/ak47/mk2': 'friesnet:weapon/ak47'
+```
+
+Each player receives an optional, version-identified client download. The server
+does not fetch or block on the URL. An approved `minecraft:item_model` activates
+only after that player's successful-load status; accepted-but-pending, declined,
+failed and unknown assets use vanilla materials. Base and upgraded weapon IDs
+remain distinct even when deliberately mapped to the same approved visual.
+Status refreshes change metadata in place, preserving quantities, instance UUIDs,
+ammunition and gameplay state. Cleanup removes only this service's pack.
+
+Native Paper checks cover optional protocol delivery, foreign/duplicate statuses,
+pending-versus-loaded models, unapproved assets, failure fallback and independent
+teammate decisions. Load statuses are simulated by the test helper: these checks
+do not download or visually approve the pack. Complete the client acceptance
+above before deployment. Do not put authentication credentials into download URLs.

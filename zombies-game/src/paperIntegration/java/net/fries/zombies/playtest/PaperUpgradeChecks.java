@@ -48,6 +48,7 @@ final class PaperUpgradeChecks {
         var w = s.weapons().get(r.content.starter());
         switch (step) {
             case "pap-start" -> {
+                PaperResourcePackChecks.verify(plugin, r, p);
                 s.perks().clear();
                 r.perks.apply(p, false);
                 p.teleport(new Location(r.world, 3.5, 64, 4.5));
