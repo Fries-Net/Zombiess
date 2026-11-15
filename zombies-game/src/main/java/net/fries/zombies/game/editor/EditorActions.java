@@ -195,6 +195,7 @@ public final class EditorActions {
                     properties.put("price", "-1");
                 }
                 case MYSTERY_BOX -> {
+                    properties.put("preview-yaw", "0");
                     properties.put("box", "friesnet:box/default");
                     properties.put(
                             "price",

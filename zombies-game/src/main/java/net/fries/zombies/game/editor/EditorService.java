@@ -26,6 +26,7 @@ public final class EditorService {
     private final EditorActions actions;
     private final EditorMenus menus;
     private long tick;
+    private final Map<UUID, EditorBoxPreview> boxPreviews = new HashMap<>();
 
     public EditorService(
             ZombiesPlugin plugin, MatchCoordinator matches, MapWorlds worlds, DurableFiles disk) {
@@ -93,6 +94,13 @@ public final class EditorService {
             var s = require(player);
             if (s.busy) throw new IllegalStateException("Draft is saving; wait for completion");
             switch (args[0]) {
+                case "boxpreview" -> {
+                    var previous = boxPreviews.remove(player.getUniqueId());
+                    if (previous != null) previous.remove();
+                    boxPreviews.put(player.getUniqueId(), new EditorBoxPreview(s, catalog(), tick));
+                    player.closeInventory();
+                    message(player, "Mystery presentation preview: no gold or reward is involved");
+                }
                 case "delete" -> menus.confirmDelete(player);
                 case "preview" -> {
                     player.closeInventory();
@@ -274,6 +282,7 @@ public final class EditorService {
                             "room",
                             "delete",
                             "preview",
+                            "boxpreview",
                             "wand");
         else if (args.length == 2
                 && Set.of("enter", "open", "duplicate", "versions", "checkout").contains(args[0]))
@@ -807,6 +816,8 @@ public final class EditorService {
     }
 
     public void close(Player p) {
+        var preview = boxPreviews.remove(p.getUniqueId());
+        if (preview != null) preview.remove();
         opening.remove(p.getUniqueId());
         var s = sessions.remove(p.getUniqueId());
         if (s == null) return;
@@ -831,7 +842,9 @@ public final class EditorService {
     }
 
     public void tick() {
-        if (++tick % 10 != 0) return;
+        ++tick;
+        boxPreviews.entrySet().removeIf(e -> !e.getValue().tick(tick));
+        if (tick % 10 != 0) return;
         for (var s : sessions.values()) {
             var p = Bukkit.getPlayer(s.player);
             if (p == null || s.busy || p.getWorld() != s.world) continue;
