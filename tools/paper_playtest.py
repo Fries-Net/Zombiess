@@ -82,6 +82,7 @@ def main():
     parser.add_argument("--node", default="node")
     parser.add_argument("--accept-eula", action="store_true")
     parser.add_argument("--editor-only", action="store_true", help="Run authoring regressions without the combat/recovery suite")
+    parser.add_argument("--profile",action="store_true",help="Profile bounded mixed populations under native rapid fire")
     parser.add_argument("--client-dir", type=Path, default=ROOT / "tools/paper-client")
     args = parser.parse_args()
     if not args.accept_eula:
@@ -113,12 +114,21 @@ def main():
     gameplay = (resources / "gameplay.yml").read_text().replace("final-round: 30", "final-round: 3").replace("base-count: 5", "base-count: 3").replace("spawn-ticks: 30", "spawn-ticks: 10").replace("intermission-ticks: 160", "intermission-ticks: 40").replace("bleedout-ticks: 500", "bleedout-ticks: 200")
     gameplay = gameplay.replace("base-damage: 3", "base-damage: 0.1").replace("damage-per-round: 0.15", "damage-per-round: 0")
     gameplay = gameplay.replace("double-gold-drop-chance: 0.03", "double-gold-drop-chance: 0")
+    if args.profile:
+        gameplay=gameplay.replace("base-count: 3","base-count: 96").replace("count-per-round: 2","count-per-round: 0").replace("extra-player-factor: 0.65","extra-player-factor: 0").replace("spawn-ticks: 10","spawn-ticks: 1").replace("alive-limit: 24","alive-limit: 100")
     (data / "gameplay.yml").write_text(gameplay, encoding="utf-8")
     boxes = (resources / "mystery-boxes.yml").read_text()
     boxes += "\n  - id: friesnet:box/test\n    price: 41\n    open-ticks: 20\n    claim-ticks: 40\n    relocate-chance: 1\n    rewards:\n      - {weapon: 'friesnet:weapon/awp', weight: 1, rare: true}\n"
     (data / "mystery-boxes.yml").write_text(boxes, encoding="utf-8")
     perks = (resources / "perks.yml").read_text(encoding="utf-8").replace("chance: 0.35", "chance: 1")
     (data / "perks.yml").write_text(perks, encoding="utf-8")
+    powerups=(resources/"power-ups.yml").read_text().replace("drop-chance: 0.07","drop-chance: 0").replace("min-round: 3","min-round: 1")
+    powerups="\n".join(line.replace("despawn-ticks: 600","despawn-ticks: 20").replace("per-round-limit: 1","per-round-limit: 2") if "type: NUKE" in line else line for line in powerups.splitlines())+"\n"
+    (data/"power-ups.yml").write_text(powerups,encoding="utf-8")
+    if args.profile:
+        import re
+        archetypes=re.sub(r"min-round: [0-9]+","min-round: 1",(resources/"zombie-archetypes.yml").read_text())
+        (data/"zombie-archetypes.yml").write_text(archetypes,encoding="utf-8")
     map_fixture=(resources/"maps/training.yml").read_text().replace("round-gold-cap: 60","round-gold-cap: 10")
     (data/"maps/training.yml").write_text(map_fixture,encoding="utf-8")
     (work / "eula.txt").write_text("eula=true\n", encoding="utf-8")
@@ -166,6 +176,20 @@ def main():
         server.wait("event=instance_ready", 240)
         clients = connect_clients("clients-first.log")
         check("setup")
+        if args.profile:
+            join()
+            check("profile-start",6)
+            for name in ("SurvivorOne","SurvivorTwo"):
+                bot(name,"sustain",enabled=True)
+            check("profile-stats",8)
+            for name in ("SurvivorOne","SurvivorTwo"):
+                bot(name,"sustain",enabled=False)
+            check("defeat")
+            server.wait("event=match_ready",60)
+            check("restored")
+            (work/"result.json").write_text(json.dumps(dict(paper="1.21.11-132",profile=True,checks=checks,passed=len(checks)),indent=2),encoding="utf-8")
+            print("Paper population/fire profile passed: "+str(work/"result.json"))
+            return
         if not args.editor_only:
             join()
             check("playing")
@@ -298,6 +322,8 @@ def main():
             bot(name,"chat",text="/zombies join authored")
         server.wait("event=match_playable",60)
         check("editor-match",1)
+        check("enemy-spawn")
+        check("enemy-checked",.3)
         check("editor-runtime")
         check("mystery-start")
         check("mystery-collected", 1.3)
@@ -331,6 +357,13 @@ def main():
         check("pap-combat", .8)
         check("pap-down", .8)
         check("pap-revived", 2.8)
+        check("powerup-max-start",.5)
+        check("powerup-max-claimed",.8)
+        check("powerup-insta",.8)
+        check("powerup-double",.8)
+        check("powerup-carpenter",.8)
+        check("powerup-expired",1.3)
+        check("powerup-nuke",.8)
         bot("SurvivorTwo","chat",text="/zombies leave")
         time.sleep(1)
         bot("SurvivorTwo","chat",text="/zombies editor open authored")

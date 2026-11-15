@@ -238,7 +238,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 getLogger()
                                         .severe(
                                                 "PLAYTEST_FAIL window-jamb-entered native entry did"
-                                                    + " not clear: "
+                                                        + " not clear: "
                                                         + (z == null
                                                                 ? "missing"
                                                                 : z.getLocation()));
@@ -1024,6 +1024,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "frozen" -> {
                     var r = run();
+                    PaperExpansionChecks.seedCrash(r, player("SurvivorOne"));
                     PaperPerkChecks.seedCrash(r, player("SurvivorOne"));
                     PaperUpgradeChecks.seedCrash(r, player("SurvivorOne"));
                     check(
@@ -1080,6 +1081,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 }
                 case "status" -> getLogger().info("PLAYTEST_STATUS " + zombies.matches().status());
                 default -> {
+                    if (step.equals("profile-start")) {
+                        quiet = false;
+                        run().waves.pause(false);
+                    }
                     if (step.equals("editor-closed") || step.equals("editor-second-closed")) {
                         PaperEditorChecks.awaitClosed(
                                 zombies,
@@ -1088,7 +1093,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperUpgradeChecks.handle(step, zombies)
+                    if (!PaperExpansionChecks.handle(step, zombies)
+                            && !PaperUpgradeChecks.handle(step, zombies)
                             && !PaperPerkChecks.handle(step, zombies)
                             && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");

@@ -69,6 +69,8 @@ public final class WaveService {
                         || zombie.getLocation().getY() > run.map.bounds().y2() + 2) {
                     zombie.remove();
                     zombies.remove(zombie.getUniqueId());
+                    credits.remove(zombie.getUniqueId());
+                    archetypes.remove(zombie.getUniqueId());
                     remaining++;
                     continue;
                 }
@@ -91,6 +93,8 @@ public final class WaveService {
                         || zombie.getLocation().getY() > run.map.bounds().y2() + 2) {
                     zombie.remove();
                     zombies.remove(zombie.getUniqueId());
+                    credits.remove(zombie.getUniqueId());
+                    archetypes.remove(zombie.getUniqueId());
                     remaining++;
                 }
             }

@@ -5,6 +5,8 @@ const bots = new Map();
 const battling = new Set();
 const busy = new Set();
 const spamming = new Set();
+const sustained = new Set();
+const holding = new Set();
 function connect(name) {
   const bot = mineflayer.createBot({host: '127.0.0.1', port: Number(process.argv[2]), username: name, auth: 'offline', version: '1.21.11'});
   bots.set(name, bot);
@@ -48,6 +50,7 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     if (command.op === 'spam') { if(command.enabled)spamming.add(command.name);else {spamming.delete(command.name);bot.deactivateItem();} }
     if (command.op === 'hold') {if(command.enabled)bot.activateItem();else bot.deactivateItem();}
     if (command.op === 'battle') { if (command.enabled) battling.add(command.name); else battling.delete(command.name); }
+    if (command.op === 'sustain') {if(command.enabled){sustained.add(command.name);battling.add(command.name);}else{sustained.delete(command.name);holding.delete(command.name);battling.delete(command.name);bot.deactivateItem();}}
     if (command.op === 'sneak') bot.setControlState('sneak', command.enabled);
     if (command.op === 'quit') bot.quit();
     if (command.op === 'exit') { for (const b of bots.values()) b.quit(); setTimeout(() => process.exit(0), 100); }
@@ -61,7 +64,7 @@ setInterval(async () => {
       .sort((a,b) => a.position.distanceTo(bot.entity.position) - b.position.distanceTo(bot.entity.position))[0];
     if (!target) continue;
     busy.add(name);
-    try { await bot.lookAt(target.position.offset(0, 1.7, 0), true); bot.deactivateItem(); bot.activateItem(); }
+    try { await bot.lookAt(target.position.offset(0, target.height && target.height<1.2 ? .7 : 1.7, 0), true); if(!sustained.has(name)){bot.deactivateItem();bot.activateItem();}else if(!holding.has(name)){bot.activateItem();holding.add(name);} }
     catch (error) { console.log('BOT_ERROR battle ' + error.message); }
     finally { busy.delete(name); }
   }
