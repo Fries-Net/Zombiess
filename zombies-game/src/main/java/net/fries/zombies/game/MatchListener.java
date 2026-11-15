@@ -41,14 +41,15 @@ final class MatchListener implements Listener {
         var r = matches.current();
         if (r == null || !r.alive(e.getPlayer().getUniqueId())) return;
         if (e.getAction().isRightClick()) {
-            if (!r.interactions.interact(e.getPlayer())
+            if (!r.interactions.nativeInteract(e.getPlayer(), e.getInteractionPoint())
                     && !r.lives.reviving(e.getPlayer().getUniqueId())
                     && r.combat.held(e.getPlayer()) != null) {
                 r.combat.press(e.getPlayer());
                 e.setUseInteractedBlock(Event.Result.DENY);
                 e.setUseItemInHand(Event.Result.ALLOW);
             }
-        } else if (e.getAction().isLeftClick()) r.combat.reload(e.getPlayer());
+        } else if (e.getAction().isLeftClick() && !r.interactions.consumedRecently(e.getPlayer()))
+            r.combat.reload(e.getPlayer());
     }
 
     @EventHandler
