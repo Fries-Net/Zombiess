@@ -1,0 +1,225 @@
+schema-version: 3
+id: friesnet:map/foundry_lab
+version: v35
+world-source: blueprint
+world-digest: none
+objects:
+  - id: training_box
+    kind: MYSTERY_BOX
+    point: {x: 3.5, y: 65, z: 7.5}
+    region: {x1: 3, y1: 64, z1: 8, x2: 3, y2: 64, z2: 8}
+    rooms: [spawn]
+    asset: friesnet:object/mystery_box
+    properties: {box: 'friesnet:box/default'}
+  - id: lab_juggernog
+    kind: PERK
+    point: {x: -11.5, y: 64, z: -6.5}
+    region: {x1: -12, y1: 64, z1: -7, x2: -12, y2: 65, z2: -7}
+    rooms: [spawn]
+    asset: friesnet:object/juggernog
+    properties: {perk: 'friesnet:perk/extra_health'}
+  - id: lab_speed_cola
+    kind: PERK
+    point: {x: -11.5, y: 64, z: -2.5}
+    region: {x1: -12, y1: 64, z1: -3, x2: -12, y2: 65, z2: -3}
+    rooms: [spawn]
+    asset: friesnet:object/speed_cola
+    properties: {perk: 'friesnet:perk/speed_cola'}
+  - id: lab_quick_revive
+    kind: PERK
+    point: {x: -11.5, y: 64, z: 2.5}
+    region: {x1: -12, y1: 64, z1: 2, x2: -12, y2: 65, z2: 2}
+    rooms: [spawn]
+    asset: friesnet:object/quick_revive
+    properties: {perk: 'friesnet:perk/quick_revive'}
+  - id: lab_double_tap
+    kind: PERK
+    point: {x: -11.5, y: 64, z: 6.5}
+    region: {x1: -12, y1: 64, z1: 6, x2: -12, y2: 65, z2: 6}
+    rooms: [spawn]
+    asset: friesnet:object/double_tap
+    properties: {perk: 'friesnet:perk/double_tap'}
+  - id: lab_mule_kick
+    kind: PERK
+    point: {x: 1.5, y: 64, z: -6.5}
+    region: {x1: 1, y1: 64, z1: -7, x2: 1, y2: 65, z2: -7}
+    rooms: [spawn]
+    asset: friesnet:object/mule_kick
+    properties: {perk: 'friesnet:perk/mule_kick'}
+  - id: lab_frozen_bullets
+    kind: PERK
+    point: {x: 1.5, y: 64, z: -2.5}
+    region: {x1: 1, y1: 64, z1: -3, x2: 1, y2: 65, z2: -3}
+    rooms: [spawn]
+    asset: friesnet:object/frozen_bullets
+    properties: {perk: 'friesnet:perk/frozen_bullets'}
+  - id: lab_speed
+    kind: PERK
+    point: {x: 1.5, y: 64, z: 2.5}
+    region: {x1: 1, y1: 64, z1: 2, x2: 1, y2: 65, z2: 2}
+    rooms: [spawn]
+    asset: friesnet:object/speed
+    properties: {perk: 'friesnet:perk/speed'}
+  - id: lab_wunderfizz
+    kind: PERK
+    point: {x: 1.5, y: 64, z: 6.5}
+    region: {x1: 1, y1: 64, z1: 6, x2: 1, y2: 65, z2: 6}
+    rooms: [spawn]
+    asset: friesnet:object/wunderfizz
+    properties: {perk: 'friesnet:perk/wunderfizz'}
+  - id: lab_pack_a_punch
+    kind: PACK_A_PUNCH
+    point: {x: 10.5, y: 64, z: 4.5}
+    region: {x1: 10, y1: 64, z1: 4, x2: 10, y2: 65, z2: 4}
+    rooms: [workshop]
+    asset: friesnet:object/pack_a_punch
+    properties: {weapons: '*', price: '-1'}
+name: Foundry Training Lab
+player-spawn: {x: -4.5, y: 64, z: 0.5}
+bounds: {x1: -16, y1: 62, z1: -16, x2: 16, y2: 72, z2: 16}
+playable-bounds: {x1: -14, y1: 64, z1: -9, x2: 14, y2: 72, z2: 9}
+initial-rooms: [spawn]
+blocks:
+  - box: {x1: 3, y1: 64, z1: 8, x2: 3, y2: 64, z2: 8}
+    material: CHEST
+  - box: {x1: -15, y1: 63, z1: -15, x2: 15, y2: 63, z2: 15}
+    material: POLISHED_ANDESITE
+  - box: {x1: -15, y1: 64, z1: -15, x2: 15, y2: 68, z2: -15}
+    material: DEEPSLATE_BRICKS
+  - box: {x1: -15, y1: 64, z1: 15, x2: 15, y2: 68, z2: 15}
+    material: DEEPSLATE_BRICKS
+  - box: {x1: -15, y1: 64, z1: -15, x2: -15, y2: 68, z2: 15}
+    material: DEEPSLATE_BRICKS
+  - box: {x1: 15, y1: 64, z1: -15, x2: 15, y2: 68, z2: 15}
+    material: DEEPSLATE_BRICKS
+  - box: {x1: 6, y1: 64, z1: -14, x2: 6, y2: 68, z2: 14}
+    material: STONE_BRICKS
+  - box: {x1: 6, y1: 64, z1: -1, x2: 6, y2: 66, z2: 1}
+    material: OAK_PLANKS
+  - box: {x1: 6, y1: 64, z1: 7, x2: 6, y2: 66, z2: 9}
+    material: IRON_BARS
+  - box: {x1: -14, y1: 64, z1: -10, x2: 14, y2: 68, z2: -10}
+    material: STONE_BRICKS
+  - box: {x1: -14, y1: 64, z1: 10, x2: 14, y2: 68, z2: 10}
+    material: STONE_BRICKS
+  - box: {x1: -6, y1: 64, z1: -10, x2: -4, y2: 65, z2: -10}
+    material: OAK_TRAPDOOR
+  - box: {x1: -6, y1: 64, z1: 10, x2: -4, y2: 65, z2: 10}
+    material: OAK_TRAPDOOR
+  - box: {x1: 10, y1: 64, z1: -10, x2: 12, y2: 65, z2: -10}
+    material: OAK_TRAPDOOR
+  - box: {x1: -14, y1: 63, z1: -14, x2: -14, y2: 63, z2: 14}
+    material: SEA_LANTERN
+  - box: {x1: 14, y1: 63, z1: -14, x2: 14, y2: 63, z2: 14}
+    material: SEA_LANTERN
+  - box: {x1: -14, y1: 64, z1: 0, x2: -14, y2: 65, z2: 0}
+    material: SMITHING_TABLE
+  - box: {x1: 13, y1: 64, z1: 0, x2: 13, y2: 65, z2: 0}
+    material: SMITHING_TABLE
+  - box: {x1: -12, y1: 64, z1: -7, x2: -12, y2: 65, z2: -7}
+    material: RED_CONCRETE
+  - box: {x1: -12, y1: 64, z1: -3, x2: -12, y2: 65, z2: -3}
+    material: LIME_CONCRETE
+  - box: {x1: -12, y1: 64, z1: 2, x2: -12, y2: 65, z2: 2}
+    material: LIGHT_BLUE_CONCRETE
+  - box: {x1: -12, y1: 64, z1: 6, x2: -12, y2: 65, z2: 6}
+    material: ORANGE_CONCRETE
+  - box: {x1: 1, y1: 64, z1: -7, x2: 1, y2: 65, z2: -7}
+    material: GREEN_CONCRETE
+  - box: {x1: 1, y1: 64, z1: -3, x2: 1, y2: 65, z2: -3}
+    material: BLUE_ICE
+  - box: {x1: 1, y1: 64, z1: 2, x2: 1, y2: 65, z2: 2}
+    material: YELLOW_CONCRETE
+  - box: {x1: 1, y1: 64, z1: 6, x2: 1, y2: 65, z2: 6}
+    material: PURPLE_CONCRETE
+  - box: {x1: 10, y1: 64, z1: 4, x2: 10, y2: 65, z2: 4}
+    material: CRYING_OBSIDIAN
+zombie-spawns:
+  - point: {x: -5.5, y: 64, z: -13.5}
+    gate: none
+  - point: {x: -5.5, y: 64, z: 13.5}
+    gate: none
+  - point: {x: -12.5, y: 64, z: 8.5}
+    gate: none
+  - point: {x: 12.5, y: 64, z: -12.5}
+    gate: workshop
+gates:
+  - id: workshop
+    name: Workshop
+    point: {x: 6.5, y: 65, z: 0.5}
+    box: {x1: 6, y1: 64, z1: -1, x2: 6, y2: 66, z2: 1}
+    price: 750
+    unlocks-room: workshop
+  - id: service
+    name: Service Barrier
+    point: {x: 6.5, y: 65, z: 8.5}
+    box: {x1: 6, y1: 64, z1: 7, x2: 6, y2: 66, z2: 9}
+    price: 500
+    unlocks-room: workshop
+barricades: []
+windows:
+  - id: north
+    point: {x: -4.5, y: 65, z: -8.5}
+    orientation: NORTH
+    boards:
+      - {x: -5, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: -5, y: 65, z: -10, material: OAK_TRAPDOOR}
+      - {x: -6, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: -6, y: 65, z: -10, material: OAK_TRAPDOOR}
+      - {x: -4, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: -4, y: 65, z: -10, material: OAK_TRAPDOOR}
+    spawn-region: {x1: -6, y1: 64, z1: -13, x2: -4, y2: 64, z2: -12}
+    approach: {x: -4.5, y: 64, z: -10.8}
+    entry: {x: -4.5, y: 64, z: -8.5}
+    break-ticks: 40
+    repair-ticks: 40
+    repair-gold: 10
+    round-gold-cap: 60
+    deny-repair-under-attack: true
+    required-rooms: [spawn]
+    asset: friesnet:window/wooden
+  - id: south
+    point: {x: -4.5, y: 65, z: 8.5}
+    orientation: SOUTH
+    boards:
+      - {x: -5, y: 64, z: 10, material: OAK_TRAPDOOR}
+      - {x: -5, y: 65, z: 10, material: OAK_TRAPDOOR}
+      - {x: -6, y: 64, z: 10, material: OAK_TRAPDOOR}
+      - {x: -6, y: 65, z: 10, material: OAK_TRAPDOOR}
+      - {x: -4, y: 64, z: 10, material: OAK_TRAPDOOR}
+      - {x: -4, y: 65, z: 10, material: OAK_TRAPDOOR}
+    spawn-region: {x1: -6, y1: 64, z1: 12, x2: -4, y2: 64, z2: 13}
+    approach: {x: -4.5, y: 64, z: 11.8}
+    entry: {x: -4.5, y: 64, z: 8.5}
+    break-ticks: 40
+    repair-ticks: 40
+    repair-gold: 10
+    round-gold-cap: 60
+    deny-repair-under-attack: true
+    required-rooms: [spawn]
+    asset: friesnet:window/wooden
+  - id: workshop-window
+    point: {x: 11.5, y: 65, z: -8.5}
+    orientation: NORTH
+    boards:
+      - {x: 11, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: 11, y: 65, z: -10, material: OAK_TRAPDOOR}
+      - {x: 10, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: 10, y: 65, z: -10, material: OAK_TRAPDOOR}
+      - {x: 12, y: 64, z: -10, material: OAK_TRAPDOOR}
+      - {x: 12, y: 65, z: -10, material: OAK_TRAPDOOR}
+    spawn-region: {x1: 10, y1: 64, z1: -13, x2: 12, y2: 64, z2: -12}
+    approach: {x: 11.5, y: 64, z: -10.8}
+    entry: {x: 11.5, y: 64, z: -8.5}
+    break-ticks: 40
+    repair-ticks: 40
+    repair-gold: 10
+    round-gold-cap: 60
+    deny-repair-under-attack: true
+    required-rooms: [workshop]
+    asset: friesnet:window/wooden
+shops:
+  - point: {x: -13.5, y: 65, z: 0.5}
+    weapon: friesnet:weapon/glock18
+  - point: {x: 13.5, y: 65, z: 0.5}
+    weapon: friesnet:weapon/ak47
