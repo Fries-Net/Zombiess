@@ -82,6 +82,7 @@ def main():
     parser.add_argument("--node", default="node")
     parser.add_argument("--accept-eula", action="store_true")
     parser.add_argument("--editor-only", action="store_true", help="Run authoring regressions without the combat/recovery suite")
+    parser.add_argument("--discord-unavailable",action="store_true",help="Verify missing Discord credentials cannot block gameplay")
     parser.add_argument("--client-dir", type=Path, default=ROOT / "tools/paper-client")
     args = parser.parse_args()
     if not args.accept_eula:
@@ -110,6 +111,10 @@ def main():
     resources = ROOT / "zombies-game/src/main/resources"
     config = (resources / "config.yml").read_text().replace("countdown-seconds: 10", "countdown-seconds: 1").replace("private: false", "private: true").replace("pause-allowed: false", "pause-allowed: true")
     (data / "config.yml").write_text(config, encoding="utf-8")
+    if args.discord_unavailable:
+        missing="FNZ_DISCORD_TEST_MISSING_"+uuid.uuid4().hex.upper()
+        discord=(resources/"discord.yml").read_text().replace("enabled: false","enabled: true").replace("outgoing-chat: false","outgoing-chat: true").replace("FNZ_DISCORD_WEBHOOK",missing)
+        (data/"discord.yml").write_text(discord,encoding="utf-8")
     gameplay = (resources / "gameplay.yml").read_text().replace("final-round: 30", "final-round: 3").replace("base-count: 5", "base-count: 3").replace("spawn-ticks: 30", "spawn-ticks: 10").replace("intermission-ticks: 160", "intermission-ticks: 40").replace("bleedout-ticks: 500", "bleedout-ticks: 200")
     gameplay = gameplay.replace("base-damage: 3", "base-damage: 0.1").replace("damage-per-round: 0.15", "damage-per-round: 0")
     gameplay = gameplay.replace("double-gold-drop-chance: 0.03", "double-gold-drop-chance: 0")
@@ -166,6 +171,17 @@ def main():
         server.wait("event=instance_ready", 240)
         clients = connect_clients("clients-first.log")
         check("setup")
+        if args.discord_unavailable:
+            check("discord-unavailable",.5)
+            join()
+            check("playing")
+            check("defeat")
+            server.wait("event=match_ready",60)
+            check("restored")
+            (work/"result.json").write_text(json.dumps(dict(paper="1.21.11-132",discord_unavailable=True,checks=checks,passed=len(checks)),indent=2),encoding="utf-8")
+            print("Paper unavailable-Discord regression passed: "+str(work/"result.json"))
+            return
+        check("discord-disabled")
         if not args.editor_only:
             join()
             check("playing")
