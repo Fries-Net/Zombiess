@@ -154,6 +154,7 @@ public final class EditorActions {
                             b.y1(),
                             b.z1() - (ns ? 3 : 0)));
             n.put("break-ticks", 40);
+            n.put("entry-policy", "ALL_BOARDS");
             n.put("repair-ticks", 40);
             n.put("repair-gold", 10);
             n.put("round-gold-cap", 60);
@@ -177,10 +178,12 @@ public final class EditorActions {
                                     .weapons()
                                     .get(service.catalog().gameplay().starter());
                     properties.put("weapon", weapon.id().value());
+                    properties.put("hitbox", "POINT");
                     properties.put("price", Integer.toString(weapon.price()));
                     properties.put("ammo-price", Integer.toString(weapon.ammoPrice()));
                 }
                 case PERK -> {
+                    properties.put("hitbox", "POINT");
                     properties.put("perk", "friesnet:perk/extra_health");
                     properties.put(
                             "price",
@@ -191,10 +194,12 @@ public final class EditorActions {
                                             .price()));
                 }
                 case PACK_A_PUNCH -> {
+                    properties.put("hitbox", "POINT");
                     properties.put("weapons", "*");
                     properties.put("price", "-1");
                 }
                 case MYSTERY_BOX -> {
+                    properties.put("hitbox", "POINT");
                     properties.put("box", "friesnet:box/default");
                     properties.put(
                             "price",

@@ -41,6 +41,7 @@ public final class MatchRun {
     public WaveService waves;
     public LifeService lives;
     public InteractionService interactions;
+    public net.fries.zombies.game.world.InteractionTargeting targets;
     public MatchHud hud;
     public net.fries.zombies.game.ui.DynamicHolograms holograms;
     public net.fries.zombies.game.economy.PowerUpService powerups;

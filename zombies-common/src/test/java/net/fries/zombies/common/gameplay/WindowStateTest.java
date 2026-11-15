@@ -10,6 +10,24 @@ import java.util.*;
 
 class WindowStateTest {
     @Test
+    void interruptedBoardDamageNeverTransfersToARepairedBoard() {
+        var state = new WindowState(2, 3, 1);
+        state.attack(0, true);
+        state.attack(1, true);
+        assertEquals(0, state.attack(2, true));
+        state.attack(3, true);
+        assertEquals(0, state.repair(3, UUID.randomUUID(), true, true));
+        state.attack(4, true);
+        assertEquals(1f / 3, state.damageProgress());
+        state.attack(5, true);
+        assertEquals(0, state.attack(6, true));
+        assertEquals(1f / 3, state.damageProgress());
+        state.attack(7, true);
+        assertEquals(1, state.attack(8, true));
+        assertEquals(0, state.intactCount());
+    }
+
+    @Test
     void simultaneousAttackersAdvanceOncePerTickAndRemoveOneBoard() {
         var s = new WindowState(6, 3, 3);
         for (int tick = 0; tick < 2; tick++)

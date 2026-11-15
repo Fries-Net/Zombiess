@@ -123,6 +123,7 @@ final class PaperEditorChecks {
                         s.draft.nodes("objects").size() == initialObjects + 15,
                         "all gameplay object kinds authored");
                 PaperPerkChecks.author(plugin, p);
+                PaperTargetChecks.author(plugin, p);
                 PaperUpgradeChecks.author(plugin, p);
                 editor.execute(p, "select objects test_hologram".split(" "));
                 editor.execute(p, "set text Gold {gold} / round {round}".split(" "));
@@ -221,7 +222,7 @@ final class PaperEditorChecks {
                         map != null && !map.worldSource().equals("blueprint"),
                         "published snapshot installed");
                 check(
-                        map.objects().size() == initialObjects + 22,
+                        map.objects().size() == initialObjects + 26,
                         "published complete metadata including eight perk stations");
                 publishedVersion = map.version();
                 check(
@@ -262,12 +263,12 @@ final class PaperEditorChecks {
                 var weaponId = new net.fries.zombies.common.NamespacedId("friesnet:weapon/mac10");
                 p.teleport(new Location(r.world, -10.5, 64, 4.5));
                 int before = survivor.points();
-                r.interactions.interact(p);
+                PaperTargetChecks.interact(r, p);
                 check(
                         survivor.points() == before && !survivor.weapons().containsKey(weaponId),
                         "published room restriction prevents purchase without charging");
                 p.teleport(new Location(r.world, 5, 64, .5));
-                r.interactions.interact(p);
+                PaperTargetChecks.interact(r, p);
                 check(
                         r.interactions.roomUnlocked("workshop") && survivor.points() == before - 71,
                         "edited door opens room at configured price");
@@ -275,7 +276,7 @@ final class PaperEditorChecks {
                         r.world.getBlockAt(6, 64, 0).getType() == Material.AIR,
                         "published physical door removed");
                 p.teleport(new Location(r.world, -10.5, 64, 4.5));
-                r.interactions.interact(p);
+                PaperTargetChecks.interact(r, p);
                 var weapon = survivor.weapons().get(weaponId);
                 check(
                         weapon != null && survivor.points() == before - 71 - 123,
@@ -284,7 +285,7 @@ final class PaperEditorChecks {
                 weapon.reload(r.tick);
                 weapon.tick(r.tick + 1000);
                 p.teleport(new Location(r.world, -1.5, 64, 5.5));
-                r.interactions.interact(p);
+                PaperTargetChecks.interact(r, p);
                 check(
                         survivor.points() == before - 71 - 123 - 11
                                 && weapon.reserve() == r.content.weapons().get(weaponId).reserve(),
@@ -306,9 +307,9 @@ final class PaperEditorChecks {
                 other.teleport(p.getLocation());
                 mysteryGold = r.survivor(p.getUniqueId()).points();
                 int otherGold = r.survivor(other.getUniqueId()).points();
-                check(r.mysteryBoxes.interact(p), "published mystery station starts purchase");
-                r.mysteryBoxes.interact(p);
-                r.mysteryBoxes.interact(other);
+                check(PaperTargetChecks.mystery(r, p), "published mystery station starts purchase");
+                PaperTargetChecks.mystery(r, p);
+                PaperTargetChecks.mystery(r, other);
                 check(
                         r.survivor(p.getUniqueId()).points() == mysteryGold - 41,
                         "opening input cannot duplicate charge");
@@ -323,12 +324,12 @@ final class PaperEditorChecks {
                 var r = plugin.matches().current();
                 var s = r.survivor(p.getUniqueId());
                 var awp = new net.fries.zombies.common.NamespacedId("friesnet:weapon/awp");
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(
                         s.weapons().containsKey(awp) && s.points() == mysteryGold - 41,
                         "rare reward collected once at configured price");
                 var instance = s.weapons().get(awp).instanceId();
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(
                         s.points() == mysteryGold - 41
                                 && s.weapons().get(awp).instanceId().equals(instance),
@@ -341,10 +342,10 @@ final class PaperEditorChecks {
                     if (p.getInventory().getItem(i) == null)
                         p.getInventory()
                                 .setItem(i, new org.bukkit.inventory.ItemStack(Material.BARRIER));
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(s.points() == mysteryGold - 41, "full inventory rejected without charging");
                 r.combat.equip(p);
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(
                         s.points() == mysteryGold - 82,
                         "relocated destination accepts next purchase");
@@ -365,7 +366,7 @@ final class PaperEditorChecks {
                         .weapons()
                         .remove(new net.fries.zombies.common.NamespacedId("friesnet:weapon/awp"));
                 r.combat.equip(p);
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(
                         r.survivor(p.getUniqueId()).points() == mysteryGold - 82,
                         "capacity recheck fixture paid once");
@@ -376,7 +377,7 @@ final class PaperEditorChecks {
             }
             case "mystery-capacity-refund" -> {
                 var r = plugin.matches().current();
-                r.mysteryBoxes.interact(p);
+                PaperTargetChecks.mystery(r, p);
                 check(
                         r.survivor(p.getUniqueId()).points() == mysteryGold - 41,
                         "inventory filled during opening causes full refund");

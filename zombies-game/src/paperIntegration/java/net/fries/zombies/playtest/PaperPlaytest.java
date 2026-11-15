@@ -216,6 +216,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                             r.windows.guide(z) && !z.isCollidable(),
                             "jamb pushback reacquires physical entry guidance");
                 }
+                case "window-cardinals" -> {
+                    PaperWindowChecks.start(zombies, this);
+                    return;
+                }
                 case "window-jamb-entered" -> {
                     var r = run();
                     new org.bukkit.scheduler.BukkitRunnable() {
@@ -238,7 +242,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 getLogger()
                                         .severe(
                                                 "PLAYTEST_FAIL window-jamb-entered native entry did"
-                                                    + " not clear: "
+                                                        + " not clear: "
                                                         + (z == null
                                                                 ? "missing"
                                                                 : z.getLocation()));
@@ -428,13 +432,13 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var g = r.map.gates().getFirst();
                     p.teleport(new Location(r.world, 4.5, 64, .5));
                     int points = s.points();
-                    check(r.interactions.interact(p), "gate interaction");
+                    check(PaperTargetChecks.interact(r, p), "gate interaction");
                     check(
                             s.points() == points && !r.interactions.open(g.id()),
                             "insufficient points do not mutate gate");
                     s.credit(10000);
                     points = s.points();
-                    r.interactions.interact(p);
+                    PaperTargetChecks.interact(r, p);
                     check(
                             r.interactions.open(g.id()) && s.points() == points - g.price(),
                             "gate purchase charged exactly once");
@@ -446,10 +450,11 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                             g.box(),
                             b -> check(b.getType() == Material.AIR, "gate geometry removed"));
                     points = s.points();
-                    r.interactions.interact(p);
+                    PaperTargetChecks.interact(r, p);
                     check(s.points() == points, "opened gate cannot charge twice");
                     var barrier = r.map.gates().get(1);
                     p.teleport(new Location(r.world, 4.5, 64, 8.5));
+                    PaperTargetChecks.aim(r, p, "gate:" + barrier.id());
                     r.interactions.interact(p);
                     check(
                             r.interactions.open(barrier.id())
@@ -458,7 +463,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     points = s.points();
                     var shop = r.map.shops().get(1);
                     p.teleport(new Location(r.world, 11.5, 64, .5));
-                    r.interactions.interact(p);
+                    PaperTargetChecks.interact(r, p);
                     check(s.weapons().containsKey(shop.weapon()), "AK-47 purchased");
                     check(
                             s.points() == points - r.content.weapons().get(shop.weapon()).price(),
@@ -467,7 +472,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var w = r.combat.held(p);
                     check(w != null && w.definition().name().equals("AK-47"), "AK equipped");
                     points = s.points();
-                    r.interactions.interact(p);
+                    PaperTargetChecks.interact(r, p);
                     check(s.points() == points, "full reserve cannot charge");
                     var z = (Zombie) getServer().getEntity(target);
                     position(p, z, 1.0);
@@ -483,7 +488,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     var s = r.survivor(p.getUniqueId());
                     int points = s.points();
                     p.teleport(new Location(r.world, 11.5, 64, .5));
-                    r.interactions.interact(p);
+                    PaperTargetChecks.interact(r, p);
                     check(
                             w.reserve() == 240 && s.points() == points - w.definition().ammoPrice(),
                             "purchased reserve ammo");
@@ -776,8 +781,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                             "multiple zombies navigate through opening without teleport: "
                                     + inside);
                     check(
-                            r.windows.state("north").intactCount() == 4,
-                            "zombies enter as soon as passage is available");
+                            r.windows.state("north").intactCount() == 0,
+                            "all designated boards are destroyed before normal entry");
                     quiet = true;
                     r.waves.pause(true);
                 }
@@ -816,7 +821,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 case "repair-capped" -> {
                     var r = run();
                     var p = player("SurvivorOne");
-                    check(r.windows.state("north").intactCount() == 6, "second board rebuilt");
+                    check(r.windows.state("north").intactCount() == 6, "all six boards rebuilt");
                     check(
                             r.survivor(p.getUniqueId()).points() == pointsBefore,
                             "window per-round gold cap respected");
@@ -1088,7 +1093,8 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperUpgradeChecks.handle(step, zombies)
+                    if (!PaperTargetChecks.handle(step, zombies)
+                            && !PaperUpgradeChecks.handle(step, zombies)
                             && !PaperPerkChecks.handle(step, zombies)
                             && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");

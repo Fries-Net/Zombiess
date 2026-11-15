@@ -81,7 +81,7 @@ public final class MysteryBoxService {
                                 Comparator.comparingDouble(
                                         s -> p.getEyeLocation().distanceSquared(at(s))))
                         .toList())
-            if (run.interactions.near(p, station.point(), 3.5)) {
+            if (run.targets.matches(p,"object:"+station.id())) {
                 if (!unlocked(station)) {
                     message(p, "Unlock this mystery box's room first");
                     return true;
@@ -291,7 +291,7 @@ public final class MysteryBoxService {
                                 Comparator.comparingDouble(
                                         s -> p.getEyeLocation().distanceSquared(at(s))))
                         .toList())
-            if (run.interactions.near(p, station.point(), 3.5)) {
+            if (run.targets.matches(p,"object:"+station.id())) {
                 if (!unlocked(station)) return "Mystery box • room locked";
                 if (!active(station)) return "Mystery box • dormant location";
                 var purchase = pending.get(station.id());

@@ -322,6 +322,10 @@ public record MapTemplate(
                         "Player spawn requires a locked room: " + object.id());
             map.requireInside(object.point());
             map.requireInside(object.region());
+            if (!Set.of("POINT","REGION").contains(object.property("hitbox","POINT")))
+                throw new IllegalArgumentException("Unknown interaction hitbox: " + object.id());
+            if (object.property("hitbox","POINT").equals("REGION") && object.region().volume()>2048)
+                throw new IllegalArgumentException("Interaction hitbox exceeds 2048 blocks: " + object.id());
             if ((object.kind() == MapObject.Kind.WALL_WEAPON
                             || object.kind() == MapObject.Kind.AMMO)
                     && !gameplay.weapons()

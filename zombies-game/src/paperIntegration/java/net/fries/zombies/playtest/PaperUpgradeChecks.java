@@ -29,6 +29,7 @@ final class PaperUpgradeChecks {
                 "editor restores tier pricing without manual YAML edits");
         p.teleport(new Location(s.world, 3.5, 64, 4.5));
         editor.execute(p, new String[] {"point"});
+        s.world.getBlockAt(p.getLocation()).setType(Material.OBSIDIAN);
         p.closeInventory();
     }
 
@@ -50,7 +51,7 @@ final class PaperUpgradeChecks {
             case "pap-start" -> {
                 s.perks().clear();
                 r.perks.apply(p, false);
-                p.teleport(new Location(r.world, 3.5, 64, 4.5));
+                PaperTargetChecks.aim(r, p, "object:test_pack_a_punch");
                 int gold = s.points();
                 p.getInventory().setHeldItemSlot(1);
                 r.packAPunch.interact(p);
@@ -161,7 +162,7 @@ final class PaperUpgradeChecks {
                 check(w.reloadRemaining(r.tick) == 24, "upgraded reload duration");
                 w.tick(r.tick + 1000);
                 p.teleport(new Location(r.world, -12.5, 64, .5));
-                r.interactions.interact(p);
+                PaperTargetChecks.interact(r, p);
                 check(
                         w.reserve() == 320
                                 && w.upgradeLevel() == 2
