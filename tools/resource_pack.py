@@ -10,6 +10,7 @@ import math
 import re
 import struct
 import zipfile
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +68,21 @@ def png(texture):
     width, height = struct.unpack(">II", data[16:24])
     if not 1 <= width <= 4096 or not 1 <= height <= 4096:
         raise ValueError("Invalid PNG dimensions")
+    offset, ended = 8, False
+    while offset + 12 <= len(data):
+        size = struct.unpack(">I", data[offset:offset + 4])[0]
+        end = offset + size + 12
+        if end > len(data):
+            raise ValueError("Truncated PNG chunk")
+        chunk = data[offset + 4:end - 4]
+        if zlib.crc32(chunk) != struct.unpack(">I", data[end - 4:end])[0]:
+            raise ValueError("Corrupt PNG chunk")
+        if chunk[:4] == b"IEND":
+            ended = size == 0 and end == len(data)
+            break
+        offset = end
+    if not ended:
+        raise ValueError("Incomplete PNG")
     return data
 
 
@@ -225,7 +241,10 @@ def export_model(source, override=None):
                "fixed": frame(points, [0, -90, 0], 12)}
     for prefix, span in (("firstperson", 16), ("thirdperson", 24)):
         fit = min(1, span / max(extent, 1))
-        pose = {"rotation": hand_rotation, "translation": [0, 0, 0], "scale": [s * fit / factor for s in hand_scale]}
+        # The native held-item layer adds -90 degrees around X. Source gun barrels
+        # run along Z; cancel that layer so they do not point vertically upward.
+        rotation = [hand_rotation[0] + (90 if prefix == "thirdperson" else 0), *hand_rotation[1:]]
+        pose = {"rotation": rotation, "translation": [0, 0, 0], "scale": [s * fit / factor for s in hand_scale]}
         display[prefix + "_righthand"] = copy.deepcopy(pose)
         display[prefix + "_lefthand"] = copy.deepcopy(pose)
     for context, pose in override.get("display", {}).items():
@@ -284,6 +303,7 @@ def build(source=DATA / "source", output=DATA / "build", config_path=DATA / "tra
         for name, data in sorted(entries.items()):
             info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3  # identical ZIP headers on Windows and Linux
             info.external_attr = 0o644 << 16
             pack.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
     report = {"pack": archive.name, "sha1": hashlib.sha1(archive.read_bytes()).hexdigest(), "sha256": digest(archive.read_bytes()),

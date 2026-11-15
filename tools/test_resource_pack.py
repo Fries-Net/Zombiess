@@ -1,4 +1,5 @@
 import copy
+import base64
 import importlib.util
 import json
 import tempfile
@@ -91,6 +92,16 @@ class ResourcePackTest(unittest.TestCase):
         model, _, _ = pack.export_model(self.source)
         self.assertEqual(set(pack.CONTEXTS), set(model["display"]))
         self.assertEqual(model["display"]["firstperson_righthand"], model["display"]["firstperson_lefthand"])
+        self.assertEqual(95, model["display"]["thirdperson_righthand"]["rotation"][0])
+
+    def test_corrupt_png_and_out_of_bounds_display_fail_closed(self):
+        texture = copy.deepcopy(self.source["textures"][0])
+        data = bytearray(pack.png(texture))
+        data[-5] ^= 1
+        texture["source"] = "data:image/png;base64," + base64.b64encode(data).decode()
+        self.assertRaises(ValueError, pack.png, texture)
+        self.assertRaises(ValueError, pack.export_model, self.source,
+                          {"display": {"gui": {"scale": [5, 1, 1]}}})
 
 
 if __name__ == "__main__":
