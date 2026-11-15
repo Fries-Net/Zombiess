@@ -88,6 +88,7 @@ public final class PowerUpService {
         item.setUnlimitedLifetime(true);
         item.setGlowing(true);
         item.setGravity(false);
+        item.setVelocity(new org.bukkit.util.Vector());
         item.setCanMobPickup(false);
         var label =
                 run.world.spawn(

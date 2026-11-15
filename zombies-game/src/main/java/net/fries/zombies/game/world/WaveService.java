@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  * roster.
  */
 public final class WaveService {
-    public record Credit(UUID player, boolean headshot, boolean drop) {}
+    public record Credit(UUID player, boolean headshot, boolean standardKill) {}
 
     private final MatchRun run;
     private final Consumer<Outcome> finish;
@@ -208,8 +208,9 @@ public final class WaveService {
         var credit = credits.remove(id);
         if (credit != null) {
             var s = run.players.get(credit.player());
-            if (s != null) s.kill(credit.headshot(), run.content);
-            if (run.powerups != null && credit.drop()) run.powerups.maybeDrop(zombie.getLocation());
+            if (s != null) s.kill(credit.headshot(), run.content, credit.standardKill());
+            if (run.powerups != null && credit.standardKill())
+                run.powerups.maybeDrop(zombie.getLocation());
         }
     }
 
