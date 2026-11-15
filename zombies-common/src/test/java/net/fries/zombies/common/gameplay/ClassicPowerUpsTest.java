@@ -11,6 +11,24 @@ import java.util.*;
 
 class ClassicPowerUpsTest {
     @Test
+    void powerupEliminationsNeverAddLegacyFixedKillGold(
+            @org.junit.jupiter.api.io.TempDir Path directory) throws Exception {
+        var path = directory.resolve("gameplay.yml");
+        Files.writeString(
+                path,
+                Files.readString(Path.of("../zombies-game/src/main/resources/gameplay.yml"))
+                        .replace("fixed-rewards-enabled: false", "fixed-rewards-enabled: true"));
+        var c = Gameplay.load(path);
+        var s = new Survivor(UUID.randomUUID(), c);
+        int before = s.points();
+        s.kill(false, c, false);
+        assertEquals(1, s.kills());
+        assertEquals(before, s.points());
+        s.kill(false, c);
+        assertEquals(before + c.killPoints(), s.points());
+    }
+
+    @Test
     void stackingCapsAndRefreshUseMatchTicks() throws Exception {
         var rules = PowerUps.load(Path.of("../zombies-game/src/main/resources/power-ups.yml"));
         var d = rules.definitions().get(PowerUps.Type.INSTA_KILL);

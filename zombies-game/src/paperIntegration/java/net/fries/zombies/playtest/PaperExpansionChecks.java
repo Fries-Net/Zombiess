@@ -20,6 +20,8 @@ final class PaperExpansionChecks {
     private static final Map<UUID, Integer> gold = new HashMap<>();
     private static Set<UUID> nuked;
     private static Item pickup;
+    private static Item hovering;
+    private static Location hoverOrigin;
     private static int nukeReward;
 
     static void seedCrash(MatchRun r, Player p) {
@@ -197,6 +199,9 @@ final class PaperExpansionChecks {
                 check(pickup != null, "carpenter drop");
             }
             case "powerup-carpenter" -> {
+                hovering = r.powerups.spawn(one.getLocation().clone().add(8, 0, 0), Type.MAX_AMMO);
+                check(hovering != null, "stationary long-lived pickup fixture");
+                hoverOrigin = hovering.getLocation();
                 var d = r.map.windows().getFirst();
                 check(
                         r.windows.state(d.id()).intactCount() == d.boards().size(),
@@ -214,6 +219,10 @@ final class PaperExpansionChecks {
                 check(pickup != null, "expiring drop fixture");
             }
             case "powerup-expired" -> {
+                check(
+                        hovering.isValid()
+                                && hovering.getLocation().distanceSquared(hoverOrigin) < .01,
+                        "gravity-free pickup cannot drift away from its label");
                 check(
                         !pickup.isValid() && !r.powerups.pickup(one, pickup),
                         "expired drop cannot activate");
