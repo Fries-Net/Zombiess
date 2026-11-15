@@ -14,6 +14,12 @@ import java.util.*;
 
 /** Physical window ownership, navigation, board damage and continuous sneak rebuilding. */
 public final class WindowService {
+    private static final com.destroystokyo.paper.entity.ai.GoalKey<Zombie> MOVE_GOAL =
+            com.destroystokyo.paper.entity.ai.GoalKey.of(
+                    Zombie.class, new NamespacedKey("friesnetzombies", "window_move"));
+    private static final com.destroystokyo.paper.entity.ai.GoalKey<Zombie> TARGET_GOAL =
+            com.destroystokyo.paper.entity.ai.GoalKey.of(
+                    Zombie.class, new NamespacedKey("friesnetzombies", "window_target"));
     private final MatchRun run;
     private final Map<String, WindowDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, WindowState> states = new HashMap<>();
@@ -70,6 +76,49 @@ public final class WindowService {
         assigned.put(zombie.getUniqueId(), d.id());
         arrivals.put(zombie.getUniqueId(), d.id());
         zombie.setCollidable(false);
+        var goals = Bukkit.getMobGoals();
+        if (!goals.hasGoal(zombie, MOVE_GOAL))
+            goals.addGoal(
+                    zombie,
+                    0,
+                    new com.destroystokyo.paper.entity.ai.Goal<Zombie>() {
+                        public boolean shouldActivate() {
+                            return assigned.containsKey(zombie.getUniqueId());
+                        }
+
+                        public void tick() {
+                            guide(zombie);
+                        }
+
+                        public com.destroystokyo.paper.entity.ai.GoalKey<Zombie> getKey() {
+                            return MOVE_GOAL;
+                        }
+
+                        public EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+                            return EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.MOVE);
+                        }
+                    });
+        if (!goals.hasGoal(zombie, TARGET_GOAL))
+            goals.addGoal(
+                    zombie,
+                    0,
+                    new com.destroystokyo.paper.entity.ai.Goal<Zombie>() {
+                        public boolean shouldActivate() {
+                            return assigned.containsKey(zombie.getUniqueId());
+                        }
+
+                        public void tick() {
+                            zombie.setTarget(null);
+                        }
+
+                        public com.destroystokyo.paper.entity.ai.GoalKey<Zombie> getKey() {
+                            return TARGET_GOAL;
+                        }
+
+                        public EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+                            return EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.TARGET);
+                        }
+                    });
     }
 
     public boolean exterior(UUID zombie) {
@@ -340,6 +389,12 @@ public final class WindowService {
     }
 
     public void clear() {
+        for (var id : arrivals.keySet())
+            if (Bukkit.getEntity(id) instanceof Zombie zombie) {
+                Bukkit.getMobGoals().removeGoal(zombie, MOVE_GOAL);
+                Bukkit.getMobGoals().removeGoal(zombie, TARGET_GOAL);
+                zombie.setCollidable(true);
+            }
         for (var d : definitions.values()) for (var b : d.boards()) clearCracks(d, b);
         assigned.clear();
         arrivals.clear();

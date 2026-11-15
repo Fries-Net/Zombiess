@@ -31,8 +31,9 @@ final class PaperWindowChecks {
             final Set<UUID> crossed = new HashSet<>();
 
             void prepare() {
-                var orientation = WindowDefinition.Orientation.values()[Math.min(scenario, 3)];
-                if (scenario == 4) orientation = WindowDefinition.Orientation.NORTH;
+                int variant = scenario % 5;
+                var orientation = WindowDefinition.Orientation.values()[Math.min(variant, 3)];
+                if (variant == 4) orientation = WindowDefinition.Orientation.NORTH;
                 boolean ns =
                         orientation == WindowDefinition.Orientation.NORTH
                                 || orientation == WindowDefinition.Orientation.SOUTH;
@@ -83,7 +84,7 @@ final class PaperWindowChecks {
                                 true,
                                 Set.of("spawn"),
                                 new NamespacedId("friesnet:window/test"),
-                                scenario == 4
+                                variant == 4
                                         ? WindowDefinition.EntryPolicy.PASSABLE_OPENING
                                         : WindowDefinition.EntryPolicy.ALL_BOARDS);
                 var m = real.map;
@@ -160,7 +161,7 @@ final class PaperWindowChecks {
                     scene.windows.tick();
                     var state = scene.windows.state("fixture");
                     if (state.intactCount() == 4
-                            && scenario < 4
+                            && scenario % 5 < 4
                             && scene.windows.entryAllowed(definition))
                         throw new AssertionError("partial opening allowed premature entry");
                     for (var mob : mobs) {
@@ -171,8 +172,8 @@ final class PaperWindowChecks {
                                         mob.getWidth() / 2 + .05)) crossed.add(mob.getUniqueId());
                     }
                     if (crossed.size() == 2) {
-                        if (scenario < 4 && state.intactCount() != 0
-                                || scenario == 4 && state.intactCount() != 4)
+                        if (scenario % 5 < 4 && state.intactCount() != 0
+                                || scenario % 5 == 4 && state.intactCount() != 4)
                             throw new AssertionError("entry policy board state");
                         assertions
                                 .getLogger()
@@ -185,7 +186,7 @@ final class PaperWindowChecks {
                         clean();
                         scene = null;
                         scenario++;
-                        if (scenario == 5) {
+                        if (scenario == 10) {
                             cancel();
                             assertions.getLogger().info("PLAYTEST_PASS window-cardinals");
                         }
@@ -197,7 +198,21 @@ final class PaperWindowChecks {
                                         + state.intactCount()
                                         + " positions="
                                         + mobs.stream()
-                                                .map(z -> z.getLocation().toVector())
+                                                .map(
+                                                        z ->
+                                                                z.getLocation().toVector()
+                                                                        + " baby="
+                                                                        + z.isBaby()
+                                                                        + " ai="
+                                                                        + z.hasAI()
+                                                                        + " vehicle="
+                                                                        + z.getVehicle()
+                                                                        + " path="
+                                                                        + z.getPathfinder()
+                                                                                .hasPath()
+                                                                        + " goals="
+                                                                        + Bukkit.getMobGoals()
+                                                                                .getRunningGoals(z))
                                                 .toList());
                 } catch (Throwable error) {
                     clean();
