@@ -49,7 +49,7 @@ All branches start from master `6e9369f`; no feature has been merged into master
 | [12](https://github.com/Fries-Net/Zombiess/pull/12) | enemies-powerups | `97c7700` | Six bounded archetypes, five classic power-ups |
 | [13](https://github.com/Fries-Net/Zombiess/pull/13) | presentation-training | `eb6a9c2` | Staged mystery rendering, unpaid preview, separate training lab |
 | [14](https://github.com/Fries-Net/Zombiess/pull/14) | discord | `d40f44f` | Optional bounded staff logging and two-way chat |
-| [15](https://github.com/Fries-Net/Zombiess/pull/15) | `feature/resource-pack-v3` | `aa83834` | Original models, standalone pose review, optional per-player delivery |
+| [15](https://github.com/Fries-Net/Zombiess/pull/15) | `feature/resource-pack-v3` | `6180ef7` | Original models, standalone pose review, optional per-player delivery |
 
 The `verify/phase-3-5` branch combines those histories for regression verification only. It retains
 the shared constructor/content fields, every test dispatcher and the coordinated HUD during conflict
