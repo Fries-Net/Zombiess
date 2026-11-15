@@ -98,6 +98,15 @@ final class MatchListener implements Listener {
     }
 
     @EventHandler
+    public void merge(org.bukkit.event.entity.ItemMergeEvent e) {
+        var r = matches.current();
+        if (r != null
+                && r.powerups != null
+                && (r.powerups.contains(e.getEntity()) || r.powerups.contains(e.getTarget())))
+            e.setCancelled(true);
+    }
+
+    @EventHandler
     public void pickup(EntityPickupItemEvent e) {
         var r = matches.current();
         if (r != null

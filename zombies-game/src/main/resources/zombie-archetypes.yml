@@ -1,0 +1,21 @@
+max-health: 240
+max-damage: 20
+max-speed: 0.38
+default-pool: friesnet:zombie_pool/default
+map-pools: {}
+archetypes:
+  - {id: 'friesnet:zombie/normal', name: Zombie, asset: 'friesnet:mob/zombie', provider: 'minecraft:zombie', baby: false, elite: false, health: 1, speed: 1, damage: 1, variation: 0.04, armour: 0, equipment: NONE, headshot-scale: 1, insta-kill: true, nuke: true}
+  - {id: 'friesnet:zombie/runner', name: Runner, asset: 'friesnet:mob/runner', provider: 'minecraft:zombie', baby: false, elite: false, health: 0.8, speed: 1.3, damage: 1, variation: 0.05, armour: 0, equipment: NONE, headshot-scale: 1, insta-kill: true, nuke: true}
+  - {id: 'friesnet:zombie/tank', name: Tank, asset: 'friesnet:mob/tank', provider: 'minecraft:zombie', baby: false, elite: false, health: 2.4, speed: 0.7, damage: 1.7, variation: 0.05, armour: 0, equipment: NONE, headshot-scale: 1, insta-kill: true, nuke: true}
+  - {id: 'friesnet:zombie/armoured', name: Armoured Zombie, asset: 'friesnet:mob/armoured', provider: 'minecraft:zombie', baby: false, elite: false, health: 1.2, speed: 0.9, damage: 1.1, variation: 0.04, armour: 12, equipment: IRON, headshot-scale: 0.25, insta-kill: true, nuke: true}
+  - {id: 'friesnet:zombie/baby', name: Baby Zombie, asset: 'friesnet:mob/baby', provider: 'minecraft:zombie', baby: true, elite: false, health: 0.55, speed: 1.25, damage: 0.75, variation: 0.05, armour: 0, equipment: NONE, headshot-scale: 1, insta-kill: true, nuke: true}
+  - {id: 'friesnet:zombie/elite', name: Elite Zombie, asset: 'friesnet:mob/elite', provider: 'minecraft:zombie', baby: false, elite: true, health: 3, speed: 1.05, damage: 2, variation: 0.03, armour: 6, equipment: DIAMOND, headshot-scale: 0.5, insta-kill: false, nuke: false}
+pools:
+  - id: friesnet:zombie_pool/default
+    entries:
+      - {type: 'friesnet:zombie/normal', weight: 70, min-round: 1, max-round: 10000, active-limit: 128, round-limit: 0}
+      - {type: 'friesnet:zombie/runner', weight: 16, min-round: 3, max-round: 10000, active-limit: 8, round-limit: 0}
+      - {type: 'friesnet:zombie/baby', weight: 10, min-round: 5, max-round: 10000, active-limit: 5, round-limit: 0}
+      - {type: 'friesnet:zombie/tank', weight: 8, min-round: 7, max-round: 10000, active-limit: 3, round-limit: 5}
+      - {type: 'friesnet:zombie/armoured', weight: 8, min-round: 9, max-round: 10000, active-limit: 4, round-limit: 6}
+      - {type: 'friesnet:zombie/elite', weight: 2, min-round: 15, max-round: 10000, active-limit: 1, round-limit: 2}

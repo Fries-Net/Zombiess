@@ -1,0 +1,14 @@
+drop-chance: 0.07
+max-active-drops: 12
+include-downed-ammo: false
+include-dead-ammo: false
+refill-magazines: true
+nuke-gold: 400
+carpenter-gold: 0
+excluded-nuke-damage: 40
+power-ups:
+  - {type: INSTA_KILL, name: Insta-Kill, material: GOLDEN_SWORD, enabled: true, weight: 20, min-round: 1, per-round-limit: 2, duration-ticks: 400, max-duration-ticks: 800, despawn-ticks: 600, stacking: REFRESH}
+  - {type: MAX_AMMO, name: Max Ammo, material: ARROW, enabled: true, weight: 25, min-round: 1, per-round-limit: 3, duration-ticks: 0, max-duration-ticks: 0, despawn-ticks: 600, stacking: REFRESH}
+  - {type: DOUBLE_POINTS, name: Double Points, material: GOLD_INGOT, enabled: true, weight: 40, min-round: 1, per-round-limit: 3, duration-ticks: 600, max-duration-ticks: 1200, despawn-ticks: 600, stacking: REFRESH}
+  - {type: NUKE, name: Nuke, material: TNT, enabled: true, weight: 5, min-round: 3, per-round-limit: 1, duration-ticks: 0, max-duration-ticks: 0, despawn-ticks: 600, stacking: REFRESH}
+  - {type: CARPENTER, name: Carpenter, material: OAK_PLANKS, enabled: true, weight: 10, min-round: 1, per-round-limit: 2, duration-ticks: 0, max-duration-ticks: 0, despawn-ticks: 600, stacking: REFRESH}

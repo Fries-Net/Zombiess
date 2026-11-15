@@ -26,7 +26,8 @@ public record MapObject(
         HOLOGRAM,
         BOSS_SPAWN,
         RANGE_TARGET,
-        CUSTOM
+        CUSTOM,
+        POWERUP_ZONE
     }
 
     public MapObject {
@@ -58,7 +59,8 @@ public record MapObject(
                     HOLOGRAM,
                     MYSTERY_BOX,
                     PERK,
-                    PACK_A_PUNCH ->
+                    PACK_A_PUNCH,
+                    POWERUP_ZONE ->
                     true;
             default -> false;
         };

@@ -120,7 +120,7 @@ final class PaperEditorChecks {
                 p.teleport(new Location(s.world, -1.5, 64, -4.5));
                 editor.execute(p, new String[] {"point"});
                 check(
-                        s.draft.nodes("objects").size() == initialObjects + 15,
+                        s.draft.nodes("objects").size() == initialObjects + 16,
                         "all gameplay object kinds authored");
                 PaperPerkChecks.author(plugin, p);
                 PaperTargetChecks.author(plugin, p);
@@ -222,7 +222,7 @@ final class PaperEditorChecks {
                         map != null && !map.worldSource().equals("blueprint"),
                         "published snapshot installed");
                 check(
-                        map.objects().size() == initialObjects + 25,
+                        map.objects().size() == initialObjects + 26,
                         "published complete metadata including eight perk stations");
                 publishedVersion = map.version();
                 check(

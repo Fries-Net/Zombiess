@@ -283,7 +283,9 @@ public final class MatchCoordinator {
                         catalog.mysteryPools(),
                         catalog.perks(),
                         catalog.upgrades(),
-                        catalog.hud());
+                        catalog.hud(),
+                        catalog.archetypes(),
+                        catalog.powerups());
         run.countdownEnds = Instant.now().plus(rules.countdown());
         queued.clear();
         events(run);

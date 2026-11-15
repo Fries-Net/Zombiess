@@ -706,6 +706,7 @@ public final class EditorService {
                                 current.mysteryPools().validate(published);
                                 current.perks().validate(published);
                                 current.upgrades().validate(published);
+                                current.powerups().validate(published);
                                 candidate =
                                         new ContentCatalog(
                                                 current.gameplay(),
@@ -713,7 +714,9 @@ public final class EditorService {
                                                 current.mysteryPools(),
                                                 current.perks(),
                                                 current.upgrades(),
-                                                current.hud());
+                                                current.hud(),
+                                                current.archetypes(),
+                                                current.powerups());
                                 Path deployed = data.resolve("maps/" + s.map + ".yml");
                                 if (Files.exists(deployed))
                                     retainVersion(s.map, ContentYaml.readBytes(deployed));
@@ -803,6 +806,7 @@ public final class EditorService {
         catalog().mysteryPools().validate(map);
         catalog().perks().validate(map);
         catalog().upgrades().validate(map);
+        catalog().powerups().validate(map);
         MapGeometry.validate(s.world, map);
         MapRoutes.validate(s.world, map);
     }
