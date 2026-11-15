@@ -48,12 +48,15 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     if (command.op === 'spam') { if(command.enabled)spamming.add(command.name);else {spamming.delete(command.name);bot.deactivateItem();} }
     if (command.op === 'hold') {if(command.enabled)bot.activateItem();else bot.deactivateItem();}
     if (command.op === 'motion') {
-      if (!command.enabled) { bot.clearControlStates(); bot.deactivateItem(); bot._client.write('player_input',{inputs:{forward:false,sprint:false}}); }
+      if (!command.enabled) { bot.clearControlStates(); bot.deactivateItem(); bot._client.write('player_input',{inputs:{forward:false,sprint:false}}); bot._client.write('entity_action',{entityId:bot.entity.id,actionId:'stop_sprinting',jumpBoost:0}); }
       else bot.lookAt(bot.entity.position.offset(0,1.6,10),true).then(()=>{
         bot.setControlState('forward',true); bot.setControlState('sprint',true);
         // Mineflayer currently sends the new input packet for sneak only. A vanilla 1.21.11
         // client also reports forward/sprint here; the server uses these flags for sprint state.
         bot._client.write('player_input',{inputs:{forward:true,sprint:true}});
+        // Sprint action IDs changed when shift actions moved to player_input. Use the current
+        // protocol mapper rather than Mineflayer's legacy numeric fallback (3/4).
+        bot._client.write('entity_action',{entityId:bot.entity.id,actionId:'start_sprinting',jumpBoost:0});
         if(command.fire) bot.activateItem();
         console.log('BOT_MOTION '+command.name);
       });
