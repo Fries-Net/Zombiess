@@ -41,7 +41,7 @@ public final class PowerUpService {
         item.remove();
         run.points.doubleGold(run.tick, run.content.scoring().doubleGoldTicks());
         for (var p : run.world.getPlayers()) {
-            p.sendActionBar(Component.text("DOUBLE GOLD", NamedTextColor.GOLD));
+            run.hud.notice(p, "powerup", "DOUBLE GOLD", 40, run.hudSettings.powerupTicks());
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, .4f, 1.6f);
         }
         return true;

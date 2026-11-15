@@ -12,12 +12,14 @@ public record ContentCatalog(
         Map<String, MapTemplate> maps,
         MysteryPools mysteryPools,
         Perks perks,
-        WeaponUpgrades upgrades) {
+        WeaponUpgrades upgrades,
+        HudSettings hud) {
     public ContentCatalog {
         maps = Map.copyOf(maps);
     }
 
     public static ContentCatalog load(Path directory) throws IOException {
+        rebalance(directory);
         try (var input = ContentCatalog.class.getResourceAsStream("/gameplay.yml")) {
             if (input == null) throw new IOException("Bundled gameplay content missing");
             Path file = directory.resolve("gameplay.yml");
@@ -43,6 +45,7 @@ public record ContentCatalog(
         var mysteryPools = MysteryPools.load(directory.resolve("mystery-boxes.yml"), gameplay);
         var perks = Perks.load(directory.resolve("perks.yml"));
         var upgrades = WeaponUpgrades.load(directory.resolve("weapon-upgrades.yml"), gameplay);
+        var hud = HudSettings.load(directory.resolve("hud.yml"));
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {
             var files =
@@ -63,7 +66,7 @@ public record ContentCatalog(
                 maps.put(key, map);
             }
         }
-        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades);
+        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades, hud);
     }
 
     private static void migrateTraining(Path directory, Path file) throws IOException {
@@ -82,6 +85,51 @@ public record ContentCatalog(
                     net.fries.zombies.persistence.DurableFiles.replace(backup, old);
                 net.fries.zombies.persistence.DurableFiles.replace(file, upgraded);
             }
+        }
+    }
+
+    private static void rebalance(Path directory) throws IOException {
+        var g = directory.resolve("gameplay.yml");
+        var u = directory.resolve("weapon-upgrades.yml");
+        byte[] oldG = ContentYaml.readBytes(g), oldU = ContentYaml.readBytes(u);
+        var result =
+                WeaponBalanceMigration.upgrade(
+                        oldG,
+                        oldU,
+                        resource("/migrations/phase3-gameplay.yml"),
+                        resource("/migrations/phase3-weapon-upgrades.yml"),
+                        resource("/gameplay.yml"),
+                        resource("/weapon-upgrades.yml"));
+        if (Arrays.equals(oldG, result.gameplay()) && Arrays.equals(oldU, result.upgrades()))
+            return;
+        var candidate = directory.resolve("gameplay.balance-candidate.yml");
+        try {
+            net.fries.zombies.persistence.DurableFiles.replace(candidate, result.gameplay());
+            var gameplay = Gameplay.load(candidate);
+            WeaponUpgrades.parse(result.upgrades(), gameplay);
+            for (var entry :
+                    Map.of(
+                                    "gameplay.pre-3-5.backup.yml",
+                                    oldG,
+                                    "weapon-upgrades.pre-3-5.backup.yml",
+                                    oldU)
+                            .entrySet())
+                if (!Files.exists(directory.resolve(entry.getKey())))
+                    net.fries.zombies.persistence.DurableFiles.replace(
+                            directory.resolve(entry.getKey()), entry.getValue());
+            // New upgrade stats are also compatible with the old shipped weapons. Write them first;
+            // rerunning after interruption recognizes both old and new shipped upgrade documents.
+            net.fries.zombies.persistence.DurableFiles.replace(u, result.upgrades());
+            net.fries.zombies.persistence.DurableFiles.replace(g, result.gameplay());
+        } finally {
+            Files.deleteIfExists(candidate);
+        }
+    }
+
+    private static byte[] resource(String path) throws IOException {
+        try (var input = ContentCatalog.class.getResourceAsStream(path)) {
+            if (input == null) throw new IOException("Missing bundled content " + path);
+            return input.readAllBytes();
         }
     }
 }

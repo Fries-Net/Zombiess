@@ -1,0 +1,8 @@
+headshot-ticks: 20
+hit-ticks: 8
+purchase-ticks: 35
+powerup-ticks: 40
+refresh-ticks: 2
+headshot-text: HEADSHOT
+hit-text: HIT
+separator: ' | '

@@ -4,12 +4,12 @@ weapons:
   - id: friesnet:weapon/glock18
     name: Glock-18
     material: IRON_HOE
-    magazine: 10
-    reserve: 160
+    magazine: 12
+    reserve: 180
     damage: 6.0
     headshot-multiplier: 2.0
     range: 64
-    cooldown-ticks: 30
+    cooldown-ticks: 8
     reload-ticks: 32
     price: 500
     ammo-price: 200
@@ -21,17 +21,17 @@ weapons:
     shot-particle: CRIT
     asset: friesnet:weapon/glock18
     pierce-targets: 1
-    body-gold: 10
-    headshot-gold: 15
+    body-gold: 3
+    headshot-gold: 5
   - id: friesnet:weapon/ak47
     name: AK-47
     material: DIAMOND_HOE
-    magazine: 20
-    reserve: 240
-    damage: 10.0
+    magazine: 30
+    reserve: 300
+    damage: 5.0
     headshot-multiplier: 2.0
     range: 80
-    cooldown-ticks: 20
+    cooldown-ticks: 4
     reload-ticks: 48
     price: 1500
     ammo-price: 500
@@ -43,18 +43,18 @@ weapons:
     shot-particle: ELECTRIC_SPARK
     asset: friesnet:weapon/ak47
     pierce-targets: 1
-    body-gold: 7
-    headshot-gold: 10
+    body-gold: 1
+    headshot-gold: 2
   - id: friesnet:weapon/mac10
     name: MAC-10
     material: GOLDEN_HOE
-    magazine: 20
-    reserve: 240
-    damage: 5.0
+    magazine: 32
+    reserve: 320
+    damage: 3.0
     headshot-multiplier: 1.8
     range: 48
-    cooldown-ticks: 10
-    reload-ticks: 36
+    cooldown-ticks: 2
+    reload-ticks: 40
     price: 1000
     ammo-price: 350
     fire-mode: AUTOMATIC
@@ -65,18 +65,18 @@ weapons:
     shot-particle: SMOKE
     asset: friesnet:weapon/mac10
     pierce-targets: 1
-    body-gold: 4
-    headshot-gold: 6
+    body-gold: 1
+    headshot-gold: 1
   - id: friesnet:weapon/revolver
     name: Revolver
     material: IRON_HORSE_ARMOR
     magazine: 6
-    reserve: 72
-    damage: 12.0
+    reserve: 84
+    damage: 15.0
     headshot-multiplier: 3.0
     range: 72
-    cooldown-ticks: 40
-    reload-ticks: 60
+    cooldown-ticks: 15
+    reload-ticks: 56
     price: 1250
     ammo-price: 400
     fire-mode: SEMI_AUTOMATIC
@@ -87,18 +87,18 @@ weapons:
     shot-particle: FLAME
     asset: friesnet:weapon/revolver
     pierce-targets: 1
-    body-gold: 12
-    headshot-gold: 24
+    body-gold: 6
+    headshot-gold: 10
   - id: friesnet:weapon/awp
     name: AWP
     material: AMETHYST_SHARD
-    magazine: 1
-    reserve: 40
-    damage: 30.0
+    magazine: 3
+    reserve: 48
+    damage: 36.0
     headshot-multiplier: 2.5
     range: 128
-    cooldown-ticks: 50
-    reload-ticks: 100
+    cooldown-ticks: 30
+    reload-ticks: 70
     price: 2500
     ammo-price: 700
     fire-mode: SEMI_AUTOMATIC
@@ -109,8 +109,8 @@ weapons:
     shot-particle: END_ROD
     asset: friesnet:weapon/awp
     pierce-targets: 4
-    body-gold: 20
-    headshot-gold: 30
+    body-gold: 10
+    headshot-gold: 15
 waves:
   final-round: 30
   base-count: 5

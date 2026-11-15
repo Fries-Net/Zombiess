@@ -712,7 +712,8 @@ public final class EditorService {
                                                 maps,
                                                 current.mysteryPools(),
                                                 current.perks(),
-                                                current.upgrades());
+                                                current.upgrades(),
+                                                current.hud());
                                 Path deployed = data.resolve("maps/" + s.map + ".yml");
                                 if (Files.exists(deployed))
                                     retainVersion(s.map, ContentYaml.readBytes(deployed));

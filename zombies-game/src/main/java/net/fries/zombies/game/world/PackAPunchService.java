@@ -124,8 +124,7 @@ public final class PackAPunchService {
         labels.clear();
     }
 
-    private static void message(Player p, String text) {
-        p.sendMessage(Component.text(text, NamedTextColor.LIGHT_PURPLE));
-        p.sendActionBar(Component.text(text, NamedTextColor.LIGHT_PURPLE));
+    private void message(Player p, String text) {
+        run.hud.notice(p, "purchase", text, 30, run.hudSettings.purchaseTicks());
     }
 }

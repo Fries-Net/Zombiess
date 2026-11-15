@@ -282,7 +282,8 @@ public final class MatchCoordinator {
                         map,
                         catalog.mysteryPools(),
                         catalog.perks(),
-                        catalog.upgrades());
+                        catalog.upgrades(),
+                        catalog.hud());
         run.countdownEnds = Instant.now().plus(rules.countdown());
         queued.clear();
         events(run);
@@ -295,7 +296,7 @@ public final class MatchCoordinator {
         for (var id : r.session.snapshot().players()) {
             var p = Bukkit.getPlayer(id);
             if (p == null) continue;
-            p.sendActionBar(Component.text("Starting in " + seconds + "s", NamedTextColor.GOLD));
+            MatchHud.countdown(p, seconds);
             if (seconds <= 5)
                 p.showTitle(
                         Title.title(

@@ -306,7 +306,7 @@ public final class MysteryBoxService {
         return "";
     }
 
-    private static void message(Player p, String text) {
-        p.sendMessage(Component.text(text));
+    private void message(Player p, String text) {
+        run.hud.notice(p, "purchase", text, 30, run.hudSettings.purchaseTicks());
     }
 }
