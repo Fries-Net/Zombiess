@@ -5,6 +5,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class WindowDefinitionTest {
+    @Test
+    void missingPolicyRequiresEveryBoardAndPartialEntryIsExplicit() {
+        assertEquals(WindowDefinition.EntryPolicy.ALL_BOARDS, load(definition()).entryPolicy());
+        assertEquals(
+                WindowDefinition.EntryPolicy.PASSABLE_OPENING,
+                load(definition() + "entry-policy: PASSABLE_OPENING\n").entryPolicy());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> load(definition() + "entry-policy: unknown\n"));
+    }
+
     private String definition() {
         return """
 id: north

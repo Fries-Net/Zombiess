@@ -98,7 +98,7 @@ public final class WindowService {
             return false;
         }
         zombie.setTarget(null);
-        boolean open = opening(d);
+        boolean open = entryAllowed(d);
         var destination = open ? entryDestination(d) : MapWorlds.location(run.world, d.approach());
         if (zombie.hasAI()) zombie.getPathfinder().moveTo(destination, 1.0);
         return true;
@@ -106,7 +106,19 @@ public final class WindowService {
 
     private boolean cleared(Zombie zombie, WindowDefinition d) {
         return run.map.playableBounds().contains(point(zombie.getLocation()))
-                && d.clearsBoardPlane(point(zombie.getLocation()), zombie.getWidth() / 2 + .05);
+                && d.clearsBoardPlane(point(zombie.getLocation()), zombie.getWidth() / 2 + .05)
+                && clearBody(zombie);
+    }
+
+    private boolean clearBody(Zombie zombie) {
+        var body = zombie.getBoundingBox().clone().expand(.02, -.001, .02);
+        for (int x = (int) Math.floor(body.getMinX()); x <= Math.floor(body.getMaxX()); x++)
+            for (int y = (int) Math.floor(body.getMinY()); y <= Math.floor(body.getMaxY()); y++)
+                for (int z = (int) Math.floor(body.getMinZ()); z <= Math.floor(body.getMaxZ()); z++)
+                    for (var shape :
+                            run.world.getBlockAt(x, y, z).getCollisionShape().getBoundingBoxes())
+                        if (shape.clone().shift(x, y, z).overlaps(body)) return false;
+        return true;
     }
 
     private Location entryDestination(WindowDefinition d) {
@@ -126,6 +138,12 @@ public final class WindowService {
                         && farther.clone().subtract(0, 1, 0).getBlock().getType().isSolid()
                 ? farther
                 : configured;
+    }
+
+    public boolean entryAllowed(WindowDefinition d) {
+        return (d.entryPolicy() == WindowDefinition.EntryPolicy.PASSABLE_OPENING
+                        || states.get(d.id()).intactCount() == 0)
+                && opening(d);
     }
 
     private boolean opening(WindowDefinition d) {
@@ -156,7 +174,9 @@ public final class WindowService {
         for (var d : definitions.values()) {
             var state = states.get(d.id());
             boolean attack =
-                    !opening(d)
+                    states.get(d.id()).intactCount() > 0
+                            && (d.entryPolicy() == WindowDefinition.EntryPolicy.ALL_BOARDS
+                                    || !opening(d))
                             && assigned.entrySet().stream()
                                     .filter(e -> e.getValue().equals(d.id()))
                                     .map(e -> Bukkit.getEntity(e.getKey()))
@@ -170,6 +190,11 @@ public final class WindowService {
                                                                                     d.approach()))
                                                             <= 3.5);
             attacking.put(d.id(), attack);
+            if (attack && run.tick % 12 == 0)
+                for (var assignment : assigned.entrySet())
+                    if (assignment.getValue().equals(d.id())
+                            && Bukkit.getEntity(assignment.getKey()) instanceof Zombie zombie)
+                        zombie.swingMainHand();
             int damaged = state.attackingBoard();
             int broken = state.attack(run.tick, attack);
             if (broken >= 0) {
@@ -177,7 +202,7 @@ public final class WindowService {
                 clearCracks(d, board);
                 block(board).setType(Material.AIR, false);
                 effects(board, false);
-                if (opening(d))
+                if (entryAllowed(d))
                     for (var assignment : List.copyOf(assigned.entrySet()))
                         if (assignment.getValue().equals(d.id())) {
                             var e = Bukkit.getEntity(assignment.getKey());
