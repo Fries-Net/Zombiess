@@ -45,6 +45,7 @@ final class PaperPerkChecks {
             editor.execute(p, "set price 17".split(" "));
             p.teleport(new Location(s.world, POSITIONS[i][0], 64, POSITIONS[i][1]));
             editor.execute(p, new String[] {"point"});
+            s.world.getBlockAt(p.getLocation()).setType(Material.GREEN_CONCRETE);
             i++;
         }
         p.closeInventory();
@@ -68,7 +69,7 @@ final class PaperPerkChecks {
 
     private static void buy(MatchRun r, Player p, Type type) {
         var at = station(r, type).point();
-        p.teleport(new Location(r.world, at.x(), at.y(), at.z()));
+        PaperTargetChecks.aim(r, p, "object:" + station(r, type).id());
         r.perks.interact(p);
     }
 
@@ -98,11 +99,11 @@ final class PaperPerkChecks {
                         r.map.objects().stream()
                                         .filter(o -> o.kind() == MapObject.Kind.PERK)
                                         .count()
-                                == 8,
-                        "all eight station types published");
+                                == 10,
+                        "eight perk types plus adjacent targeting stations published");
                 s.credit(10000);
                 gold = s.points();
-                p.teleport(new Location(r.world, -6.5, 64, -4.5));
+                PaperTargetChecks.aim(r, p, "object:" + station(r, Type.JUGGERNOG).id());
                 p.getInventory().setHeldItemSlot(7);
             }
             case "perk-health" -> {

@@ -18,7 +18,13 @@ public record WindowDefinition(
         int roundGoldCap,
         boolean denyRepairUnderAttack,
         Set<String> requiredRooms,
-        NamespacedId asset) {
+        NamespacedId asset,
+        EntryPolicy entryPolicy) {
+    public enum EntryPolicy {
+        ALL_BOARDS,
+        PASSABLE_OPENING
+    }
+
     public enum Orientation {
         NORTH,
         SOUTH,
@@ -33,6 +39,7 @@ public record WindowDefinition(
     }
 
     public WindowDefinition {
+        Objects.requireNonNull(entryPolicy);
         boards = List.copyOf(boards);
         requiredRooms = Set.copyOf(requiredRooms);
         if (!id.matches("[a-z0-9_-]{1,32}")
@@ -73,21 +80,25 @@ public record WindowDefinition(
     }
 
     public static WindowDefinition load(ContentYaml n) {
-        n.keys(
-                "id",
-                "point",
-                "orientation",
-                "boards",
-                "spawn-region",
-                "approach",
-                "entry",
-                "break-ticks",
-                "repair-ticks",
-                "repair-gold",
-                "round-gold-cap",
-                "deny-repair-under-attack",
-                "required-rooms",
-                "asset");
+        var keys =
+                new ArrayList<>(
+                        List.of(
+                                "id",
+                                "point",
+                                "orientation",
+                                "boards",
+                                "spawn-region",
+                                "approach",
+                                "entry",
+                                "break-ticks",
+                                "repair-ticks",
+                                "repair-gold",
+                                "round-gold-cap",
+                                "deny-repair-under-attack",
+                                "required-rooms",
+                                "asset"));
+        if (n.values().containsKey("entry-policy")) keys.add("entry-policy");
+        n.keys(keys.toArray(String[]::new));
         var boards =
                 n.nodes("boards").stream()
                         .map(
@@ -114,6 +125,9 @@ public record WindowDefinition(
                 n.integer("round-gold-cap", 0, 100000),
                 n.bool("deny-repair-under-attack"),
                 Set.copyOf(n.strings("required-rooms")),
-                new NamespacedId(n.text("asset")));
+                new NamespacedId(n.text("asset")),
+                n.values().containsKey("entry-policy")
+                        ? EntryPolicy.valueOf(n.text("entry-policy"))
+                        : EntryPolicy.ALL_BOARDS);
     }
 }

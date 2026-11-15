@@ -58,7 +58,7 @@ public final class PerkService {
 
     private MapObject nearest(Player p) {
         return stations.stream()
-                .filter(s -> run.interactions.near(p, s.point(), 3.5))
+                .filter(s -> run.targets.matches(p,"object:"+s.id()))
                 .min(
                         Comparator.comparingDouble(
                                 s ->

@@ -14,6 +14,12 @@ import java.util.*;
 
 /** Physical window ownership, navigation, board damage and continuous sneak rebuilding. */
 public final class WindowService {
+    private static final com.destroystokyo.paper.entity.ai.GoalKey<Zombie> MOVE_GOAL =
+            com.destroystokyo.paper.entity.ai.GoalKey.of(
+                    Zombie.class, new NamespacedKey("friesnetzombies", "window_move"));
+    private static final com.destroystokyo.paper.entity.ai.GoalKey<Zombie> TARGET_GOAL =
+            com.destroystokyo.paper.entity.ai.GoalKey.of(
+                    Zombie.class, new NamespacedKey("friesnetzombies", "window_target"));
     private final MatchRun run;
     private final Map<String, WindowDefinition> definitions = new LinkedHashMap<>();
     private final Map<String, WindowState> states = new HashMap<>();
@@ -70,6 +76,49 @@ public final class WindowService {
         assigned.put(zombie.getUniqueId(), d.id());
         arrivals.put(zombie.getUniqueId(), d.id());
         zombie.setCollidable(false);
+        var goals = Bukkit.getMobGoals();
+        if (!goals.hasGoal(zombie, MOVE_GOAL))
+            goals.addGoal(
+                    zombie,
+                    0,
+                    new com.destroystokyo.paper.entity.ai.Goal<Zombie>() {
+                        public boolean shouldActivate() {
+                            return assigned.containsKey(zombie.getUniqueId());
+                        }
+
+                        public void tick() {
+                            guide(zombie);
+                        }
+
+                        public com.destroystokyo.paper.entity.ai.GoalKey<Zombie> getKey() {
+                            return MOVE_GOAL;
+                        }
+
+                        public EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+                            return EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.MOVE);
+                        }
+                    });
+        if (!goals.hasGoal(zombie, TARGET_GOAL))
+            goals.addGoal(
+                    zombie,
+                    0,
+                    new com.destroystokyo.paper.entity.ai.Goal<Zombie>() {
+                        public boolean shouldActivate() {
+                            return assigned.containsKey(zombie.getUniqueId());
+                        }
+
+                        public void tick() {
+                            zombie.setTarget(null);
+                        }
+
+                        public com.destroystokyo.paper.entity.ai.GoalKey<Zombie> getKey() {
+                            return TARGET_GOAL;
+                        }
+
+                        public EnumSet<com.destroystokyo.paper.entity.ai.GoalType> getTypes() {
+                            return EnumSet.of(com.destroystokyo.paper.entity.ai.GoalType.TARGET);
+                        }
+                    });
     }
 
     public boolean exterior(UUID zombie) {
@@ -98,7 +147,7 @@ public final class WindowService {
             return false;
         }
         zombie.setTarget(null);
-        boolean open = opening(d);
+        boolean open = entryAllowed(d);
         var destination = open ? entryDestination(d) : MapWorlds.location(run.world, d.approach());
         if (zombie.hasAI()) zombie.getPathfinder().moveTo(destination, 1.0);
         return true;
@@ -106,7 +155,19 @@ public final class WindowService {
 
     private boolean cleared(Zombie zombie, WindowDefinition d) {
         return run.map.playableBounds().contains(point(zombie.getLocation()))
-                && d.clearsBoardPlane(point(zombie.getLocation()), zombie.getWidth() / 2 + .05);
+                && d.clearsBoardPlane(point(zombie.getLocation()), zombie.getWidth() / 2 + .05)
+                && clearBody(zombie);
+    }
+
+    private boolean clearBody(Zombie zombie) {
+        var body = zombie.getBoundingBox().clone().expand(.02, -.001, .02);
+        for (int x = (int) Math.floor(body.getMinX()); x <= Math.floor(body.getMaxX()); x++)
+            for (int y = (int) Math.floor(body.getMinY()); y <= Math.floor(body.getMaxY()); y++)
+                for (int z = (int) Math.floor(body.getMinZ()); z <= Math.floor(body.getMaxZ()); z++)
+                    for (var shape :
+                            run.world.getBlockAt(x, y, z).getCollisionShape().getBoundingBoxes())
+                        if (shape.clone().shift(x, y, z).overlaps(body)) return false;
+        return true;
     }
 
     private Location entryDestination(WindowDefinition d) {
@@ -126,6 +187,12 @@ public final class WindowService {
                         && farther.clone().subtract(0, 1, 0).getBlock().getType().isSolid()
                 ? farther
                 : configured;
+    }
+
+    public boolean entryAllowed(WindowDefinition d) {
+        return (d.entryPolicy() == WindowDefinition.EntryPolicy.PASSABLE_OPENING
+                        || states.get(d.id()).intactCount() == 0)
+                && opening(d);
     }
 
     private boolean opening(WindowDefinition d) {
@@ -156,7 +223,9 @@ public final class WindowService {
         for (var d : definitions.values()) {
             var state = states.get(d.id());
             boolean attack =
-                    !opening(d)
+                    states.get(d.id()).intactCount() > 0
+                            && (d.entryPolicy() == WindowDefinition.EntryPolicy.ALL_BOARDS
+                                    || !opening(d))
                             && assigned.entrySet().stream()
                                     .filter(e -> e.getValue().equals(d.id()))
                                     .map(e -> Bukkit.getEntity(e.getKey()))
@@ -170,6 +239,11 @@ public final class WindowService {
                                                                                     d.approach()))
                                                             <= 3.5);
             attacking.put(d.id(), attack);
+            if (attack && run.tick % 12 == 0)
+                for (var assignment : assigned.entrySet())
+                    if (assignment.getValue().equals(d.id())
+                            && Bukkit.getEntity(assignment.getKey()) instanceof Zombie zombie)
+                        zombie.swingMainHand();
             int damaged = state.attackingBoard();
             int broken = state.attack(run.tick, attack);
             if (broken >= 0) {
@@ -177,7 +251,7 @@ public final class WindowService {
                 clearCracks(d, board);
                 block(board).setType(Material.AIR, false);
                 effects(board, false);
-                if (opening(d))
+                if (entryAllowed(d))
                     for (var assignment : List.copyOf(assigned.entrySet()))
                         if (assignment.getValue().equals(d.id())) {
                             var e = Bukkit.getEntity(assignment.getKey());
@@ -315,6 +389,12 @@ public final class WindowService {
     }
 
     public void clear() {
+        for (var id : arrivals.keySet())
+            if (Bukkit.getEntity(id) instanceof Zombie zombie) {
+                Bukkit.getMobGoals().removeGoal(zombie, MOVE_GOAL);
+                Bukkit.getMobGoals().removeGoal(zombie, TARGET_GOAL);
+                zombie.setCollidable(true);
+            }
         for (var d : definitions.values()) for (var b : d.boards()) clearCracks(d, b);
         assigned.clear();
         arrivals.clear();

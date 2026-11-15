@@ -6,7 +6,8 @@ import java.util.*;
 public final class WindowState {
     private final BitSet intact = new BitSet();
     private final int count, breakTicks, repairTicks;
-    private int damage, repairBoard = -1, repairProgress;
+    private final int[] damage;
+    private int repairBoard = -1, repairProgress;
     private long attackTick = -1, repairTick = -1;
     private UUID repairer;
 
@@ -14,6 +15,7 @@ public final class WindowState {
         if (boards < 1 || boards > 64 || breakTicks < 1 || repairTicks < 1)
             throw new IllegalArgumentException("Invalid window limits");
         count = boards;
+        damage = new int[boards];
         this.breakTicks = breakTicks;
         this.repairTicks = repairTicks;
         intact.set(0, count);
@@ -24,8 +26,8 @@ public final class WindowState {
         attackTick = tick;
         int board = intact.nextSetBit(0);
         if (board < 0) return -1;
-        if (++damage < breakTicks) return -1;
-        damage = 0;
+        if (++damage[board] < breakTicks) return -1;
+        damage[board] = 0;
         intact.clear(board);
         return board;
     }
@@ -45,6 +47,7 @@ public final class WindowState {
         }
         if (++repairProgress < repairTicks) return -1;
         intact.set(missing);
+        damage[missing] = 0;
         cancelRepair();
         return missing;
     }
@@ -74,7 +77,8 @@ public final class WindowState {
     }
 
     public float damageProgress() {
-        return (float) damage / breakTicks;
+        int board = attackingBoard();
+        return board < 0 ? 0 : (float) damage[board] / breakTicks;
     }
 
     public float repairProgress() {
