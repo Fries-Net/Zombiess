@@ -119,6 +119,14 @@ final class PaperWindowChecks {
                 scene.players.putAll(real.players);
                 scene.interactions = real.interactions;
                 scene.lives = real.lives;
+                // A real frame prevents a successful test from simply walking around the boards.
+                for (int lateral = -3; lateral <= 3; lateral++)
+                    for (int y = 64; y <= 67; y++) {
+                        if (Math.abs(lateral) <= 1 && y <= 65) continue;
+                        var frame = real.world.getBlockAt(ns ? lateral : 0, y, ns ? 0 : lateral);
+                        before.put(frame, frame.getBlockData());
+                        frame.setType(Material.STONE_BRICKS, false);
+                    }
                 for (var board : boards) {
                     var block = real.world.getBlockAt(board.x(), board.y(), board.z());
                     before.put(block, block.getBlockData());
