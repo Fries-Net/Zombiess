@@ -55,6 +55,7 @@ public record PowerUps(
                     || perRound < 1
                     || perRound > 20
                     || duration < 0
+                    || (type == Type.INSTA_KILL || type == Type.DOUBLE_POINTS) && duration < 1
                     || maxDuration < duration
                     || maxDuration > 72000
                     || despawnTicks < 20

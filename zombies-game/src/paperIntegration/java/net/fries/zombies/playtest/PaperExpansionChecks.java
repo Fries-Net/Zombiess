@@ -39,6 +39,16 @@ final class PaperExpansionChecks {
         var two = Bukkit.getPlayerExact("SurvivorTwo");
         switch (step) {
             case "enemy-spawn" -> {
+                for (String invalid : List.of("AIR", "FIRE", "MISSING_MATERIAL")) {
+                    boolean rejected = false;
+                    try {
+                        net.fries.zombies.game.world.ContentCatalog.validatePowerupMaterial(
+                                invalid);
+                    } catch (IllegalArgumentException expected) {
+                        rejected = true;
+                    }
+                    check(rejected, "invalid power-up item rejected before gameplay");
+                }
                 var factory = new ZombieFactory();
                 int i = 0;
                 for (var type : r.archetypes.types().values()) {
