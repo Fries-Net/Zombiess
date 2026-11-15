@@ -1,0 +1,21 @@
+enabled: false
+token-env: FNZ_DISCORD_TOKEN
+webhook-env: FNZ_DISCORD_WEBHOOK
+guild-id: '0'
+chat-channel-id: '0'
+outgoing-chat: false
+incoming-chat: false
+minecraft-channel: GLOBAL
+include-player-names: true
+avatar-template: 'https://mc-heads.net/avatar/{uuid}/64'
+avatar-hosts: [mc-heads.net]
+queue-capacity: 256
+messages-per-second: 2
+staff-channels:
+  JOIN_LEAVE: '0'
+  MATCH: '0'
+  STAFF: '0'
+  EDITOR: '0'
+  ECONOMY: '0'
+  SERVER: '0'
+  ERROR: '0'

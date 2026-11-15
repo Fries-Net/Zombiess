@@ -747,6 +747,14 @@ public final class EditorService {
                                                         });
                                                 if (saved.catalog() != null)
                                                     matches.installCatalog(saved.catalog());
+                                                plugin.getLogger()
+                                                        .info(
+                                                                "event="
+                                                                        + (publish
+                                                                                ? "map_published"
+                                                                                : "map_modified")
+                                                                        + " map="
+                                                                        + s.map);
                                             }
                                             if (sessions.get(s.player) != s) {
                                                 locked.remove(s.map);
