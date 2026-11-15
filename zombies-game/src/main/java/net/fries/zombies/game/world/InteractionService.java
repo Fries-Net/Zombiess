@@ -133,8 +133,9 @@ public final class InteractionService {
                         .forEach(t -> message(t, p.getName() + " opened " + g.name()));
                 return true;
             }
+        int shopIndex = 0;
         for (var shop : run.map.wallShops())
-            if (run.targets.matches(p, "shop:" + run.map.wallShops().indexOf(shop))) {
+            if (run.targets.matches(p, "shop:" + shopIndex++)) {
                 if (!shop.rooms().stream().allMatch(this::roomUnlocked)) {
                     message(p, "Unlock this station's room first");
                     return true;
@@ -261,8 +262,9 @@ public final class InteractionService {
         for (var g : run.map.gates())
             if (!opened.contains(g.id()) && run.targets.matches(p, "gate:" + g.id()))
                 return "Right-click • " + g.name() + " • " + g.price() + " gold";
+        int shopIndex = 0;
         for (var s : run.map.wallShops())
-            if (run.targets.matches(p, "shop:" + run.map.wallShops().indexOf(s))) {
+            if (run.targets.matches(p, "shop:" + shopIndex++)) {
                 if (!s.rooms().stream().allMatch(this::roomUnlocked))
                     return "Station locked • unlock its room";
                 var w = run.content.weapons().get(s.weapon());

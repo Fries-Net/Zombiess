@@ -222,7 +222,7 @@ final class PaperEditorChecks {
                         map != null && !map.worldSource().equals("blueprint"),
                         "published snapshot installed");
                 check(
-                        map.objects().size() == initialObjects + 25,
+                        map.objects().size() == initialObjects + 26,
                         "published complete metadata including eight perk stations");
                 publishedVersion = map.version();
                 check(
