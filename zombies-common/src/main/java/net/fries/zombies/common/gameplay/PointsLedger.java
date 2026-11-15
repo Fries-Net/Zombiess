@@ -13,7 +13,8 @@ public final class PointsLedger {
         BULLET,
         MELEE,
         EXPLOSIVE,
-        DAMAGE_OVER_TIME
+        DAMAGE_OVER_TIME,
+        POWER_UP
     }
 
     public record Damage(
@@ -80,14 +81,17 @@ public final class PointsLedger {
                     case MELEE -> policy.meleeGold();
                     case EXPLOSIVE -> policy.explosiveGold();
                     case DAMAGE_OVER_TIME -> policy.damageOverTimeGold();
+                    case POWER_UP -> 0;
                 };
-        if (receipt.after() == 0) base = Math.addExact(base, policy.lethalBonus());
+        if (receipt.after() == 0 && receipt.kind() != Kind.POWER_UP)
+            base = Math.addExact(base, policy.lethalBonus());
         int amount = payEnemy(enemy, receipt.player(), base, receipt.tick());
         if (amount > 0) enemy.attacks.add(receipt.attack());
         if (receipt.after() == 0) {
             enemy.dead = true;
             for (var contributor : enemy.contributors.entrySet())
-                if (!contributor.getKey().equals(receipt.player())
+                if (receipt.kind() != Kind.POWER_UP
+                        && !contributor.getKey().equals(receipt.player())
                         && receipt.tick() - contributor.getValue() <= policy.assistWindowTicks())
                     payEnemy(enemy, contributor.getKey(), policy.assistGold(), receipt.tick());
         }
@@ -141,6 +145,16 @@ public final class PointsLedger {
         String key = player + ":" + objective + ":" + round;
         if (objectives.contains(key)) return 0;
         int amount = scaled(policy.objectiveGold(), tick);
+        if (!credit(player, amount, tick)) return 0;
+        objectives.add(key);
+        return amount;
+    }
+
+    public int powerup(UUID player, String pickup, int value, long tick) {
+        if (value < 0 || value > 10000) throw new IllegalArgumentException("Invalid pickup reward");
+        String key = player + ":powerup:" + pickup;
+        if (objectives.contains(key)) return 0;
+        int amount = scaled(value, tick);
         if (!credit(player, amount, tick)) return 0;
         objectives.add(key);
         return amount;

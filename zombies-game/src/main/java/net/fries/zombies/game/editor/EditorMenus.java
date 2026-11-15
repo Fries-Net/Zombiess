@@ -736,6 +736,7 @@ final class EditorMenus implements Listener {
             case POWER -> Material.LEVER;
             case HOLOGRAM -> Material.OAK_SIGN;
             case RANGE_TARGET -> Material.TARGET;
+            case POWERUP_ZONE -> Material.NETHER_STAR;
             case CUSTOM -> Material.COMPARATOR;
         };
     }

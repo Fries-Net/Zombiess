@@ -74,6 +74,17 @@ public final class WeaponState {
         return true;
     }
 
+    public boolean maxAmmo(boolean magazineToo) {
+        boolean changed =
+                reserve != definition.reserve() || magazineToo && magazine != definition.magazine();
+        reserve = definition.reserve();
+        if (magazineToo) {
+            cancelReload();
+            magazine = definition.magazine();
+        }
+        return changed;
+    }
+
     /** Same owned identity and ammunition; upgrades never reset recovery or finish a reload. */
     public boolean upgrade(
             Survivor owner,
