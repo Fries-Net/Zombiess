@@ -47,6 +47,14 @@ readline.createInterface({input: process.stdin}).on('line', line => {
     if (command.op === 'slot') bot.setQuickBarSlot(command.slot);
     if (command.op === 'spam') { if(command.enabled)spamming.add(command.name);else {spamming.delete(command.name);bot.deactivateItem();} }
     if (command.op === 'hold') {if(command.enabled)bot.activateItem();else bot.deactivateItem();}
+    if (command.op === 'motion') {
+      if (!command.enabled) { bot.clearControlStates(); bot.deactivateItem(); }
+      else bot.lookAt(bot.entity.position.offset(0,1.6,10),true).then(()=>{
+        bot.setControlState('forward',true); bot.setControlState('sprint',true);
+        if(command.fire) bot.activateItem();
+        console.log('BOT_MOTION '+command.name);
+      });
+    }
     if (command.op === 'battle') { if (command.enabled) battling.add(command.name); else battling.delete(command.name); }
     if (command.op === 'sneak') bot.setControlState('sneak', command.enabled);
     if (command.op === 'quit') bot.quit();
