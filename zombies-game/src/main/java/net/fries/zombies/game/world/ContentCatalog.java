@@ -19,6 +19,7 @@ public record ContentCatalog(
     }
 
     public static ContentCatalog load(Path directory) throws IOException {
+        rebalance(directory);
         try (var input = ContentCatalog.class.getResourceAsStream("/gameplay.yml")) {
             if (input == null) throw new IOException("Bundled gameplay content missing");
             Path file = directory.resolve("gameplay.yml");
@@ -87,4 +88,48 @@ public record ContentCatalog(
         }
     }
 
+    private static void rebalance(Path directory) throws IOException {
+        var g = directory.resolve("gameplay.yml");
+        var u = directory.resolve("weapon-upgrades.yml");
+        byte[] oldG = ContentYaml.readBytes(g), oldU = ContentYaml.readBytes(u);
+        var result =
+                WeaponBalanceMigration.upgrade(
+                        oldG,
+                        oldU,
+                        resource("/migrations/phase3-gameplay.yml"),
+                        resource("/migrations/phase3-weapon-upgrades.yml"),
+                        resource("/gameplay.yml"),
+                        resource("/weapon-upgrades.yml"));
+        if (Arrays.equals(oldG, result.gameplay()) && Arrays.equals(oldU, result.upgrades()))
+            return;
+        var candidate = directory.resolve("gameplay.balance-candidate.yml");
+        try {
+            net.fries.zombies.persistence.DurableFiles.replace(candidate, result.gameplay());
+            var gameplay = Gameplay.load(candidate);
+            WeaponUpgrades.parse(result.upgrades(), gameplay);
+            for (var entry :
+                    Map.of(
+                                    "gameplay.pre-3-5.backup.yml",
+                                    oldG,
+                                    "weapon-upgrades.pre-3-5.backup.yml",
+                                    oldU)
+                            .entrySet())
+                if (!Files.exists(directory.resolve(entry.getKey())))
+                    net.fries.zombies.persistence.DurableFiles.replace(
+                            directory.resolve(entry.getKey()), entry.getValue());
+            // New upgrade stats are also compatible with the old shipped weapons. Write them first;
+            // rerunning after interruption recognizes both old and new shipped upgrade documents.
+            net.fries.zombies.persistence.DurableFiles.replace(u, result.upgrades());
+            net.fries.zombies.persistence.DurableFiles.replace(g, result.gameplay());
+        } finally {
+            Files.deleteIfExists(candidate);
+        }
+    }
+
+    private static byte[] resource(String path) throws IOException {
+        try (var input = ContentCatalog.class.getResourceAsStream(path)) {
+            if (input == null) throw new IOException("Missing bundled content " + path);
+            return input.readAllBytes();
+        }
+    }
 }

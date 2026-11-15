@@ -18,7 +18,10 @@ class PointsLedgerTest {
 
     @BeforeEach
     void setup() throws Exception {
-        content = Gameplay.load(Path.of("../zombies-game/src/main/resources/gameplay.yml"));
+        content =
+                Gameplay.load(
+                        Path.of(
+                                "../zombies-game/src/main/resources/migrations/phase3-gameplay.yml"));
         a = new Survivor(UUID.randomUUID(), content);
         b = new Survivor(UUID.randomUUID(), content);
         roster = Map.of(a.id(), a, b.id(), b);

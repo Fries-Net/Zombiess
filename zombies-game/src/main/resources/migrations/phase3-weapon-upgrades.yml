@@ -1,0 +1,22 @@
+schema-version: 1
+weapons:
+  - weapon: friesnet:weapon/glock18
+    tiers:
+      - {cost: 5000, name: 'Glock-18 Mk II', damage: 12, magazine: 15, reserve: 240, cooldown-ticks: 25, reload-ticks: 28, asset: 'friesnet:weapon/glock18/mk2', fire-sound: 'minecraft:entity.firework_rocket.large_blast', upgrade-sound: 'minecraft:block.anvil.use'}
+      - {cost: 10000, name: 'Glock-18 Mk III', damage: 20, magazine: 20, reserve: 320, cooldown-ticks: 20, reload-ticks: 24, asset: 'friesnet:weapon/glock18/mk3', fire-sound: 'minecraft:entity.firework_rocket.large_blast', upgrade-sound: 'minecraft:ui.toast.challenge_complete'}
+  - weapon: friesnet:weapon/ak47
+    tiers:
+      - {cost: 5000, name: 'AK-47 Mk II', damage: 20, magazine: 30, reserve: 360, cooldown-ticks: 16, reload-ticks: 40, asset: 'friesnet:weapon/ak47/mk2', fire-sound: 'minecraft:entity.generic.explode', upgrade-sound: 'minecraft:block.anvil.use'}
+      - {cost: 10000, name: 'AK-47 Mk III', damage: 32, magazine: 40, reserve: 480, cooldown-ticks: 12, reload-ticks: 32, asset: 'friesnet:weapon/ak47/mk3', fire-sound: 'minecraft:entity.generic.explode', upgrade-sound: 'minecraft:ui.toast.challenge_complete'}
+  - weapon: friesnet:weapon/mac10
+    tiers:
+      - {cost: 5000, name: 'MAC-10 Mk II', damage: 10, magazine: 30, reserve: 360, cooldown-ticks: 8, reload-ticks: 30, asset: 'friesnet:weapon/mac10/mk2', fire-sound: 'minecraft:block.note_block.snare', upgrade-sound: 'minecraft:block.anvil.use'}
+      - {cost: 10000, name: 'MAC-10 Mk III', damage: 16, magazine: 40, reserve: 480, cooldown-ticks: 6, reload-ticks: 24, asset: 'friesnet:weapon/mac10/mk3', fire-sound: 'minecraft:block.note_block.snare', upgrade-sound: 'minecraft:ui.toast.challenge_complete'}
+  - weapon: friesnet:weapon/revolver
+    tiers:
+      - {cost: 5000, name: 'Revolver Mk II', damage: 24, magazine: 8, reserve: 108, cooldown-ticks: 32, reload-ticks: 50, asset: 'friesnet:weapon/revolver/mk2', fire-sound: 'minecraft:entity.iron_golem.damage', upgrade-sound: 'minecraft:block.anvil.use'}
+      - {cost: 10000, name: 'Revolver Mk III', damage: 40, magazine: 12, reserve: 144, cooldown-ticks: 24, reload-ticks: 40, asset: 'friesnet:weapon/revolver/mk3', fire-sound: 'minecraft:entity.iron_golem.damage', upgrade-sound: 'minecraft:ui.toast.challenge_complete'}
+  - weapon: friesnet:weapon/awp
+    tiers:
+      - {cost: 5000, name: 'AWP Mk II', damage: 60, magazine: 2, reserve: 60, cooldown-ticks: 40, reload-ticks: 80, asset: 'friesnet:weapon/awp/mk2', fire-sound: 'minecraft:entity.lightning_bolt.impact', upgrade-sound: 'minecraft:block.anvil.use'}
+      - {cost: 10000, name: 'AWP Mk III', damage: 100, magazine: 3, reserve: 80, cooldown-ticks: 30, reload-ticks: 60, asset: 'friesnet:weapon/awp/mk3', fire-sound: 'minecraft:entity.lightning_bolt.impact', upgrade-sound: 'minecraft:ui.toast.challenge_complete'}
