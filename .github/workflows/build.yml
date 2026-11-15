@@ -79,6 +79,7 @@ jobs:
       - run: npm ci --prefix tools/paper-client --ignore-scripts --no-audit --no-fund
       - run: python tools/paper_playtest.py --accept-eula
       - run: python tools/paper_playtest.py --accept-eula --profile
+      - run: python tools/paper_playtest.py --accept-eula --discord-unavailable
       - uses: actions/upload-artifact@v4
         if: always()
         with:

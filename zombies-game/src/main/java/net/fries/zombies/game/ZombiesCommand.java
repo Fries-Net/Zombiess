@@ -118,6 +118,7 @@ final class ZombiesCommand implements BasicCommand {
             return;
         }
         switch (command) {
+            case "discord" -> message(sender, plugin.discordStatus(), false);
             case "pause", "resume", "stop" -> {
                 try {
                     if (command.equals("stop")) plugin.matches().stopMatch();
@@ -203,6 +204,7 @@ final class ZombiesCommand implements BasicCommand {
                                 "status",
                                 "profile",
                                 "health",
+                                "discord",
                                 "validate",
                                 "reload",
                                 "pause",
