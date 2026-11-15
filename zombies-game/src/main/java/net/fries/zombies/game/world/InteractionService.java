@@ -97,13 +97,14 @@ public final class InteractionService {
                     return true;
                 }
         for (var g : run.map.gates())
-            if (!opened.contains(g.id()) && near(p, g.point(), 3.5)) {
+            if (!opened.contains(g.id()) && run.targets.matches(p,"gate:"+g.id())) {
                 if (!survivor.spend(g.price())) {
                     message(p, "Need " + g.price() + " gold");
                     return true;
                 }
                 MapWorlds.each(run.world, g.box(), b -> b.setType(Material.AIR, false));
                 opened.add(g.id());
+                run.targets.invalidate();
                 rooms.add(g.unlocksRoom());
                 run.world.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 1, .7f);
                 run.world
@@ -112,7 +113,7 @@ public final class InteractionService {
                 return true;
             }
         for (var shop : run.map.wallShops())
-            if (near(p, shop.point(), 3.5)) {
+            if (run.targets.matches(p,"shop:"+run.map.wallShops().indexOf(shop))) {
                 if (!shop.rooms().stream().allMatch(this::roomUnlocked)) {
                     message(p, "Unlock this station's room first");
                     return true;
@@ -237,10 +238,10 @@ public final class InteractionService {
             if (near(p, b.point(), 3.5) && missing(b) != null)
                 return "Sneak + right-click to repair";
         for (var g : run.map.gates())
-            if (!opened.contains(g.id()) && near(p, g.point(), 3.5))
+            if (!opened.contains(g.id()) && run.targets.matches(p,"gate:"+g.id()))
                 return "Right-click • " + g.name() + " • " + g.price() + " gold";
         for (var s : run.map.wallShops())
-            if (near(p, s.point(), 3.5)) {
+            if (run.targets.matches(p,"shop:"+run.map.wallShops().indexOf(s))) {
                 if (!s.rooms().stream().allMatch(this::roomUnlocked))
                     return "Station locked • unlock its room";
                 var w = run.content.weapons().get(s.weapon());

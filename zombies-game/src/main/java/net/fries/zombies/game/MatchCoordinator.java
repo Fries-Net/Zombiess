@@ -381,6 +381,7 @@ public final class MatchCoordinator {
             r.lives =
                     new net.fries.zombies.game.player.LifeService(r, outcome -> finish(r, outcome));
             r.interactions = new InteractionService(r);
+            r.targets = new net.fries.zombies.game.world.InteractionTargeting(r);
             r.windows = new WindowService(r);
             r.waves = new WaveService(r, outcome -> finish(r, outcome));
             r.perks = new net.fries.zombies.game.world.PerkService(r);
