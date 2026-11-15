@@ -39,6 +39,16 @@ final class PaperExpansionChecks {
         var two = Bukkit.getPlayerExact("SurvivorTwo");
         switch (step) {
             case "enemy-spawn" -> {
+                for (String invalid : List.of("AIR", "FIRE", "MISSING_MATERIAL")) {
+                    boolean rejected = false;
+                    try {
+                        net.fries.zombies.game.world.ContentCatalog.validatePowerupMaterial(
+                                invalid);
+                    } catch (IllegalArgumentException expected) {
+                        rejected = true;
+                    }
+                    check(rejected, "invalid power-up item rejected before gameplay");
+                }
                 var factory = new ZombieFactory();
                 int i = 0;
                 for (var type : r.archetypes.types().values()) {
@@ -186,11 +196,15 @@ final class PaperExpansionChecks {
                         "second collector cannot extend consumed pickup");
                 var d = r.map.windows().getFirst();
                 var state = r.windows.state(d.id());
-                int broken = -1;
-                for (int i = 0; i < d.breakTicks(); i++) {
-                    broken = state.attack(r.tick + i, true);
-                    if (broken >= 0) break;
-                }
+                r.waves.pause(true);
+                for (var enemy : r.waves.enemies())
+                    enemy.teleport(new Location(r.world, -10.5, 64, .5));
+                int broken = state.missing();
+                if (broken < 0)
+                    for (int i = 1; i <= d.breakTicks(); i++) {
+                        broken = state.attack(r.tick + i, true);
+                        if (broken >= 0) break;
+                    }
                 check(broken >= 0, "damaged window fixture");
                 var board = d.boards().get(broken);
                 r.world.getBlockAt(board.x(), board.y(), board.z()).setType(Material.AIR);

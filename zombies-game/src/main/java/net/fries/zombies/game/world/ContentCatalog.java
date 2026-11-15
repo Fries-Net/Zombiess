@@ -53,7 +53,7 @@ public record ContentCatalog(
                 .anyMatch(t -> !t.provider().value().equals("minecraft:zombie")))
             throw new IllegalArgumentException("Unavailable zombie provider");
         var powerups = PowerUps.load(directory.resolve("power-ups.yml"));
-        powerups.definitions().values().forEach(d -> MaterialCheck(d.material()));
+        powerups.definitions().values().forEach(d -> validatePowerupMaterial(d.material()));
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {
             var files =
@@ -79,9 +79,10 @@ public record ContentCatalog(
                 gameplay, maps, mysteryPools, perks, upgrades, hud, archetypes, powerups);
     }
 
-    private static void MaterialCheck(String name) {
-        if (org.bukkit.Material.matchMaterial(name) == null)
-            throw new IllegalArgumentException("Unknown power-up material");
+    public static void validatePowerupMaterial(String name) {
+        var material = org.bukkit.Material.matchMaterial(name);
+        if (material == null || material.isAir() || !material.isItem())
+            throw new IllegalArgumentException("Power-up material must be a non-air item");
     }
 
     private static void migrateTraining(Path directory, Path file) throws IOException {
