@@ -53,6 +53,22 @@ final class PaperResourcePackChecks {
                     new PlayerResourcePackStatusEvent(
                             player, policy.id(), Status.SUCCESSFULLY_LOADED));
             var rendered = player.getInventory().getItem(0);
+            var consumable =
+                    rendered.getData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE);
+            require(
+                    consumable != null && consumable.consumeSeconds() == 3600,
+                    "model metadata retains native held-fire component");
+            var beforeEffects =
+                    original.getData(io.papermc.paper.datacomponent.DataComponentTypes.USE_EFFECTS);
+            var afterEffects =
+                    rendered.getData(io.papermc.paper.datacomponent.DataComponentTypes.USE_EFFECTS);
+            require(
+                    beforeEffects == null
+                            || (afterEffects != null
+                                    && beforeEffects.canSprint() == afterEffects.canSprint()
+                                    && beforeEffects.speedMultiplier()
+                                            == afterEffects.speedMultiplier()),
+                    "model activation cannot reintroduce native movement slowdown");
             require(
                     "friesnet:weapon/glock18"
                             .equals(rendered.getItemMeta().getItemModel().toString()),
