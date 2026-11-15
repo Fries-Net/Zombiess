@@ -85,6 +85,7 @@ def main():
     parser.add_argument("--profile",action="store_true",help="Profile bounded mixed populations under native rapid fire")
     parser.add_argument("--client-dir", type=Path, default=ROOT / "tools/paper-client")
     args = parser.parse_args()
+    args.client_dir = args.client_dir.resolve()
     if not args.accept_eula:
         parser.error("Review https://aka.ms/MinecraftEULA and supply --accept-eula")
     plugin = ROOT / "zombies-game/build/libs/zombies-game-0.1.0.jar"

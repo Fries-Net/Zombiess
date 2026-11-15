@@ -53,6 +53,10 @@ populations under two-client sustained two-tick fire. The log reports actual pop
 and sampled tick-time percentiles; it is a reproducible workload, not a hardware-independent latency
 guarantee. The ordinary full harness also verifies match/editor crash recovery.
 
+The initial local profile passed with 63 active enemies across all six archetypes, 80 shots per
+client over eight seconds, median tick time 3.96 ms and 95th percentile 6.64 ms. The focused editor/
+native-effect suite passed (`run/playtest-e634e07b/result.json`). CI repeats the profiling workload.
+
 In a graphical client, inspect baby/adult passage, armour, elite readability, pickup labels at two
 GUI scales and simultaneous pickup announcements. Try exclusions around spawn rooms and safe/occupied
 Carpenter windows. Confirm normal inventory restoration after defeat, disconnect and server restart.
