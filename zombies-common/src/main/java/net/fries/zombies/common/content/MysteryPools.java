@@ -7,7 +7,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 /** Immutable weighted rewards. Each match captures this registry before purchases begin. */
-public record MysteryPools(Map<NamespacedId, Pool> pools) {
+public record MysteryPools(Map<NamespacedId, Pool> pools, MysteryPresentation presentation) {
+    public MysteryPools(Map<NamespacedId, Pool> pools) {
+        this(pools, MysteryPresentation.defaults());
+    }
+
     public record Reward(NamespacedId weapon, int weight, boolean rare) {
         public Reward {
             if (weight < 1 || weight > 100000)
@@ -55,6 +59,7 @@ public record MysteryPools(Map<NamespacedId, Pool> pools) {
     }
 
     public MysteryPools {
+        Objects.requireNonNull(presentation);
         pools = Map.copyOf(pools);
         if (pools.isEmpty() || pools.size() > 32)
             throw new IllegalArgumentException("Expected 1..32 mystery pools");
@@ -72,7 +77,10 @@ public record MysteryPools(Map<NamespacedId, Pool> pools) {
 
     public static MysteryPools parse(byte[] bytes, Gameplay gameplay) {
         var root = ContentYaml.parse(bytes);
-        root.keys("schema-version", "pools");
+        root.keys(
+                root.values().containsKey("presentation")
+                        ? new String[] {"schema-version", "pools", "presentation"}
+                        : new String[] {"schema-version", "pools"});
         root.integer("schema-version", 1, 1);
         var pools = new LinkedHashMap<NamespacedId, Pool>();
         for (var n : root.nodes("pools")) {
@@ -104,7 +112,30 @@ public record MysteryPools(Map<NamespacedId, Pool> pools) {
             if (pools.putIfAbsent(id, pool) != null)
                 throw new IllegalArgumentException("Duplicate mystery pool " + id);
         }
-        return new MysteryPools(pools);
+        var presentation = MysteryPresentation.defaults();
+        if (root.values().containsKey("presentation")) {
+            var p = root.node("presentation");
+            p.keys(
+                    "activate-ticks",
+                    "close-ticks",
+                    "fastest-cycle-ticks",
+                    "slowest-cycle-ticks",
+                    "preview-height",
+                    "item-scale",
+                    "rare-particles",
+                    "use-item-models");
+            presentation =
+                    new MysteryPresentation(
+                            p.integer("activate-ticks", 1, 100),
+                            p.integer("close-ticks", 1, 100),
+                            p.integer("fastest-cycle-ticks", 1, 40),
+                            p.integer("slowest-cycle-ticks", 1, 40),
+                            p.number("preview-height", .5, 3),
+                            p.number("item-scale", .1, 1),
+                            p.bool("rare-particles"),
+                            p.bool("use-item-models"));
+        }
+        return new MysteryPools(pools, presentation);
     }
 
     public void validate(MapTemplate map) {
@@ -112,6 +143,7 @@ public record MysteryPools(Map<NamespacedId, Pool> pools) {
             if (object.kind() == MapObject.Kind.MYSTERY_BOX) {
                 require(object.property("box", "friesnet:box/default"));
                 if (object.properties().containsKey("price")) object.integer("price", 0, 0, 100000);
+                object.integer("preview-yaw", 0, -180, 180);
             }
     }
 }

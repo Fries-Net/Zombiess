@@ -1088,7 +1088,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 step);
                         return;
                     }
-                    if (!PaperUpgradeChecks.handle(step, zombies)
+                    if (!PaperPresentationChecks.handle(step,zombies) && !PaperUpgradeChecks.handle(step, zombies)
                             && !PaperPerkChecks.handle(step, zombies)
                             && !PaperEditorChecks.handle(step, zombies))
                         throw new IllegalArgumentException("Unknown test step");

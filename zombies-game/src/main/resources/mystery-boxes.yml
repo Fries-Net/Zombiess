@@ -1,4 +1,13 @@
 schema-version: 1
+presentation:
+  activate-ticks: 8
+  close-ticks: 10
+  fastest-cycle-ticks: 2
+  slowest-cycle-ticks: 12
+  preview-height: 1.25
+  item-scale: 0.5
+  rare-particles: true
+  use-item-models: false
 pools:
   - id: friesnet:box/default
     price: 950
