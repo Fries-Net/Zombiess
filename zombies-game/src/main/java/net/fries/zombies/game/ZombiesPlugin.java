@@ -19,6 +19,7 @@ public final class ZombiesPlugin extends JavaPlugin {
     private JdbcAccountRepository accounts;
     private boolean operational;
     private MatchCoordinator matches;
+    private net.fries.zombies.game.discord.DiscordIntegration discord;
 
     @Override
     public void onEnable() {
@@ -27,6 +28,7 @@ public final class ZombiesPlugin extends JavaPlugin {
             for (String resource :
                     new String[] {
                         "config.yml",
+                        "discord.yml",
                         "database.yml",
                         "gameplay.yml",
                         "mystery-boxes.yml",
@@ -41,6 +43,7 @@ public final class ZombiesPlugin extends JavaPlugin {
             getLogger().setLevel(configuration.logLevel());
             accounts = new JdbcAccountRepository(configuration.database());
             matches = new MatchCoordinator(this);
+            discord = net.fries.zombies.game.discord.DiscordIntegration.start(this);
             getServer().getPluginManager().registerEvents(new MatchListener(matches), this);
             registerCommand("zombies", java.util.List.of("jz"), new ZombiesCommand(this));
             matches.initialize()
@@ -103,6 +106,7 @@ public final class ZombiesPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (discord != null) discord.close();
         if (matches != null) matches.shutdown();
         stopping.set(true);
         operational = false;
@@ -123,6 +127,12 @@ public final class ZombiesPlugin extends JavaPlugin {
 
     AppConfiguration readConfiguration() throws IOException {
         return new ConfigurationLoader().load(getDataFolder().toPath(), System::getenv);
+    }
+
+    public String discordStatus() {
+        return discord == null
+                ? "Discord unavailable or disabled by invalid settings"
+                : discord.status();
     }
 
     void reloadConfiguration() throws IOException {

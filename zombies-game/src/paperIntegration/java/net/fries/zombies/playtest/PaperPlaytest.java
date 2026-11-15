@@ -185,6 +185,14 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                     }
                     check(getServer().getOnlinePlayers().size() == 2, "two connected clients");
                 }
+                case "discord-unavailable" ->
+                        check(
+                                zombies.discordStatus().contains("unavailable"),
+                                "missing environment secrets disable adapter safely");
+                case "discord-disabled" ->
+                        check(
+                                zombies.discordStatus().contains("disabled"),
+                                "optional integration remains disabled by default");
                 case "playing" -> {
                     var r = run();
                     check(r.playing(), "in progress");
@@ -238,7 +246,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                                 getLogger()
                                         .severe(
                                                 "PLAYTEST_FAIL window-jamb-entered native entry did"
-                                                    + " not clear: "
+                                                        + " not clear: "
                                                         + (z == null
                                                                 ? "missing"
                                                                 : z.getLocation()));
