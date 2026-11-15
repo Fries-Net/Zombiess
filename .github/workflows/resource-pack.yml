@@ -1,0 +1,49 @@
+name: Resource pack V3
+on:
+  push:
+    branches: [master, 'feature/resource-pack-v3']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p test_resource_pack.py
+      - run: python tools/resource_pack.py build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resource-pack-v3-${{ runner.os }}
+          path: |
+            resource-pack/build/*.zip
+            resource-pack/build/build-report.json
+            resource-pack/build/asset-manifest.json
+          if-no-files-found: error
+  preview:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/model-preview/package-lock.json
+      - run: npm ci --prefix tools/model-preview --ignore-scripts --no-audit --no-fund
+      - run: cd tools/model-preview && npx playwright install --with-deps chromium
+      - run: node tools/model-preview/check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-model-review
+          path: resource-pack/build/review/

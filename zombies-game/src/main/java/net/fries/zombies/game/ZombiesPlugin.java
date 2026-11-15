@@ -19,6 +19,7 @@ public final class ZombiesPlugin extends JavaPlugin {
     private JdbcAccountRepository accounts;
     private boolean operational;
     private MatchCoordinator matches;
+    private net.fries.zombies.game.presentation.ResourcePackService resourcePacks;
 
     @Override
     public void onEnable() {
@@ -32,6 +33,7 @@ public final class ZombiesPlugin extends JavaPlugin {
                         "mystery-boxes.yml",
                         "perks.yml",
                         "weapon-upgrades.yml",
+                        "resource-pack.yml",
                         "maps/training.yml"
                     }) {
                 if (!Files.exists(getDataFolder().toPath().resolve(resource)))
@@ -41,6 +43,9 @@ public final class ZombiesPlugin extends JavaPlugin {
             getLogger().setLevel(configuration.logLevel());
             accounts = new JdbcAccountRepository(configuration.database());
             matches = new MatchCoordinator(this);
+            resourcePacks = net.fries.zombies.game.presentation.ResourcePackService.load(this);
+            getServer().getPluginManager().registerEvents(resourcePacks, this);
+            getServer().getOnlinePlayers().forEach(resourcePacks::offer);
             getServer().getPluginManager().registerEvents(new MatchListener(matches), this);
             registerCommand("zombies", java.util.List.of("jz"), new ZombiesCommand(this));
             matches.initialize()
@@ -103,6 +108,7 @@ public final class ZombiesPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (resourcePacks != null) resourcePacks.close();
         if (matches != null) matches.shutdown();
         stopping.set(true);
         operational = false;
@@ -164,6 +170,10 @@ public final class ZombiesPlugin extends JavaPlugin {
 
     public MatchCoordinator matches() {
         return matches;
+    }
+
+    public net.fries.zombies.game.presentation.ResourcePackService resourcePacks() {
+        return resourcePacks;
     }
 
     private String failureTypes(Throwable failure) {

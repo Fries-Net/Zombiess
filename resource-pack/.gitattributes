@@ -1,0 +1,2 @@
+*.json text eol=lf
+source/*.json linguist-generated=true

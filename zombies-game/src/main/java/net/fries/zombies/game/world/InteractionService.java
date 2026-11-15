@@ -146,7 +146,7 @@ public final class InteractionService {
                     var state = new WeaponState(w);
                     int slot = run.perks.freeWeaponSlot(p);
                     survivor.weapons().put(w.id(), state);
-                    p.getInventory().setItem(slot, run.combat.item(state));
+                    p.getInventory().setItem(slot, run.combat.item(state, p));
                     message(p, "Purchased " + w.name() + " • slot " + (slot + 1));
                 }
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);

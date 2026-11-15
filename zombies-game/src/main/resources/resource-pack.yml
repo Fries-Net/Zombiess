@@ -1,0 +1,11 @@
+# Optional immutable HTTPS download. Copy SHA-1 from build-report.json after visual approval.
+# Restart to apply changes. Declining or failing the download preserves vanilla weapon visuals.
+enabled: false
+url: ''
+sha1: ''
+# Map gameplay asset IDs to verified item_model IDs. Empty until Minecraft acceptance passes.
+# Upgrade assets may deliberately map to an approved base model while retaining their identity.
+# approved-models:
+#   'friesnet:weapon/ak47': 'friesnet:weapon/ak47'
+#   'friesnet:weapon/ak47/mk2': 'friesnet:weapon/ak47'
+approved-models: {}

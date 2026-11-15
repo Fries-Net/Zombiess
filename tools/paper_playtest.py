@@ -321,6 +321,7 @@ def main():
         check("perk-revived", 2.8)
         check("perk-wunder", .8)
         check("pap-start", .8)
+        clients.wait("BOT_RESOURCE_PACK SurvivorOne")
         bot("SurvivorOne", "waitposition", x=3.5, y=64, z=4.5)
         clients.wait("BOT_POSITION SurvivorOne")
         bot("SurvivorOne", "useblock", x=3, y=63, z=4)
