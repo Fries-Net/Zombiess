@@ -38,6 +38,41 @@ weapons; switch/reload during cooldown; repeat with Speed and upgraded weapons. 
 third-person hands for eating/blocking/swing artifacts and confirm headshots remain readable beside
 ammo. No graphical acceptance has been claimed. Final automated results are recorded on PR #10.
 
-Next work is the independent targeting/window branch, followed by archetypes/power-ups, mystery-box
-presentation/training content and the optional Discord adapter. Original Blockbench ZIP and prior
-packs are absent; V3 requires those sources and visual approval rather than replacement artwork.
+## Review checkpoints
+
+All branches start from master `6e9369f`; no feature has been merged into master during this work.
+
+| PR | Branch suffix (`feature/phase-3-5-…`) | Checkpoint | Scope |
+| --- | --- | --- | --- |
+| [10](https://github.com/Fries-Net/Zombiess/pull/10) | gun-handling | `e40c579` | Native use effects, balance, coordinated HUD |
+| [11](https://github.com/Fries-Net/Zombiess/pull/11) | targeting-windows | `ebf15d2` | Crosshair purchases, full boards, framed adult/baby traversal |
+| [12](https://github.com/Fries-Net/Zombiess/pull/12) | enemies-powerups | `bf7f5a2` | Six bounded archetypes, five classic power-ups |
+| [13](https://github.com/Fries-Net/Zombiess/pull/13) | presentation-training | `eb6a9c2` | Staged mystery rendering, unpaid preview, separate training lab |
+| [14](https://github.com/Fries-Net/Zombiess/pull/14) | discord | `d40f44f` | Optional bounded staff logging and two-way chat |
+
+The `verify/phase-3-5` branch combines those histories for regression verification only. It retains
+the shared constructor/content fields, every test dispatcher and the coordinated HUD during conflict
+resolution. It is not an additional aggregate feature PR. Use its resolutions when reviewing the
+independent PRs together. Check each exact head's Actions results before merging; earlier green
+results do not establish that a newer commit passed.
+
+Combined validation runs the full two-client Paper suite, mixed-population/two-tick-fire profile and
+unavailable-Discord match, plus unit/H2 and PostgreSQL checks. The native suite covers editor
+publication/version pinning, physical gameplay objects, upgrades/perks, pickups, repeated matches,
+restoration and forced match/editor process recovery. The separate configuration documents contain
+rules and graphical/live acceptance steps:
+
+* [Interactions and windows](INTERACTIONS_WINDOWS.md)
+* [Zombie populations and power-ups](ZOMBIES_POWERUPS.md)
+* [Mystery presentation and training lab](MYSTERY_PRESENTATION.md)
+* [Discord setup, security and acceptance](DISCORD.md)
+
+Next external acceptance is a normal graphical Minecraft session using `foundry_lab`: sprint/strafe
+while holding automatic fire, inspect hands and headshot HUD, target adjacent stations, destroy and
+rebuild every board, inspect mystery animation and complete a match. Discord additionally needs a
+live guild/channel permissions and webhook appearance/reconnect test with protected credentials.
+
+Original Blockbench ZIP and prior packs are absent. The next exact V3 step is to inspect the supplied
+66-model source archive and original texture assignments, then implement reproducible export and
+per-weapon preview/transform overrides with graphical approval. No replacement geometry or unverified
+weapon transforms have been presented as fixed. Native model fallbacks remain enabled.

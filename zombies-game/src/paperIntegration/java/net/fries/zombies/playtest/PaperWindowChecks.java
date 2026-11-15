@@ -114,7 +114,10 @@ final class PaperWindowChecks {
                                 map,
                                 real.mysteryPools,
                                 real.perkRules,
-                                real.upgradeRules, real.hudSettings, real.archetypes,real.powerupRules);
+                                real.upgradeRules,
+                                real.hudSettings,
+                                real.archetypes,
+                                real.powerupRules);
                 scene.world = real.world;
                 scene.players.putAll(real.players);
                 scene.interactions = real.interactions;

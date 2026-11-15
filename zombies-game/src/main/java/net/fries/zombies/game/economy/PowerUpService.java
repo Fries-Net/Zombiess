@@ -167,7 +167,12 @@ public final class PowerUpService {
             }
         }
         for (var p : run.world.getPlayers()) {
-            run.hud.notice(p,"powerup",definition.name().toUpperCase(java.util.Locale.ROOT),40,run.hudSettings.powerupTicks());
+            run.hud.notice(
+                    p,
+                    "powerup",
+                    definition.name().toUpperCase(java.util.Locale.ROOT),
+                    40,
+                    run.hudSettings.powerupTicks());
             p.sendMessage(
                     Component.text(
                             definition.name() + " activated by " + player.getName(),
