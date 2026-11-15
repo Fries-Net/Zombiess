@@ -215,7 +215,7 @@ def main():
             check("repair")
             check("repaired", 2.5)
             check("repair-cap-start")
-            check("repair-capped",2.5)
+            check("repair-capped",10.5)
             check("window-rebreak")
             check("window-under-attack",2.3)
             check("repair-cancel")

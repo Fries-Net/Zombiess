@@ -821,7 +821,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                 case "repair-capped" -> {
                     var r = run();
                     var p = player("SurvivorOne");
-                    check(r.windows.state("north").intactCount() == 6, "second board rebuilt");
+                    check(r.windows.state("north").intactCount() == 6, "all six boards rebuilt");
                     check(
                             r.survivor(p.getUniqueId()).points() == pointsBefore,
                             "window per-round gold cap respected");
