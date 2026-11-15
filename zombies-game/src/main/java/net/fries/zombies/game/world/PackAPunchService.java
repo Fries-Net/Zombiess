@@ -87,7 +87,7 @@ public final class PackAPunchService {
         var tier = run.upgradeRules.next(weapon.definition().id(), weapon.upgradeLevel());
         // Render before the charge; cosmetic construction cannot lose gold or create an unowned
         // gun.
-        var item = run.combat.upgradeItem(weapon, tier);
+        var item = run.combat.upgradeItem(weapon, tier, p);
         int level = weapon.upgradeLevel(), cost = price(station, tier);
         if (!weapon.upgrade(
                 run.survivor(p.getUniqueId()), run.upgradeRules, level, cost, run.tick)) {

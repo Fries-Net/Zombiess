@@ -25,11 +25,16 @@ public final class CombatService {
     private final MatchRun run;
     private final NamespacedKey instanceKey;
     private final MatchDamageService damageService;
+    private final net.fries.zombies.game.presentation.ResourcePackService resourcePacks;
 
     public CombatService(JavaPlugin plugin, MatchRun run) {
         this.run = run;
         damageService = new MatchDamageService(run);
         instanceKey = new NamespacedKey(plugin, "weapon_instance");
+        resourcePacks =
+                plugin instanceof net.fries.zombies.game.ZombiesPlugin zombies
+                        ? zombies.resourcePacks()
+                        : null;
     }
 
     public void equip(Player player) {
@@ -37,7 +42,8 @@ public final class CombatService {
         if (s == null) return;
         player.getInventory().clear();
         int slot = 0;
-        for (var weapon : s.weapons().values()) player.getInventory().setItem(slot++, item(weapon));
+        for (var weapon : s.weapons().values())
+            player.getInventory().setItem(slot++, item(weapon, player));
         player.getInventory().setHeldItemSlot(0);
         var knife = new ItemStack(Material.IRON_SWORD);
         knife.editMeta(
@@ -57,9 +63,27 @@ public final class CombatService {
         return item(state, state.definition(), state.upgradeLevel());
     }
 
+    public ItemStack item(WeaponState state, Player player) {
+        var item = item(state);
+        if (resourcePacks != null)
+            resourcePacks.apply(player, item, state.definition().behaviour().asset().value());
+        return item;
+    }
+
     public ItemStack upgradeItem(
             WeaponState state, net.fries.zombies.common.content.WeaponUpgrades.Tier tier) {
         return item(state, tier.apply(state.definition()), state.upgradeLevel() + 1);
+    }
+
+    public ItemStack upgradeItem(
+            WeaponState state,
+            net.fries.zombies.common.content.WeaponUpgrades.Tier tier,
+            Player player) {
+        var item = upgradeItem(state, tier);
+        if (resourcePacks != null)
+            resourcePacks.apply(
+                    player, item, tier.apply(state.definition()).behaviour().asset().value());
+        return item;
     }
 
     private ItemStack item(
