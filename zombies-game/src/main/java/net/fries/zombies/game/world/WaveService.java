@@ -9,7 +9,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 
 import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
 
 import java.util.*;
@@ -20,7 +19,7 @@ import java.util.function.Consumer;
  * roster.
  */
 public final class WaveService {
-    public record Credit(UUID player, boolean headshot) {}
+    public record Credit(UUID player, boolean headshot, boolean drop) {}
 
     private final MatchRun run;
     private final Consumer<Outcome> finish;
@@ -29,10 +28,16 @@ public final class WaveService {
     private int round, remaining, spawnIndex;
     private long nextRound, nextSpawn, roundStarted;
     private Gameplay.Wave plan;
+    private final Map<UUID, net.fries.zombies.common.content.ZombieArchetypes.Type> archetypes =
+            new HashMap<>();
+    private final Map<net.fries.zombies.common.NamespacedId, Integer> spawned = new HashMap<>();
+    private final ZombieFactory factory = new ZombieFactory();
+    private final Random random;
 
     public WaveService(MatchRun run, Consumer<Outcome> finish) {
         this.run = run;
         this.finish = finish;
+        random = new Random(run.session.snapshot().identity().matchId().getLeastSignificantBits());
         nextRound = run.tick + 40;
     }
 
@@ -49,8 +54,7 @@ public final class WaveService {
         if (remaining > 0
                 && zombies.size() < run.content.waves().aliveLimit()
                 && run.tick >= nextSpawn) {
-            spawn();
-            remaining--;
+            if (spawn()) remaining--;
             nextSpawn = run.tick + run.content.waves().spawnTicks();
         }
         if (run.tick % 20 == 0) {
@@ -58,6 +62,7 @@ public final class WaveService {
                 if (!zombie.isValid() || zombie.isDead()) {
                     zombies.remove(zombie.getUniqueId());
                     credits.remove(zombie.getUniqueId());
+                    archetypes.remove(zombie.getUniqueId());
                     continue;
                 }
                 if (zombie.getLocation().getY() < run.map.bounds().y1()
@@ -112,6 +117,7 @@ public final class WaveService {
 
     private void startRound() {
         round++;
+        spawned.clear();
         plan = run.content.waves().at(round, run.session.snapshot().initialPlayerCount());
         remaining = plan.count();
         nextRound = -1;
@@ -126,7 +132,14 @@ public final class WaveService {
         }
     }
 
-    private void spawn() {
+    private boolean spawn() {
+        var active = new HashMap<net.fries.zombies.common.NamespacedId, Integer>();
+        archetypes.forEach(
+                (id, type) -> {
+                    if (zombies.containsKey(id)) active.merge(type.id(), 1, Integer::sum);
+                });
+        var type = run.archetypes.choose(run.map.id(), round, active, spawned, random);
+        if (type == null) return false;
         var eligible =
                 run.map.zombieSpawns().stream()
                         .filter(s -> s.gate().equals("none") || run.interactions.open(s.gate()))
@@ -175,49 +188,33 @@ public final class WaveService {
                                         eligible.get(spawnIndex % eligible.size()).point())
                                 : run.windows.spawn(window, spawnIndex);
         spawnIndex++;
-        var zombie =
-                run.world.spawn(
-                        spawn,
-                        Zombie.class,
-                        z -> {
-                            z.setAdult();
-                            z.setCanBreakDoors(false);
-                            z.setShouldBurnInDay(false);
-                            z.setCanPickupItems(false);
-                            z.setRemoveWhenFarAway(false);
-                            z.setPersistent(false);
-                            Objects.requireNonNull(z.getAttribute(Attribute.MAX_HEALTH))
-                                    .setBaseValue(plan.health());
-                            z.setHealth(plan.health());
-                            Objects.requireNonNull(z.getAttribute(Attribute.ATTACK_DAMAGE))
-                                    .setBaseValue(plan.damage());
-                            Objects.requireNonNull(z.getAttribute(Attribute.ARMOR)).setBaseValue(0);
-                            Objects.requireNonNull(z.getAttribute(Attribute.ARMOR_TOUGHNESS))
-                                    .setBaseValue(0);
-                            Objects.requireNonNull(z.getAttribute(Attribute.MOVEMENT_SPEED))
-                                    .setBaseValue(plan.speed());
-                            Objects.requireNonNull(z.getAttribute(Attribute.FOLLOW_RANGE))
-                                    .setBaseValue(100);
-                            z.getEquipment().clear();
-                        });
+        var zombie = factory.spawn(spawn, type, run.archetypes.stats(type, plan, random));
+        archetypes.put(zombie.getUniqueId(), type);
+        spawned.merge(type.id(), 1, Integer::sum);
         zombies.put(zombie.getUniqueId(), zombie);
         run.points.register(zombie.getUniqueId());
         if (window != null) run.windows.assign(zombie, window);
+        return true;
     }
 
     public void died(UUID id) {
         var zombie = zombies.remove(id);
         if (zombie == null) return;
+        archetypes.remove(id);
         var credit = credits.remove(id);
         if (credit != null) {
             var s = run.players.get(credit.player());
             if (s != null) s.kill(credit.headshot(), run.content);
-            if (run.powerups != null) run.powerups.maybeDrop(zombie.getLocation());
+            if (run.powerups != null && credit.drop()) run.powerups.maybeDrop(zombie.getLocation());
         }
     }
 
     public void attribute(UUID id, UUID player, boolean headshot) {
-        credits.put(id, new Credit(player, headshot));
+        attribute(id, player, headshot, true);
+    }
+
+    public void attribute(UUID id, UUID player, boolean headshot, boolean drop) {
+        credits.put(id, new Credit(player, headshot, drop));
     }
 
     public void forgetAttribution(UUID id) {
@@ -226,6 +223,19 @@ public final class WaveService {
 
     public boolean contains(UUID id) {
         return zombies.containsKey(id);
+    }
+
+    public net.fries.zombies.common.content.ZombieArchetypes.Type archetype(UUID id) {
+        return archetypes.get(id);
+    }
+
+    public double headshotScale(UUID id) {
+        var type = archetype(id);
+        return type == null ? 1 : type.headshotScale();
+    }
+
+    public List<Zombie> enemies() {
+        return List.copyOf(zombies.values());
     }
 
     public int round() {
@@ -258,6 +268,8 @@ public final class WaveService {
         zombies.values().forEach(Entity::remove);
         zombies.clear();
         credits.clear();
+        archetypes.clear();
+        spawned.clear();
     }
 
     private void broadcast(String text) {

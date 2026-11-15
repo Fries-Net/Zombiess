@@ -209,6 +209,10 @@ public final class EditorActions {
                     properties.put("alignment", "CENTER");
                     properties.put("visibility", "ALL");
                 }
+                case POWERUP_ZONE -> {
+                    properties.put("enabled", "true");
+                    properties.put("allowed", "INSTA_KILL,MAX_AMMO,DOUBLE_POINTS,NUKE,CARPENTER");
+                }
                 case CUSTOM -> {
                     properties.put("text", "Activate objective");
                     properties.put("objective", id);

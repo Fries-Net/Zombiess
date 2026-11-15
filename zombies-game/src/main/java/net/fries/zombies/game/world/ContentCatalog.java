@@ -12,7 +12,9 @@ public record ContentCatalog(
         Map<String, MapTemplate> maps,
         MysteryPools mysteryPools,
         Perks perks,
-        WeaponUpgrades upgrades) {
+        WeaponUpgrades upgrades,
+        ZombieArchetypes archetypes,
+        PowerUps powerups) {
     public ContentCatalog {
         maps = Map.copyOf(maps);
     }
@@ -43,6 +45,12 @@ public record ContentCatalog(
         var mysteryPools = MysteryPools.load(directory.resolve("mystery-boxes.yml"), gameplay);
         var perks = Perks.load(directory.resolve("perks.yml"));
         var upgrades = WeaponUpgrades.load(directory.resolve("weapon-upgrades.yml"), gameplay);
+        var archetypes = ZombieArchetypes.load(directory.resolve("zombie-archetypes.yml"));
+        if (archetypes.types().values().stream()
+                .anyMatch(t -> !t.provider().value().equals("minecraft:zombie")))
+            throw new IllegalArgumentException("Unavailable zombie provider");
+        var powerups = PowerUps.load(directory.resolve("power-ups.yml"));
+        powerups.definitions().values().forEach(d -> MaterialCheck(d.material()));
         var maps = new LinkedHashMap<String, MapTemplate>();
         try (var paths = Files.list(directory.resolve("maps"))) {
             var files =
@@ -58,12 +66,19 @@ public record ContentCatalog(
                 mysteryPools.validate(map);
                 perks.validate(map);
                 upgrades.validate(map);
+                powerups.validate(map);
                 if (maps.values().stream().anyMatch(m -> m.id().equals(map.id())))
                     throw new IOException("Duplicate map identity");
                 maps.put(key, map);
             }
         }
-        return new ContentCatalog(gameplay, maps, mysteryPools, perks, upgrades);
+        return new ContentCatalog(
+                gameplay, maps, mysteryPools, perks, upgrades, archetypes, powerups);
+    }
+
+    private static void MaterialCheck(String name) {
+        if (org.bukkit.Material.matchMaterial(name) == null)
+            throw new IllegalArgumentException("Unknown power-up material");
     }
 
     private static void migrateTraining(Path directory, Path file) throws IOException {
