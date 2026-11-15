@@ -335,8 +335,8 @@ final class PaperEditorChecks {
                                 && s.weapons().get(awp).instanceId().equals(instance),
                         "relocated station cannot duplicate purchase or reward");
                 check(
-                        r.world.getEntitiesByClass(org.bukkit.entity.ItemDisplay.class).isEmpty(),
-                        "collected preview removed");
+                        r.world.getEntitiesByClass(org.bukkit.entity.ItemDisplay.class).size()==1,
+                        "collected preview enters brief closing transition");
                 p.teleport(new Location(r.world, -1.5, 64, -4.5));
                 for (int i = 0; i < 8; i++)
                     if (p.getInventory().getItem(i) == null)

@@ -115,6 +115,7 @@ public final class MatchHud {
                                 ? run.hudSettings.separator()
                                 : "")
                         + ammo
+                        + run.powerups.status()
                         + s.goldFeedback(run.tick)
                         + (run.points.doubleGoldRemaining(run.tick) > 0 ? " • DOUBLE GOLD" : "");
         rendered.put(s.id(), text);

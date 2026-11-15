@@ -200,6 +200,7 @@ public final class EditorActions {
                 }
                 case MYSTERY_BOX -> {
                     properties.put("hitbox", "POINT");
+                    properties.put("preview-yaw", "0");
                     properties.put("box", "friesnet:box/default");
                     properties.put(
                             "price",

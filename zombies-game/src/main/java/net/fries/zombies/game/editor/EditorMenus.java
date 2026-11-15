@@ -345,6 +345,16 @@ final class EditorMenus implements Listener {
                     "Interaction hitbox: point (default)",
                     () -> edit(p, "hitbox"));
         button(menu, 45, Material.LAVA_BUCKET, "Delete selected object", () -> confirmDelete(p));
+        if ("MYSTERY_BOX".equals(selected.get("kind"))) {
+            button(
+                    menu,
+                    48,
+                    Material.ENDER_EYE,
+                    "Preview mystery animation (no purchase)",
+                    () -> service.execute(p, new String[] {"boxpreview"}));
+            if (!((Map<?, ?>) selected.get("properties")).containsKey("preview-yaw"))
+                button(menu, 49, Material.COMPASS, "Preview yaw: 0", () -> edit(p, "preview-yaw"));
+        }
         button(
                 menu,
                 46,

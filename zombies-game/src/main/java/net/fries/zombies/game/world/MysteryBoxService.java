@@ -14,10 +14,27 @@ import java.util.*;
 
 /** Server-thread paid rolls, native previews and owner-only collection in a disposable match. */
 public final class MysteryBoxService {
-    private record Pending(MapObject station, MysteryRoll roll, ItemDisplay preview) {}
+    private static final class Pending {
+        final MapObject station;
+        final MysteryRoll roll;
+        final MysteryVisuals visual;
+        final long started;
+        long nextCycle;
+        boolean revealed;
+
+        Pending(MapObject station, MysteryRoll roll, MysteryVisuals visual, long tick) {
+            this.station = station;
+            this.roll = roll;
+            this.visual = visual;
+            this.started = tick;
+            this.nextCycle = tick;
+        }
+    }
 
     private final MatchRun run;
     private final Random random = new Random();
+    private final Random visualRandom = new Random();
+    private final Map<String, MysteryVisuals> closing = new HashMap<>();
     private final List<MapObject> stations;
     private final Map<NamespacedId, String> active = new HashMap<>();
     private final Map<String, Pending> pending = new HashMap<>();
@@ -115,15 +132,19 @@ public final class MysteryBoxService {
                     return true;
                 }
                 // Construct preview before charging; a spawn failure cannot lose a purchase.
+                var previous = closing.remove(station.id());
+                if (previous != null) previous.remove();
                 var preview =
-                        run.world.spawn(
-                                at(station).add(0, 1, 0),
-                                ItemDisplay.class,
-                                d -> {
-                                    d.setItemStack(new ItemStack(Material.CHEST));
-                                    d.setPersistent(false);
-                                    d.setBillboard(Display.Billboard.CENTER);
-                                });
+                        new MysteryVisuals(
+                                at(station),
+                                new Location(
+                                        run.world,
+                                        station.region().x1(),
+                                        station.region().y1(),
+                                        station.region().z1()),
+                                run.mysteryPools.presentation(),
+                                station.integer("preview-yaw", 0, -180, 180),
+                                run.tick);
                 if (!survivor.spend(price)) {
                     preview.remove();
                     message(p, "Need " + price + " gold");
@@ -136,8 +157,8 @@ public final class MysteryBoxService {
                                 price,
                                 run.tick + pool.openTicks(),
                                 run.tick + pool.openTicks() + pool.claimTicks());
-                pending.put(station.id(), new Pending(station, roll, preview));
-                run.world.playSound(at(station), Sound.BLOCK_CHEST_OPEN, 1, .7f);
+                pending.put(station.id(), new Pending(station, roll, preview, run.tick));
+                preview.activate();
                 message(
                         p,
                         "Mystery box opening • "
@@ -207,7 +228,9 @@ public final class MysteryBoxService {
 
     private void remove(Pending p) {
         pending.remove(p.station.id());
-        p.preview.remove();
+        p.visual.close(run.tick);
+        var previous = closing.put(p.station.id(), p.visual);
+        if (previous != null) previous.remove();
     }
 
     private void relocate(MapObject from) {
@@ -261,24 +284,39 @@ public final class MysteryBoxService {
                 refund(purchase, "Mystery purchase cancelled or expired; gold refunded");
                 continue;
             }
-            if (run.tick % 5 == 0) {
-                var rewards = pool(purchase.station).rewards();
-                var reward =
-                        purchase.roll.ready(run.tick)
-                                ? purchase.roll.reward()
-                                : rewards.get(random.nextInt(rewards.size()));
-                var weapon = run.content.weapons().get(reward.weapon());
-                purchase.preview.setItemStack(new ItemStack(Material.valueOf(weapon.material())));
-                run.world.spawnParticle(
-                        Particle.ENCHANT, at(purchase.station).add(0, 1, 0), 3, .3, .3, .3, 0);
+            var pool = pool(purchase.station);
+            var presentation = run.mysteryPools.presentation();
+            long elapsed = run.tick - purchase.started;
+            if (purchase.roll.ready(run.tick)) {
+                if (!purchase.revealed) {
+                    purchase.visual.item(renderItem(purchase.roll.reward()));
+                    purchase.visual.reveal(purchase.roll.reward().rare());
+                    purchase.revealed = true;
+                }
+            } else if (elapsed >= presentation.activation(pool.openTicks())
+                    && run.tick >= purchase.nextCycle) {
+                var reward = pool.rewards().get(visualRandom.nextInt(pool.rewards().size()));
+                purchase.visual.item(renderItem(reward));
+                purchase.visual.cycle(elapsed / (double) pool.openTicks());
+                purchase.nextCycle = run.tick + presentation.interval(elapsed, pool.openTicks());
             }
+            purchase.visual.tick(run.tick, pool.openTicks());
         }
+        closing.entrySet().removeIf(e -> !e.getValue().tick(run.tick, 20));
         if (run.tick % 10 == 0) updateLabels();
+    }
+
+    private ItemStack renderItem(MysteryPools.Reward reward) {
+        return MysteryVisuals.preview(
+                run.content.weapons().get(reward.weapon()),
+                run.mysteryPools.presentation().itemModels());
     }
 
     public void clear() {
         for (var p : List.copyOf(pending.values()))
             refund(p, "Match ended; pending mystery purchase refunded");
+        closing.values().forEach(MysteryVisuals::remove);
+        closing.clear();
         labels.values().forEach(Entity::remove);
         labels.clear();
         active.clear();
