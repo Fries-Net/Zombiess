@@ -32,6 +32,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
     private boolean observedRespawn;
     private final Map<String, List<Long>> shotTicks = new HashMap<>();
     private final Map<String, Long> observedShots = new HashMap<>();
+    private final Map<String, Long> startingShots = new HashMap<>();
     private boolean trackingShots;
     private boolean battleDiagnostics;
     private long switchDeadline;
@@ -304,7 +305,10 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
                         }
                         var w = run().combat.held(player(entry.getKey()));
                         check(
-                                w.magazine() == w.definition().magazine() - ticks.size(),
+                                w.magazine()
+                                        == w.definition().magazine()
+                                                - (w.shotsFired()
+                                                        - startingShots.get(entry.getKey())),
                                 "exact rapid-click ammunition " + entry.getKey());
                     }
                 }
@@ -1144,6 +1148,7 @@ public final class PaperPlaytest extends JavaPlugin implements BasicCommand {
         for (String name : List.of("SurvivorOne", "SurvivorTwo")) {
             shotTicks.put(name, new ArrayList<>());
             observedShots.put(name, run().combat.held(player(name)).shotsFired());
+            startingShots.put(name, run().combat.held(player(name)).shotsFired());
         }
     }
 
