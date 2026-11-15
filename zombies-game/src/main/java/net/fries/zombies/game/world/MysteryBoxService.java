@@ -194,7 +194,7 @@ public final class MysteryBoxService {
         }
         var state =
                 owned == null ? new WeaponState(run.content.weapons().get(reward.weapon())) : owned;
-        var item = owned == null ? run.combat.item(state) : null;
+        var item = owned == null ? run.combat.item(state, p) : null;
         if (!roll.claim(p.getUniqueId(), run.tick)) return;
         if (owned != null) owned.refill();
         else {

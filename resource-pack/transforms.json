@@ -1,0 +1,12 @@
+{
+  "version": "v3-preview.1",
+  "aliases": {
+    "friesnet:weapon/ak47": "ak_47_converted",
+    "friesnet:weapon/awp": "awm",
+    "friesnet:weapon/glock18": "glock_17",
+    "friesnet:weapon/mac10": "model_3",
+    "friesnet:weapon/raygun": "raygun"
+  },
+  "overrides": {},
+  "acceptance": {}
+}

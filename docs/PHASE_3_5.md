@@ -49,6 +49,7 @@ All branches start from master `6e9369f`; no feature has been merged into master
 | [12](https://github.com/Fries-Net/Zombiess/pull/12) | enemies-powerups | `97c7700` | Six bounded archetypes, five classic power-ups |
 | [13](https://github.com/Fries-Net/Zombiess/pull/13) | presentation-training | `eb6a9c2` | Staged mystery rendering, unpaid preview, separate training lab |
 | [14](https://github.com/Fries-Net/Zombiess/pull/14) | discord | `d40f44f` | Optional bounded staff logging and two-way chat |
+| [15](https://github.com/Fries-Net/Zombiess/pull/15) | `feature/resource-pack-v3` | `aa83834` | Original models, standalone pose review, optional per-player delivery |
 
 The `verify/phase-3-5` branch combines those histories for regression verification only. It retains
 the shared constructor/content fields, every test dispatcher and the coordinated HUD during conflict
@@ -72,7 +73,14 @@ while holding automatic fire, inspect hands and headshot HUD, target adjacent st
 rebuild every board, inspect mystery animation and complete a match. Discord additionally needs a
 live guild/channel permissions and webhook appearance/reconnect test with protected credentials.
 
-Original Blockbench ZIP and prior packs are absent. The next exact V3 step is to inspect the supplied
-66-model source archive and original texture assignments, then implement reproducible export and
-per-weapon preview/transform overrides with graphical approval. No replacement geometry or unverified
-weapon transforms have been presented as fixed. Native model fallbacks remain enabled.
+The original 66-model Blockbench archive was recovered from the local Downloads directory. PR #15
+preserves its indexed textures and UVs, exports 71 stable item-model IDs, and provides a standalone
+source/export pose viewer with pack-only rebuilds. Seven exporter tests and 40 browser contexts pass;
+Windows/Linux CI produces identical pack hashes. See [V3 review and delivery](RESOURCE_PACK_V3.md).
+
+V3 remains a preview awaiting normal Minecraft first/third-person, GUI and display acceptance.
+The optional delivery service defaults to disabled and activates only explicitly approved assets
+after each client reports a successful load. Decline/failure retains vanilla visuals. Prior V1/V2
+variant manifests and an identifiable Revolver source remain unavailable. Next exact external step:
+review the five priority guns using the documented give commands and record screenshots plus pack
+hash before enabling model mappings. No production visual approval has been claimed.

@@ -49,6 +49,7 @@ final class PaperUpgradeChecks {
         var w = s.weapons().get(r.content.starter());
         switch (step) {
             case "pap-start" -> {
+                PaperResourcePackChecks.verify(plugin, r, p);
                 s.perks().clear();
                 r.perks.apply(p, false);
                 PaperTargetChecks.aim(r, p, "object:test_pack_a_punch");

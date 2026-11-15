@@ -10,6 +10,12 @@ const holding = new Set();
 function connect(name) {
   const bot = mineflayer.createBot({host: '127.0.0.1', port: Number(process.argv[2]), username: name, auth: 'offline', version: '1.21.11'});
   bots.set(name, bot);
+  bot._client.on('add_resource_pack', data => {
+    if (data.url !== 'https://example.invalid/friesnet-v3-preview.zip') return;
+    if (data.forced || data.hash !== '0123456789abcdef0123456789abcdef01234567' || !data.uuid)
+      return console.log('BOT_ERROR invalid optional resource-pack request');
+    console.log('BOT_RESOURCE_PACK ' + name);
+  });
   bot.once('spawn', () => console.log('BOT_READY ' + name));
   bot.on('messagestr', message => console.log('BOT_MESSAGE ' + name + ' ' + message));
   bot.on('error', error => console.log('BOT_ERROR ' + name + ' ' + error.message));
