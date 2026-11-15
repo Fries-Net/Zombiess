@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':zombies-common')
+    implementation('net.dv8tion:JDA:6.7.0') { exclude group: 'club.minnced', module: 'opus-java' }
+}

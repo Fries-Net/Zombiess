@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation project(':zombies-common')
     implementation project(':zombies-persistence')
+    implementation project(':zombies-discord')
     compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
 }
 def pluginVersion = project.version

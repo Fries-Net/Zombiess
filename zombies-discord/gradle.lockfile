@@ -1,0 +1,34 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.fasterxml.jackson.core:jackson-annotations:2.22=runtimeClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-core:2.22.2=runtimeClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-databind:2.22.2=runtimeClasspath,testRuntimeClasspath
+com.fasterxml.jackson:jackson-bom:2.22.2=runtimeClasspath,testRuntimeClasspath
+com.google.code.findbugs:jsr305:3.0.2=runtimeClasspath,testRuntimeClasspath
+com.google.code.gson:gson:2.10.1=runtimeClasspath,testRuntimeClasspath
+com.google.crypto.tink:tink:1.18.0=runtimeClasspath,testRuntimeClasspath
+com.google.errorprone:error_prone_annotations:2.22.0=runtimeClasspath,testRuntimeClasspath
+com.google.protobuf:protobuf-java:4.28.2=runtimeClasspath,testRuntimeClasspath
+com.neovisionaries:nv-websocket-client:2.14=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.squareup.okhttp3:okhttp-jvm:5.5.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.squareup.okio:okio-jvm:3.18.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.squareup.okio:okio:3.18.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+net.dv8tion:JDA:6.7.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+net.sf.trove4j:core:3.1.0=runtimeClasspath,testRuntimeClasspath
+org.apache.commons:commons-collections4:4.6.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.apiguardian:apiguardian-api:1.1.2=testCompileClasspath
+org.jetbrains.kotlin:kotlin-stdlib:2.2.21=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.jetbrains:annotations:13.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.junit.jupiter:junit-jupiter-api:5.11.4=testCompileClasspath,testRuntimeClasspath
+org.junit.jupiter:junit-jupiter-engine:5.11.4=testRuntimeClasspath
+org.junit.jupiter:junit-jupiter-params:5.11.4=testCompileClasspath,testRuntimeClasspath
+org.junit.jupiter:junit-jupiter:5.11.4=testCompileClasspath,testRuntimeClasspath
+org.junit.platform:junit-platform-commons:1.11.4=testCompileClasspath,testRuntimeClasspath
+org.junit.platform:junit-platform-engine:1.11.4=testRuntimeClasspath
+org.junit.platform:junit-platform-launcher:1.11.4=testRuntimeClasspath
+org.junit:junit-bom:5.11.4=testCompileClasspath,testRuntimeClasspath
+org.opentest4j:opentest4j:1.3.0=testCompileClasspath,testRuntimeClasspath
+org.slf4j:slf4j-api:2.0.19=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.snakeyaml:snakeyaml-engine:2.9=runtimeClasspath,testRuntimeClasspath
+empty=annotationProcessor,testAnnotationProcessor
